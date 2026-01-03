@@ -10,22 +10,58 @@
 - Vector store: Chroma
 - Runtime env: conda env LangChain
 
-## MVP Sprint: <= 2026-01-01
+## 2026-01 1 个月交付目标
 
-**目标**: 可运行, 可用, 可演示. 不追求最佳效果.
+定位: 以 AI Agent 能力展示为第一优先级.
 
-- [ ] conda env LangChain 可用, pip 安装 requirements.txt
-- [ ] Gradio 启动最小 chat UI
-- [ ] 从 docs/sources 加载 markdown, 切分成 chunks
-- [ ] 用任意可用 embeddings 建立 Chroma index
-- [ ] LangGraph 编排最小流程: retrieve -> answer
-- [ ] 输出 answer + citations
+硬性验收口径:
 
-**验收标准**:
+- 端到端可复现: 清空索引 -> ingest -> 查询 -> 返回 answer + citations.
+- 可控与可测: 至少 1 条 e2e smoke test, 评测脚本可一键运行并输出报告.
+- 工程化底线: 无明文 secrets, 关键链路带 request id, 错误分层清晰.
 
-- 本地 1 条命令即可启动 UI
-- UI 可 build index, 可提问, 可返回 citations
-- 错误可见, 关键日志可定位
+### Week 1: baseline 跑通 + 工程化骨架
+
+- 交付
+  - requirements.txt 与 Python 版本固化
+  - secrets 全部走环境变量
+  - 最小 CLI 或 Gradio UI 启动
+  - 最小 ingest -> retrieve -> answer 流程
+- 验收
+  - 1 条命令启动 demo
+  - 返回 citations, 且可定位来源
+
+### Week 2: RAG MVP 闭环与引用质量
+
+- 交付
+  - docs/sources 语料接入(至少包含 Background.md)
+  - chunk 规则与 metadata schema 固化
+  - 20 个种子问题集
+- 验收
+  - 20 个问题中, 80% 以上回答包含有效 citations
+
+### Week 3: 多智能体编排与可控性
+
+- 交付
+  - LangGraph 编排最小多角色流程(例如 researcher -> writer -> reviewer)
+  - guardrails: 无法从语料支持则拒答或要求补充资料
+  - 评测脚本: 输出 citations coverage 与 groundedness 指标(可简化)
+- 验收
+  - 评测脚本可一键运行并输出报告
+  - 失败路径可解释, 日志可定位
+
+### Week 4: 收尾, 文档, Demo 固化
+
+- 交付
+  - README 一键运行, 常见问题与排障
+  - demo 脚本: 1 条端到端演示路径
+  - 3-5 条简历 bullet(量化指标优先)
+- 验收
+  - 新人按 README 10-15 分钟可跑通 demo
+
+## 设计与阶段拆分(用于实现路径)
+
+说明: 下述 Phase 用于组织工程工作, 但 2026-01 内按上面的 4 周计划完成交付.
 
 ## Phase 0: 基础强化与项目骨架
 
@@ -152,13 +188,12 @@
 
 | Phase | 预计时间 | 关键里程碑 |
 | ----- | -------- | ---------- |
-| MVP Sprint | 1-2 天 | Gradio + LangGraph + Chroma 端到端跑通 |
-| Phase 0 | 1 周 | 项目骨架与工程化基础 |
-| Phase 1 | 1-2 周 | RAG MVP 闭环与可复现 demo |
-| Phase 2 | 2-3 周 | 评测体系与质量提升 |
-| Phase 3 | 1-2 周 | 服务化与企业落地能力 |
+| Phase 0 | Week 1 | 项目骨架与工程化基础 |
+| Phase 1 | Week 2 | RAG MVP 闭环与可复现 demo |
+| Phase 2 | Week 3 | 评测体系与质量提升 |
+| Phase 3 | Week 4 | 文档固化与最小服务化能力 |
 
-**总计**: MVP 1-2 天 + 5-8 周
+**总计**: 4 周
 
 ## 开发建议
 

@@ -34,11 +34,18 @@ class RAGState(TypedDict, total=False):
 def build_rag_graph(retriever):
     # retriever 需要兼容 LangChain Retriever 接口, 即支持 retriever.invoke(query).
     # 这里保持参数宽松, 便于后续切换不同 vector store 或不同 retriever 实现.
+    # 技术难点: retriever 的返回结果质量会直接影响 citations 覆盖率.
+    # - k 值过小会漏召回, k 值过大会引入噪声并拉长 prompt.
+    # Week 2 需要把 k, search_kwargs, 以及 rerank 策略固化到配置.
 
     def retrieve_node(state: RAGState) -> RAGState:
         # 从 state 里读取 question, 调用 retriever 获取相似 chunks.
         question = state.get("question", "")
         docs = retriever.invoke(question)
+        # 业务不清晰点: 检索不到 docs 时的策略.
+        # - 是直接拒答.
+        # - 还是提示补充语料并返回下一步建议.
+        # 目前交给 answer_node 的 generate_answer 做最保守处理.
         # 只写入 docs, 不覆盖其他字段.
         return {"docs": docs}
 
@@ -50,6 +57,8 @@ def build_rag_graph(retriever):
         question = state.get("question", "")
         docs = state.get("docs", [])
         answer = generate_answer(question, docs)
+        # 技术难点: 这里返回 answer 但保留 docs, 便于 UI 提取 citations.
+        # 如果后续引入多智能体, 需要保证每个 agent 的产出都能回指 docs.
         return {"answer": answer}
 
     # StateGraph 描述节点和边. compile 后得到可 invoke 的 runnable.

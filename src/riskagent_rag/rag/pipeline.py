@@ -36,6 +36,9 @@ class IndexBuildResult:
 def build_index(sources_dir: pathlib.Path, persist_dir: pathlib.Path) -> IndexBuildResult:
     # 从 sources_dir 加载 markdown, 切分为 chunks, 并写入 Chroma.
     # 返回 source_count 和 chunk_count 便于可观测.
+    # 技术难点: ingest 的稳定性决定了后续检索与评测是否可信.
+    # - sources_dir 为空或编码异常时, 需要明确给出可解释提示, 不能 silent fail.
+    # - index 产物落盘后, 才能支撑 Week 2 的回归对比.
     sources = load_markdown_sources(sources_dir)
     chunks = split_documents(sources)
     build_chroma_vectorstore(chunks, persist_dir)
@@ -50,6 +53,10 @@ def load_index(persist_dir: pathlib.Path):
 def extract_citations(docs: list[Document]) -> list[dict[str, str]]:
     # citations 是一个最小可展示结构.
     # UI 会将其渲染为 markdown 列表.
+    # 技术难点: citations 字段一旦对外展示, 就会变成对外 contract.
+    # 业务不清晰点: 什么算有效 citations.
+    # - 只要能定位 source + chunk_id 就算, 还是要包含 section path, page, score.
+    # - 未来还需要定义引用覆盖率, 作为 Week 2 的核心指标.
     citations: list[dict[str, str]] = []
     for d in docs:
         meta = d.metadata or {}

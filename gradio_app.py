@@ -36,6 +36,8 @@ _graph = None
 def _ensure_graph() -> Any:
     # graph 缓存.
     # build index 后会重置缓存, 重新加载最新向量库.
+    # 技术难点: UI 交互是有状态的, 但向量库在磁盘上可能被重建.
+    # - 如果不重置缓存, 用户会看到旧索引的检索结果, citations 会失真.
     global _graph
     if _graph is not None:
         return _graph
@@ -43,6 +45,8 @@ def _ensure_graph() -> Any:
     # 从本地持久化目录加载向量库, 并构建 retriever.
     vectorstore = load_index(PERSIST_DIR)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
+    # 业务不清晰点: k 值和检索策略未来如何定义.
+    # - Week 2 会基于种子问题集做调参, 并把策略固化.
     # 编排最小 LangGraph: retrieve -> answer.
     _graph = build_rag_graph(retriever)
     return _graph
@@ -51,6 +55,7 @@ def _ensure_graph() -> Any:
 def on_build_index() -> str:
     # UI 按钮回调.
     # 从 docs/sources 构建向量库, 落地到 .chroma.
+    # 技术难点: ingest 必须稳定, 否则 Week 2 的引用覆盖率无法对比.
     result = build_index(sources_dir=SOURCES_DIR, persist_dir=PERSIST_DIR)
 
     global _graph
@@ -66,6 +71,9 @@ def on_build_index() -> str:
 def chat(user_text: str, history: list[tuple[str, str]]):
     # ChatInterface 回调.
     # history 当前未用, 先保持参数以满足 Gradio 的签名要求.
+    # 业务不清晰点: 是否需要多轮对话记忆.
+    # - 多轮会引入更复杂的 context 管理与成本控制.
+    # - MVP 先做单轮问答, Week 3 再扩展为多角色多轮.
     if not user_text:
         return ""
 
@@ -86,6 +94,7 @@ def chat(user_text: str, history: list[tuple[str, str]]):
 
     # MVP 先用 markdown 文本展示 citations.
     # 后续可以改成更结构化的 UI, 例如 DataFrame 或可点击链接.
+    # 技术难点: citations 一旦对外展示就是 contract, 后续字段扩展要考虑兼容.
 
     return f"{answer}\n\nCitations:\n{citations_md}"
 
@@ -100,9 +109,6 @@ def main() -> None:
 
         chat_ui = gr.ChatInterface(
             fn=chat,
-            retry_btn=None,
-            undo_btn=None,
-            clear_btn="Clear",
         )
 
         # 事件绑定.

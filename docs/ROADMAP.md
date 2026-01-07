@@ -10,6 +10,13 @@
 - Vector store: Chroma
 - Runtime env: conda env LangChain
 
+LLM strategy:
+
+- Week 1 允许无 key 的 deterministic fallback, 先验证 RAG 数据链路与 citations.
+- Week 2 开始引入真实 LLM, 优先采用 OpenAI compatible server.
+  - 商业 API 或开源模型推理服务都可.
+  - 开源模型建议通过 vLLM 或 TGI 对外提供 OpenAI compatible endpoint.
+
 ## 2026-01 1 个月交付目标
 
 定位: 以 AI Agent 能力展示为第一优先级.
@@ -23,41 +30,55 @@
 ### Week 1: baseline 跑通 + 工程化骨架
 
 - 交付
-  - requirements.txt 与 Python 版本固化
-  - secrets 全部走环境变量
-  - 最小 CLI 或 Gradio UI 启动
-  - 最小 ingest -> retrieve -> answer 流程
+  - [x] requirements.txt 与 Python 版本固化
+  - [x] secrets 全部走环境变量
+  - [x] 最小 CLI 或 Gradio UI 启动
+  - [x] 最小 ingest -> retrieve -> answer 流程
+  - [x] docs/INTERVIEW.md: 50 道硬核面试题清单, 用于边做项目边答题
 - 验收
-  - 1 条命令启动 demo
-  - 返回 citations, 且可定位来源
+  - [x] 1 条命令启动 demo
+    - [x] UI: `conda run -n LangChain python gradio_app.py`
+    - [x] CLI: `conda run -n LangChain python demo_cli.py --rebuild-index --question "what is FRTB"`
+  - [x] 返回 citations, 且可定位来源
+  - [x] 至少 1 条 e2e smoke test 可通过
+    - [x] `conda run -n LangChain python smoke_test.py`
+  - 进度: Week 1 已完成
+  - 为什么要做: 先把可复现的启动路径与回归入口固定, 避免后续每次改动都在环境与手工验证上耗时.
+  - 为 Week 2 打基础: Week 2 要扩充语料与问题集, 需要稳定入口来做回归对比, 才能判断引用质量是变好还是变差.
 
 ### Week 2: RAG MVP 闭环与引用质量
 
 - 交付
-  - docs/sources 语料接入(至少包含 Background.md)
-  - chunk 规则与 metadata schema 固化
-  - 20 个种子问题集
+  - [ ] docs/sources 语料接入(至少包含 Background.md)
+  - [ ] chunk 规则与 metadata schema 固化
+  - [ ] 20 个种子问题集
 - 验收
-  - 20 个问题中, 80% 以上回答包含有效 citations
+  - [ ] 20 个问题中, 80% 以上回答包含有效 citations
+  - 为什么要做: 引用覆盖率是最直接的 groundedness proxy, 可以压住幻觉并逼迫我们改检索与切分.
+  - 为 Week 3 打基础: Week 3 引入多智能体时, 每个 agent 的结论都必须能回指证据, 否则会放大幻觉.
 
 ### Week 3: 多智能体编排与可控性
 
 - 交付
-  - LangGraph 编排最小多角色流程(例如 researcher -> writer -> reviewer)
-  - guardrails: 无法从语料支持则拒答或要求补充资料
-  - 评测脚本: 输出 citations coverage 与 groundedness 指标(可简化)
+  - [ ] LangGraph 编排最小多角色流程(例如 researcher -> writer -> reviewer)
+  - [ ] guardrails: 无法从语料支持则拒答或要求补充资料
+  - [ ] 评测脚本: 输出 citations coverage 与 groundedness 指标(可简化)
 - 验收
-  - 评测脚本可一键运行并输出报告
-  - 失败路径可解释, 日志可定位
+  - [ ] 评测脚本可一键运行并输出报告
+  - [ ] 失败路径可解释, 日志可定位
+  - 为什么要做: 多智能体增加了非确定性与复杂度, 没有评测与可观测性会导致调参变成玄学.
+  - 为 Week 4 打基础: Week 4 做对外 demo 与文档固化时, 需要稳定的回归方法来证明功能没有退化.
 
 ### Week 4: 收尾, 文档, Demo 固化
 
 - 交付
-  - README 一键运行, 常见问题与排障
-  - demo 脚本: 1 条端到端演示路径
-  - 3-5 条简历 bullet(量化指标优先)
+  - [ ] README 一键运行, 常见问题与排障
+  - [ ] demo 脚本: 1 条端到端演示路径
+  - [ ] 3-5 条简历 bullet(量化指标优先)
 - 验收
-  - 新人按 README 10-15 分钟可跑通 demo
+  - [ ] 新人按 README 10-15 分钟可跑通 demo
+  - 为什么要做: 对外展示的核心不是功能多, 而是可复现与可传递, 这会直接影响面试叙事.
+  - 为后续阶段打基础: 文档与 demo 固化后, 才值得继续投入 embeddings 与检索质量优化.
 
 ## 设计与阶段拆分(用于实现路径)
 
@@ -67,24 +88,24 @@
 
 **目标**: 先把工程化基础打牢, 让后续迭代稳定可扩展.
 
-- [ ] 确认 conda 环境 LangChain 可用, 固化 Python 版本
-- [ ] 增加 requirements.txt, 不 pin 版本, 以当前环境为准
-- [ ] 配置管理与 secrets 管理, 统一使用环境变量, 禁止明文 key
+- [x] 确认 conda 环境 LangChain 可用, 固化 Python 版本
+- [x] 增加 requirements.txt, 不 pin 版本, 以当前环境为准
+- [x] 配置管理与 secrets 管理, 统一使用环境变量, 禁止明文 key
 - [ ] 统一日志与错误分层, 关键链路打上 request id
-- [ ] 增加最小测试框架, 至少覆盖 1 条端到端 smoke test
-- [ ] 定义核心抽象
-  - 文档源与元数据 schema
-  - chunk schema
-  - embedding provider 接口
-  - vector store 接口(Chroma)
-  - graph state schema(LangGraph)
-  - retrieval 输出 schema, 必须包含 citations
+- [x] 增加最小测试框架, 至少覆盖 1 条端到端 smoke test
+- [x] 定义核心抽象
+  - [x] 文档源与元数据 schema
+  - [x] chunk schema
+  - [ ] embedding provider 接口
+  - [x] vector store 接口(Chroma)
+  - [x] graph state schema(LangGraph)
+  - [x] retrieval 输出 schema, 必须包含 citations
 
 **验收标准**:
 
-- 项目可在本地一键启动或一键运行 demo
-- 无明文 secrets
-- 至少 1 条端到端测试可通过
+- [x] 项目可在本地一键启动或一键运行 demo
+- [x] 无明文 secrets
+- [x] 至少 1 条端到端测试可通过
 
 ## Phase 1: RAG MVP, 面向工程师的业务解释
 
@@ -92,23 +113,25 @@
 
 ### 1.1 资料与数据接入
 
-- [ ] 定义资料目录约定, 例如 docs/sources
+- [x] 定义资料目录约定, 例如 docs/sources
 - [ ] 接入第 1 批语料
-  - Background.md
-  - 可选: 公开可引用的 FRTB, CVA, Greeks, XVA 资料
-- [ ] 文档解析
-  - markdown 解析
-  - 可选: pdf 解析
+  - [ ] Background.md
+  - [ ] 可选: 公开可引用的 FRTB, CVA, Greeks, XVA 资料
+- [x] 文档解析
+  - [x] markdown 解析
+  - [ ] 可选: pdf 解析
 
 ### 1.2 切分与索引策略
 
-- [ ] chunk 策略
-  - 以标题层级优先, 再按长度切分
-  - chunk 必须携带 section path 与来源定位
+- [x] chunk 策略
+  - [x] baseline: 按长度切分
+  - [ ] 以标题层级优先, 再按长度切分
+  - [ ] chunk 必须携带 section path 与来源定位
+- [x] vector store
+  - [x] 本地优先, 例如 Chroma
 - [ ] embeddings
-  - 支持可插拔 provider, 默认采用 OpenAI compatible API
-- [ ] vector store
-  - 本地优先, 例如 Chroma
+  - [x] MVP: FakeEmbeddings(离线可运行)
+  - [ ] Week 2: 切换为真实 embeddings, 并固化 provider 与维度
 
 ### 1.3 生成与引用
 
@@ -125,17 +148,17 @@
 
 ### 1.4 最小交互形态
 
-- [ ] CLI
-  - ingest
-  - chat
-  - ask
-- [ ] 可选: 简单 Web UI, 例如 Gradio
+- [x] CLI
+  - [x] ingest(build_index)
+  - [x] ask(demo_cli.py)
+  - [ ] chat(多轮对话)
+- [x] 简单 Web UI, 例如 Gradio
 
 **验收标准**:
 
-- 给定 20 个种子问题, 80% 以上回答包含有效 citations
-- 端到端流程可复现
-  - 清空索引 -> ingest -> 查询 -> 返回答案
+- [ ] 给定 20 个种子问题, 80% 以上回答包含有效 citations
+- [x] 端到端流程可复现
+  - [x] 清空索引 -> ingest -> 查询 -> 返回答案
 
 ## Phase 2: 质量提升, 可评测与可控
 
@@ -158,8 +181,8 @@
 
 **验收标准**:
 
-- 评测脚本可一键运行并输出报告
-- 相比 Phase 1, 事实一致性指标显著提升
+- [ ] 评测脚本可一键运行并输出报告
+- [ ] 相比 Phase 1, 事实一致性指标显著提升
 
 ## Phase 3: 内部服务化与企业落地
 

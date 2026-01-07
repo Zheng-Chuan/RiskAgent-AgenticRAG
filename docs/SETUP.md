@@ -4,6 +4,11 @@
 
 建议 Python 3.11+.
 
+推荐环境:
+
+- conda env `LangChain`
+- 所有命令优先用 `conda run -n LangChain ...`, 避免 shell 激活状态不一致
+
 ## 目录约定
 
 - `docs/sources/`: 语料

@@ -20,34 +20,45 @@ pip install -r requirements.txt
 
 ## 2. 准备语料
 
-把 markdown 或 pdf 放到 `docs/sources/`.
+把 markdown 放到 `docs/sources/`.
 
 建议先放 1 个文件, 例如 `Background.md` 的拷贝.
 
 ## 3. 配置 LLM
 
-如果你暂时没有可用的 LLM API, 也可以先使用 mock 模式跑通 UI.
+如果你暂时没有可用的 LLM API key, 也可以先跑通本地 deterministic 模式.
 
 可选环境变量:
 
-- `LLM_PROVIDER`: `mock` 或 `openai_compatible`
-- `LLM_API_KEY`: API key
-- `LLM_BASE_URL`: OpenAI compatible base url
-- `LLM_MODEL`: model name
+- `OPENAI_API_KEY` 或 `LLM_API_KEY`
+- `LLM_BASE_URL`
+- `LLM_MODEL`
 
-## 4. 启动 UI
+说明:
+
+- 未配置 key 时, 系统会返回 deterministic 输出, 用于验证检索与 citations.
+- 配置 key 后, 会使用 OpenAI compatible 接口生成回答.
+
+## 4. 配置 embeddings
+
+可选环境变量:
+
+- `EMBEDDINGS_PROVIDER`: 默认 hf
+- `EMBEDDINGS_MODEL`: 默认 sentence-transformers/all-MiniLM-L6-v2
+
+## 5. 启动 UI
 
 ```bash
 conda run -n LangChain python gradio_app.py
 ```
 
-## 5. Demo 流程
+## 6. Demo 流程
 
 - 在 UI 里点击 build index
 - 提一个问题, 例如 what is FRTB
 - 观察 answer 和 citations
 
-## 6. CLI demo 与 smoke test
+## 7. CLI demo 与 smoke test
 
 - CLI demo(输出落盘到 logs/demo_result.json)
 
@@ -59,4 +70,12 @@ conda run -n LangChain python demo_cli.py --rebuild-index --question "what is FR
 
 ```bash
 conda run -n LangChain python smoke_test.py
+```
+
+## 8. 运行评测
+
+评测会跑 20 个问题, 并输出 coverage 报告到 logs/eval_summary.json.
+
+```bash
+conda run -n LangChain python scripts/run_questions.py --rebuild-index
 ```

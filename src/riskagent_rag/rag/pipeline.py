@@ -14,6 +14,7 @@
 from __future__ import annotations
 
 import pathlib
+import shutil
 
 from langchain_core.documents import Document
 
@@ -26,23 +27,40 @@ from riskagent_rag.rag.source_loader import load_markdown_sources
 
 
 class IndexBuildResult:
-    def __init__(self, source_count: int, chunk_count: int, persist_dir: pathlib.Path):
+    def __init__(
+        self,
+        source_count: int,
+        chunk_count: int,
+        persist_dir: pathlib.Path,
+    ):
         # build_index 的结果对象, 方便在 UI 里展示统计信息.
         self.source_count = source_count
         self.chunk_count = chunk_count
         self.persist_dir = persist_dir
 
 
-def build_index(sources_dir: pathlib.Path, persist_dir: pathlib.Path) -> IndexBuildResult:
+def build_index(
+    sources_dir: pathlib.Path,
+    persist_dir: pathlib.Path,
+) -> IndexBuildResult:
     # 从 sources_dir 加载 markdown, 切分为 chunks, 并写入 Chroma.
-    # 返回 source_count 和 chunk_count 便于可观测.
+    # 返回 source_count 和 chunk_count, 便于 UI 展示.
     # 技术难点: ingest 的稳定性决定了后续检索与评测是否可信.
     # - sources_dir 为空或编码异常时, 需要明确给出可解释提示, 不能 silent fail.
     # - index 产物落盘后, 才能支撑 Week 2 的回归对比.
+    if persist_dir.exists():
+        # Week 2 需要可复现的 index 产物, 因此 build_index 语义是 rebuild.
+        # 技术难点: embeddings 或 chunk 规则变化后, 复用旧索引会导致 citations 失真.
+        shutil.rmtree(persist_dir)
+
     sources = load_markdown_sources(sources_dir)
     chunks = split_documents(sources)
     build_chroma_vectorstore(chunks, persist_dir)
-    return IndexBuildResult(source_count=len(sources), chunk_count=len(chunks), persist_dir=persist_dir)
+    return IndexBuildResult(
+        source_count=len(sources),
+        chunk_count=len(chunks),
+        persist_dir=persist_dir,
+    )
 
 
 def load_index(persist_dir: pathlib.Path):

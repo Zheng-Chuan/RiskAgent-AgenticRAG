@@ -25,7 +25,9 @@ LLM strategy:
 
 - 端到端可复现: 清空索引 -> ingest -> 查询 -> 返回 answer + citations.
 - 可控与可测: 至少 1 条 e2e smoke test, 评测脚本可一键运行并输出报告.
-- 工程化底线: 无明文 secrets, 关键链路带 request id, 错误分层清晰.
+- 工程化底线: 无明文 secrets.
+
+备注: 当前 roadmap 聚焦本地可运行 demo, 暂不包含生产化能力.
 
 ### Week 1: baseline 跑通 + 工程化骨架
 
@@ -49,36 +51,63 @@ LLM strategy:
 ### Week 2: RAG MVP 闭环与引用质量
 
 - 交付
-  - [ ] docs/sources 语料接入(至少包含 Background.md)
-  - [ ] chunk 规则与 metadata schema 固化
-  - [ ] 20 个种子问题集
+  - [x] docs/sources 语料接入(至少包含 Background.md)
+  - [x] chunk 规则与 metadata schema 固化
+  - [x] 20 个种子问题集
 - 验收
-  - [ ] 20 个问题中, 80% 以上回答包含有效 citations
+  - [x] 20 个问题中, 80% 以上回答包含有效 citations
   - 为什么要做: 引用覆盖率是最直接的 groundedness proxy, 可以压住幻觉并逼迫我们改检索与切分.
   - 为 Week 3 打基础: Week 3 引入多智能体时, 每个 agent 的结论都必须能回指证据, 否则会放大幻觉.
 
-### Week 3: 多智能体编排与可控性
+### Week 3: 业务场景驱动的多 agent MVP
+
+北极星场景(先做 1 个, 其余作为扩展):
+
+- Desk exposure monitoring: 生成 desk 级风险简报, 并对 breaches 给出解释与下一步.
+- Limit breach investigation: 针对 breach 做归因假设, 证据地图, 以及建议动作.
+
+多 agent 的必要性来自职责互斥与可控性, 不是 roleplay.
 
 - 交付
-  - [ ] LangGraph 编排最小多角色流程(例如 researcher -> writer -> reviewer)
-  - [ ] guardrails: 无法从语料支持则拒答或要求补充资料
-  - [ ] 评测脚本: 输出 citations coverage 与 groundedness 指标(可简化)
+  - [ ] 明确输入输出 contract
+    - 输入: query, as_of, desk, abs_delta_limit
+    - 输出: report, breaches, evidence_set, claims
+  - [ ] 定义 agents roster(功能型, 硬边界)
+    - DataAgent: 只负责调用工具取结构化数据, 不写结论
+    - RAGAgent: 只负责从 docs/sources 找口径与概念, 只产出 evidence
+    - AnalysisAgent: 基于 data + evidence 形成 claims 列表
+    - ValidatorAgent: 校验每条 claim 的证据与数字一致性, 不通过就返回 failure_reason
+    - ReportAgent: 生成面向工程师的最终报告, 带 citations
+  - [ ] 引入工具调用(本地优先)
+    - 先用本地 mock tool 结构跑通
+    - 后续如需接入外部服务, 再单独评估
+  - [ ] Guardrails
+    - 无证据则拒答, 并输出 next_actions
+    - 数字不一致则 fail, 不允许用模糊措辞糊过去
 - 验收
-  - [ ] 评测脚本可一键运行并输出报告
-  - [ ] 失败路径可解释, 日志可定位
-  - 为什么要做: 多智能体增加了非确定性与复杂度, 没有评测与可观测性会导致调参变成玄学.
-  - 为 Week 4 打基础: Week 4 做对外 demo 与文档固化时, 需要稳定的回归方法来证明功能没有退化.
+  - [ ] 1 条端到端场景命令可跑通
+    - 清空 index -> ingest -> 调工具 -> 生成 report -> 落盘结果
+  - [ ] 每条关键结论必须能回指 evidence_set
+  - [ ] 失败路径可解释, 输出包含 failure_reason
 
-### Week 4: 收尾, 文档, Demo 固化
+### Week 4: 结构化输出与评测升级
 
 - 交付
-  - [ ] README 一键运行, 常见问题与排障
-  - [ ] demo 脚本: 1 条端到端演示路径
-  - [ ] 3-5 条简历 bullet(量化指标优先)
+  - [ ] 结构化输出落盘(便于调试与回归)
+    - evidence_set: source, chunk_id, start_index
+    - claims: claim_id, statement, evidence_ids, confidence, failure_reason
+  - [ ] 评测升级
+    - citations coverage
+    - citation precision(抽样检查 evidence 是否真正支持 claim)
+    - refusal quality(该拒答时必须拒答)
+    - numeric consistency(报告数字必须等于 tool 输出)
+  - [ ] README 与使用说明
+    - 一键运行
+    - 常见问题与排障
 - 验收
   - [ ] 新人按 README 10-15 分钟可跑通 demo
-  - 为什么要做: 对外展示的核心不是功能多, 而是可复现与可传递, 这会直接影响面试叙事.
-  - 为后续阶段打基础: 文档与 demo 固化后, 才值得继续投入 embeddings 与检索质量优化.
+  - [ ] 评测脚本可一键运行并输出报告
+  - 为什么要做: 多 agent 系统的技术深度来自 contract, 可控性, 与可回归.
 
 ## 设计与阶段拆分(用于实现路径)
 
@@ -90,8 +119,6 @@ LLM strategy:
 
 - [x] 确认 conda 环境 LangChain 可用, 固化 Python 版本
 - [x] 增加 requirements.txt, 不 pin 版本, 以当前环境为准
-- [x] 配置管理与 secrets 管理, 统一使用环境变量, 禁止明文 key
-- [ ] 统一日志与错误分层, 关键链路打上 request id
 - [x] 增加最小测试框架, 至少覆盖 1 条端到端 smoke test
 - [x] 定义核心抽象
   - [x] 文档源与元数据 schema
@@ -168,10 +195,9 @@ LLM strategy:
   - 检索相关性
   - 事实一致性与引用覆盖
   - 工程师可读性
-- [ ] 增加 RAG 诊断
-  - top k 命中率
-  - chunk 覆盖率
-  - answer faithfulness
+- [ ] 增加结构化中间产物
+  - claims 与 evidence_set 作为一等公民
+  - validator 产出 failure_reason
 - [ ] 增加 guardrails
   - 无法从语料支持则拒答或要求补充资料
   - 敏感信息与合规提示
@@ -184,37 +210,20 @@ LLM strategy:
 - [ ] 评测脚本可一键运行并输出报告
 - [ ] 相比 Phase 1, 事实一致性指标显著提升
 
-## Phase 3: 内部服务化与企业落地
+## Phase 3: 预留
 
-**目标**: 以内部服务形式提供能力, 支持权限, 审计, 可观测.
-
-- [ ] 服务化接口
-  - FastAPI REST
-  - 可选: MCP server, 让 agent 可编排
-- [ ] 身份与权限
-  - authn
-  - RBAC
-- [ ] 可观测性
-  - structured logs
-  - metrics
-  - tracing
-- [ ] 部署
-  - Docker
-  - 可选: k8s
-
-**验收标准**:
-
-- 支持最小权限访问与审计日志
-- 关键接口具备 p95 latency 与 error rate 指标
+说明: Phase 3 暂不在当前范围内. 当前先把本地 demo 的多 agent 协作与评测做扎实.
 
 ## 时间规划
 
-| Phase | 预计时间 | 关键里程碑 |
-| ----- | -------- | ---------- |
-| Phase 0 | Week 1 | 项目骨架与工程化基础 |
-| Phase 1 | Week 2 | RAG MVP 闭环与可复现 demo |
-| Phase 2 | Week 3 | 评测体系与质量提升 |
-| Phase 3 | Week 4 | 文档固化与最小服务化能力 |
+里程碑按本地 demo 倒排.
+
+| Milestone | 预计时间 | 验收输出 |
+| --------- | -------- | -------- |
+| Week 1 | 已完成 | baseline RAG demo + citations + smoke test |
+| Week 2 | 已完成 | 真实 embeddings + 稳定 chunk_id + 20 题评测覆盖 |
+| Week 3 | 2026-01-12 to 2026-01-18 | 业务场景多 agent MVP + 工具调用 + guardrails |
+| Week 4 | 2026-01-19 to 2026-01-25 | 结构化输出落盘 + 评测升级 + 文档固化 |
 
 **总计**: 4 周
 

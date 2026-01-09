@@ -2,34 +2,37 @@
 
 该项目用于将金融衍生品与风险管理相关资料, 以 RAG + multi-agent 的方式转化为面向企业内部软件工程师的通俗解释, 并在回答中提供可追溯 citations.
 
+## 文档目录
+
+- `docs/QUICKSTART.md`
+  - 本地快速启动, 包含安装依赖, 准备语料, UI 和 CLI 运行方式, 以及评测脚本
+- `docs/ROADMAP.md`
+  - 迭代计划与验收口径, 聚焦本地可运行 demo 的多 agent 主线
+- `docs/ARCHITECTURE.md`
+  - 高层目标与模块拆分, 以及 LLM provider 的接入原则
+- `docs/INTERVIEW.md`
+  - 50 道 MultiAgent RAG 面试题, 边做边补答案
+
 ## 快速入口
 
-- ROADMAP: `docs/ROADMAP.md`
-- QUICKSTART: `docs/QUICKSTART.md`
-- SETUP: `docs/SETUP.md`
-- ARCHITECTURE: `docs/ARCHITECTURE.md`
-- FEATURES: `docs/FEATURES.md`
+推荐使用 conda 环境 `LangChain`.
 
-## Quickstart
-
-推荐使用你已有的 conda 环境 `LangChain`.
-
-- UI demo
+- UI
 
 ```bash
 conda run -n LangChain python gradio_app.py
 ```
 
-- CLI demo(输出落盘到 logs/demo_result.json)
+- CLI
 
 ```bash
 conda run -n LangChain python demo_cli.py --rebuild-index --question "what is FRTB"
 ```
 
-- e2e smoke test(输出落盘到 logs/smoke_result.json)
+- 评测
 
 ```bash
-conda run -n LangChain python smoke_test.py
+conda run -n LangChain python scripts/run_questions.py --rebuild-index
 ```
 
 ## 技术栈
@@ -39,7 +42,6 @@ conda run -n LangChain python smoke_test.py
 - LLM provider: OpenAI compatible API via pluggable adapter layer
 - RAG framework: LangChain
 - Vector store: Chroma
-- Observability: TBD, LangSmith or Arize Phoenix
 
 ## 文档与语料管理
 

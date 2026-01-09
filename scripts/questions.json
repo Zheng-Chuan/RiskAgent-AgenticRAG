@@ -1,0 +1,22 @@
+[
+  {"id": "q01", "question": "What is FRTB and why does it matter for market risk?"},
+  {"id": "q02", "question": "Explain Delta in the context of derivatives risk."},
+  {"id": "q03", "question": "What is Gamma and how is it different from Delta?"},
+  {"id": "q04", "question": "What is Vega and when is it important?"},
+  {"id": "q05", "question": "What is CVA and what risk does it represent?"},
+  {"id": "q06", "question": "What is counterparty risk and how does it affect valuation?"},
+  {"id": "q07", "question": "Define market risk and list common risk factors."},
+  {"id": "q08", "question": "In a risk system, what is a position and how is exposure aggregated?"},
+  {"id": "q09", "question": "What is a risk limit and what triggers an alert?"},
+  {"id": "q10", "question": "Why are citations a contract for engineers in RAG systems?"},
+  {"id": "q11", "question": "What is a trading desk and why is desk-level aggregation common?"},
+  {"id": "q12", "question": "Explain the difference between trading book and banking book."},
+  {"id": "q13", "question": "What is meant by risk factor eligibility in FRTB?"},
+  {"id": "q14", "question": "What is PnL attribution and why does it matter?"},
+  {"id": "q15", "question": "Give a minimal glossary definition for exposure."},
+  {"id": "q16", "question": "If context is insufficient, how should a system respond?"},
+  {"id": "q17", "question": "What is retrieval drift and why is it dangerous?"},
+  {"id": "q18", "question": "How does chunk size affect retrieval recall and citation readability?"},
+  {"id": "q19", "question": "Why must embeddings model and dimension be pinned for reproducibility?"},
+  {"id": "q20", "question": "What artifacts should be persisted to support regression testing?"}
+]

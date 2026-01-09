@@ -23,9 +23,29 @@
 ## 数据与索引
 
 - [ ] Q6. chunk size 和 overlap 如何影响 citations 可读性与覆盖率?
-  - 答案: TODO
+  - 答案: chunk size 和 overlap 主要在 recall, noise, 以及 citations 可读性之间做权衡.
+    - chunk size 过小
+      - 优点: citations 更精确, 每条引用更容易对应到具体结论
+      - 缺点: chunk 数暴增, 向量库更大, 检索更容易碎片化, top_k 不够时 recall 会下降
+    - chunk size 过大
+      - 优点: 单条 chunk 覆盖更完整上下文, recall 更容易保证
+      - 缺点: citations 指向的片段太长, 工程师难以快速定位证据, 噪声也会增加
+    - overlap 的作用
+      - overlap 用来减少跨边界信息丢失, 特别是标题切分不完美时
+      - overlap 过大则会带来重复内容, 降低有效信息密度, 也会让相近 chunk 都被召回
+    - 本项目的 Week 2 选择
+      - 采用 chunk_size=900, chunk_overlap=120 作为可复现 baseline
+      - 目标是先把 20 题问题集的 citations coverage 跑通, 再用指标驱动调参
 - [ ] Q7. 你如何设计 chunk metadata schema 才能支持稳定可追溯 citations?
-  - 答案: TODO
+  - 答案: metadata schema 的目标是稳定, 可回放, 可定位.
+    - 必备字段
+      - source: 原始文件路径或稳定 ID
+      - start_index: chunk 在 source 内的起始字符位置, 用于快速定位
+      - chunk_id: 稳定 ID, 不能依赖 chunk 顺序, 否则语料轻微改动会导致引用漂移
+    - 本项目的 Week 2 选择
+      - split 时开启 add_start_index
+      - 用 sha1(source:start_index:text) 生成 digest, 再组成 chunk_id, 例如 filename:digest
+      - 这样只要文本片段不变, chunk_id 就稳定, 适合做回归与对比
 - [ ] Q8. 在 ingest 阶段你会记录哪些 artifacts 来保证可复现?
   - 答案: TODO
 - [ ] Q9. 何时需要 rebuild index, 何时只需要 rerun query?
@@ -109,10 +129,22 @@
   - 答案: TODO
 - [ ] Q38. 你会如何设计日志分层, 让排障可控?
   - 答案: TODO
+
 - [ ] Q39. 为什么 artifacts 落盘对评测与回归是基础设施?
   - 答案: TODO
-- [ ] Q40. 如何保证不同环境下 embeddings 维度一致并避免 silent bug?
-  - 答案: TODO
+- [ ] Q40. 如何选择 embeddings 模型, 并保证不同环境下 embeddings 维度一致, 避免 silent bug?
+  - 答案: 选择 embeddings 的关键是可复现, 可解释, 并能支持评测.
+    - 为什么要在 Week 2 切换到真实 embeddings
+      - citations coverage 的硬指标高度依赖 retrieval 质量
+      - FakeEmbeddings 只能保证链路可跑, 但无法代表真实检索效果
+    - 为什么选择 sentence-transformers/all-MiniLM-L6-v2
+      - 384 维, 在本地 CPU 上相对轻量, 适合作为 baseline
+      - 社区使用广泛, 可解释性强, 便于面试叙事
+      - 先用稳定 baseline, 后续再做 domain specific 或更大模型对比
+    - 如何避免 silent bug
+      - pin EMBEDDINGS_MODEL, 并把 rebuild index 作为默认语义
+      - persist 目录与 embeddings 配置必须绑定, embeddings 模型或维度变化就必须清空重建
+      - 在评测输出中记录 embeddings 配置, 让对比可追溯
 
 ## 性能与成本
 

@@ -24,7 +24,7 @@ LLM strategy:
 硬性验收口径:
 
 - 端到端可复现: 清空索引 -> ingest -> 查询 -> 返回 answer + citations.
-- 可控与可测: 至少 1 条 e2e smoke test, 评测脚本可一键运行并输出报告.
+- 可控与可测: 至少 1 条 e2e smoke test, tests 可一键运行并输出报告.
 - 工程化底线: 无明文 secrets.
 
 备注: 当前 roadmap 聚焦本地可运行 demo, 暂不包含生产化能力.
@@ -43,7 +43,7 @@ LLM strategy:
     - [x] CLI: `conda run -n LangChain python demo_cli.py --rebuild-index --question "what is FRTB"`
   - [x] 返回 citations, 且可定位来源
   - [x] 至少 1 条 e2e smoke test 可通过
-    - [x] `conda run -n LangChain python smoke_test.py`
+    - [x] `conda run -n LangChain python -m unittest tests.test_week1_acceptance`
   - 进度: Week 1 已完成
   - 为什么要做: 先把可复现的启动路径与回归入口固定, 避免后续每次改动都在环境与手工验证上耗时.
   - 为 Week 2 打基础: Week 2 要扩充语料与问题集, 需要稳定入口来做回归对比, 才能判断引用质量是变好还是变差.
@@ -56,39 +56,77 @@ LLM strategy:
   - [x] 20 个种子问题集
 - 验收
   - [x] 20 个问题中, 80% 以上回答包含有效 citations
+    - [x] `conda run -n LangChain python -m unittest tests.test_week2_acceptance`
   - 为什么要做: 引用覆盖率是最直接的 groundedness proxy, 可以压住幻觉并逼迫我们改检索与切分.
-  - 为 Week 3 打基础: Week 3 引入多智能体时, 每个 agent 的结论都必须能回指证据, 否则会放大幻觉.
+  - 为 Week 3 打基础: Week 3 引入 agentic loop 时, 每条关键结论都必须能回指证据, 否则会放大幻觉.
 
-### Week 3: 业务场景驱动的多 agent MVP
+### Week 3: 单 agent 的 agentic RAG MVP
+
+目标: 保持单 agent 编排, 但具备 agentic 行为, 即能做 query rewrite, self critique, re-retrieve, tool use, validator.
 
 北极星场景(先做 1 个, 其余作为扩展):
 
-- Desk exposure monitoring: 生成 desk 级风险简报, 并对 breaches 给出解释与下一步.
+- Desk exposure monitoring: 生成 desk 级风险简报, 并对 breaches 给出解释与 next_actions.
 - Limit breach investigation: 针对 breach 做归因假设, 证据地图, 以及建议动作.
 
-多 agent 的必要性来自职责互斥与可控性, 不是 roleplay.
+说明: 本阶段不强制 multi agent, 深度来自 contract + evaluator + regression, 而不是 agent 数量.
 
 - 交付
-  - [ ] 明确输入输出 contract
-    - 输入: query, as_of, desk, abs_delta_limit
-    - 输出: report, breaches, evidence_set, claims
-  - [ ] 定义 agents roster(功能型, 硬边界)
-    - DataAgent: 只负责调用工具取结构化数据, 不写结论
-    - RAGAgent: 只负责从 docs/sources 找口径与概念, 只产出 evidence
-    - AnalysisAgent: 基于 data + evidence 形成 claims 列表
-    - ValidatorAgent: 校验每条 claim 的证据与数字一致性, 不通过就返回 failure_reason
-    - ReportAgent: 生成面向工程师的最终报告, 带 citations
-  - [ ] 引入工具调用(本地优先)
-    - 先用本地 mock tool 结构跑通
-    - 后续如需接入外部服务, 再单独评估
-  - [ ] Guardrails
-    - 无证据则拒答, 并输出 next_actions
-    - 数字不一致则 fail, 不允许用模糊措辞糊过去
+  - [x] 头等大事: 接入本地 LLM(Ollama)
+    - 默认开发路径走 Ollama, 实时看到效果
+    - 环境变量
+      - LLM_PROVIDER=ollama
+      - `OLLAMA_BASE_URL=http://localhost:11434`
+      - OLLAMA_MODEL=qwen3:8b
+  - [x] 统一输入输出 contract(可执行 schema, v1)
+    - 输入
+      - request_id: string, uuid
+      - query: string
+      - as_of: string, ISO8601 or YYYY-MM-DD
+      - desk: string
+      - abs_delta_limit: number
+    - 输出
+      - request_id: string
+      - report: string(对话式回答)
+      - breaches: list[dict]
+      - evidence_set: list[Evidence]
+      - claims: list[Claim]
+      - tool_traces: list[ToolTrace]
+      - decision_log: list[Decision]
+      - status: ok or failed
+      - failure_reason: FailureReason or null
+    - 对话式回答规则
+      - 每段关键结论必须能回指至少 1 条 citation
+      - citations 必须来自 retriever 返回的 docs metadata, 不允许模型自造引用
+  - [x] Agentic loop(单 agent)
+    - step 1: interpret intent and choose plan
+    - step 2: retrieve with query rewrite(HyDE style optional)
+    - step 3: self critique on retrieval quality
+    - step 4: if low quality then re-retrieve with revised query, max_rounds=2
+    - step 5: tool use for numeric facts
+    - step 6: synthesize claims and report
+    - step 7: validator gate, fail fast on numeric or evidence issues
+  - [x] 引入工具调用(本地优先)
+    - desk exposure tool 先用本地 mock 输出结构跑通
+  - [ ] Validator(确定性规则, 不依赖模型)
+    - evidence gate
+      - 每条 claim 的 evidence_ids 必须非空
+      - evidence_id 必须能在 evidence_set 找到
+      - 引用粒度必须到 chunk_id + start_index
+    - numeric consistency gate
+      - report 与 claims 中出现的关键数字必须能回指到 tool_traces 的结构化输出
+      - 如无法回指, 必须标记为 numeric_inconsistent
+    - refusal gate
+      - retrieval empty 或 evidence empty 时必须拒答并给 next_actions
+  - [ ] LangGraph 编排层(后续演进)
+    - 先保留每个 step 为可单测的纯函数, 再用 LangGraph 作为编排层
+    - 目标是统一 state, trace, conditional edges, 便于后续扩展与可视化
 - 验收
   - [ ] 1 条端到端场景命令可跑通
-    - 清空 index -> ingest -> 调工具 -> 生成 report -> 落盘结果
-  - [ ] 每条关键结论必须能回指 evidence_set
-  - [ ] 失败路径可解释, 输出包含 failure_reason
+    - 清空 index -> ingest -> agentic loop -> tool use -> validator -> 落盘 artifacts
+  - [ ] 输出必须可被 schema 解析, 且包含 tool_traces 与 decision_log
+  - [ ] 失败路径可解释, 输出包含 failure_reason.category
+  - [ ] LangGraph 编排层可选启用, 输出与纯函数 runner 保持一致 schema
 
 ### Week 4: 结构化输出与评测升级
 
@@ -96,18 +134,30 @@ LLM strategy:
   - [ ] 结构化输出落盘(便于调试与回归)
     - evidence_set: source, chunk_id, start_index
     - claims: claim_id, statement, evidence_ids, confidence, failure_reason
+    - tool_traces 与 decision_log 作为一等公民, 支持回放与问题归因
   - [ ] 评测升级
-    - citations coverage
-    - citation precision(抽样检查 evidence 是否真正支持 claim)
+    - RAG triad style
+      - context relevance
+      - groundedness
+      - answer relevance
+    - retrieval metrics style
+      - context precision
+      - context recall
+    - citations quality
+      - citations coverage
+      - citation precision(抽样检查 evidence 是否真正支持 claim)
     - refusal quality(该拒答时必须拒答)
     - numeric consistency(报告数字必须等于 tool 输出)
+    - regression replay(固定问题集, 固定 tool 输出, 检测退化)
+    - failure taxonomy coverage(每类 failure_reason 至少 1 条用例)
   - [ ] README 与使用说明
     - 一键运行
     - 常见问题与排障
 - 验收
   - [ ] 新人按 README 10-15 分钟可跑通 demo
-  - [ ] 评测脚本可一键运行并输出报告
-  - 为什么要做: 多 agent 系统的技术深度来自 contract, 可控性, 与可回归.
+  - [ ] 评测 tests 可一键运行并输出报告
+  - [ ] 评测结果落盘, 支持对比上一次结果并标记退化
+  - 为什么要做: agentic RAG 系统的技术深度来自 contract, 可控性, 与可回归.
 
 ## 设计与阶段拆分(用于实现路径)
 
@@ -141,8 +191,8 @@ LLM strategy:
 ### 1.1 资料与数据接入
 
 - [x] 定义资料目录约定, 例如 docs/sources
-- [ ] 接入第 1 批语料
-  - [ ] Background.md
+- [x] 接入第 1 批语料
+  - [x] Background.md
   - [ ] 可选: 公开可引用的 FRTB, CVA, Greeks, XVA 资料
 - [x] 文档解析
   - [x] markdown 解析
@@ -183,7 +233,7 @@ LLM strategy:
 
 **验收标准**:
 
-- [ ] 给定 20 个种子问题, 80% 以上回答包含有效 citations
+- [x] 给定 20 个种子问题, 80% 以上回答包含有效 citations
 - [x] 端到端流程可复现
   - [x] 清空索引 -> ingest -> 查询 -> 返回答案
 
@@ -207,7 +257,7 @@ LLM strategy:
 
 **验收标准**:
 
-- [ ] 评测脚本可一键运行并输出报告
+- [ ] 评测 tests 可一键运行并输出报告
 - [ ] 相比 Phase 1, 事实一致性指标显著提升
 
 ## Phase 3: 预留

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import os
 import pathlib
 import sys
 from typing import Any
@@ -25,12 +27,163 @@ if str(SRC_DIR) not in sys.path:
 
 from riskagent_rag.graph.workflow import build_rag_graph
 from riskagent_rag.rag.pipeline import build_index, extract_citations, load_index
+from riskagent_rag.week3.agentic_loop import run_agentic_chat
 
 
 SOURCES_DIR = PROJECT_ROOT / "docs" / "sources"
 PERSIST_DIR = PROJECT_ROOT / ".chroma"
 
 _graph = None
+_retriever = None
+
+
+_COOL_CSS = """
+.gradio-container * {
+  transition: background-color 120ms ease, border-color 120ms ease, box-shadow 150ms ease,
+              transform 120ms ease, opacity 120ms ease;
+}
+
+.gradio-container {
+  --ig-border: rgba(219, 219, 219, 1);
+  --ig-border-light: rgba(239, 239, 239, 1);
+  --ig-blue: rgba(0, 149, 246, 1);
+  --ig-blue-hover: rgba(0, 149, 246, 0.08);
+  --ig-text: rgba(38, 38, 38, 1);
+  --ig-text-light: rgba(142, 142, 142, 1);
+  --ig-bg: rgba(255, 255, 255, 1);
+  --ig-bg-secondary: rgba(255, 255, 255, 1);
+}
+
+.gradio-container {
+  background: #ffffff;
+}
+
+.ra-header {
+  padding: 20px;
+  border: 1px solid var(--ig-border);
+  border-radius: 16px;
+  background: var(--ig-bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.ra-title {
+  font-size: 24px;
+  font-weight: 600;
+  letter-spacing: -0.3px;
+  color: var(--ig-text);
+  margin: 0;
+}
+
+.ra-subtitle {
+  margin: 8px 0 0 0;
+  color: var(--ig-text-light);
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.ra-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  margin-top: 12px;
+  border-radius: 8px;
+  border: 1px solid var(--ig-border-light);
+  background: var(--ig-bg-secondary);
+  color: var(--ig-text-light);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.ra-panel {
+  border: 1px solid var(--ig-border);
+  border-radius: 16px;
+  background: var(--ig-bg);
+  padding: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.ra-panel:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.ra-panel h3 {
+  margin: 0 0 12px 0;
+  color: var(--ig-text);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: -0.1px;
+  background: var(--ig-bg) !important;
+}
+
+.ra-hint {
+  color: var(--ig-text-light);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.ra-chat {
+  border: 1px solid var(--ig-border);
+  border-radius: 16px;
+  background: var(--ig-bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.ra-inspector {
+  border: 1px solid var(--ig-border);
+  border-radius: 16px;
+  background: var(--ig-bg);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.ra-inspector:hover {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+button, .gr-button {
+  border-radius: 8px !important;
+  font-weight: 600 !important;
+}
+
+button:hover, .gr-button:hover {
+  background: var(--ig-blue-hover) !important;
+}
+
+button[variant="primary"], .gr-button[variant="primary"] {
+  background: var(--ig-blue) !important;
+  border-color: var(--ig-blue) !important;
+}
+
+button[variant="primary"]:hover, .gr-button[variant="primary"]:hover {
+  background: rgba(0, 149, 246, 0.92) !important;
+}
+
+input:focus, textarea:focus, .gr-textbox:focus-within {
+  border-color: var(--ig-text-light) !important;
+  box-shadow: none !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gradio-container * {
+    transition: none !important;
+  }
+}
+
+code, pre {
+  background: var(--ig-bg-secondary) !important;
+  border: 1px solid var(--ig-border-light) !important;
+  border-radius: 6px !important;
+  font-size: 13px !important;
+}
+
+.ra-panel .block, .ra-panel .prose, .ra-panel .svelte-16ln60g {
+  background: var(--ig-bg) !important;
+}
+
+.gr-group {
+  background: var(--ig-bg) !important;
+}
+"""
 
 
 def _ensure_graph() -> Any:
@@ -52,6 +205,17 @@ def _ensure_graph() -> Any:
     return _graph
 
 
+def _ensure_retriever() -> Any:
+    # 中文注释: Week3 agentic loop 需要直接使用 retriever.
+    global _retriever
+    if _retriever is not None:
+        return _retriever
+
+    vectorstore = load_index(PERSIST_DIR)
+    _retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
+    return _retriever
+
+
 def on_build_index() -> str:
     # UI 按钮回调.
     # 从 docs/sources 构建向量库, 落地到 .chroma.
@@ -61,6 +225,9 @@ def on_build_index() -> str:
     global _graph
     # 索引更新后重置 graph 缓存, 确保后续问题使用新索引.
     _graph = None
+
+    global _retriever
+    _retriever = None
 
     return (
         "Index ready. "
@@ -79,6 +246,34 @@ def chat(user_text: str, history: list[tuple[str, str]]):
 
     if not PERSIST_DIR.exists():
         return "Index not found. Click 'Build index' first."
+
+    provider = os.getenv("LLM_PROVIDER", "").lower().strip()
+    if provider == "ollama":
+        retriever = _ensure_retriever()
+        out = run_agentic_chat(question=user_text, retriever=retriever, max_rounds=2)
+        answer = str(out.get("answer", ""))
+        citations = out.get("citations", [])
+        decision_log = out.get("decision_log", [])
+        tool_traces = out.get("tool_traces", [])
+        debug = out.get("debug", {})
+
+        citations_md = "\n".join(
+            [f"- source={c.get('source','')} chunk_id={c.get('chunk_id','')}" for c in citations]
+        )
+        decision_md = json.dumps(decision_log, ensure_ascii=False, indent=2)
+        tool_md = json.dumps(tool_traces, ensure_ascii=False, indent=2)
+        debug_md = json.dumps(debug, ensure_ascii=False, indent=2)
+
+        return (
+            f"{answer}\n\n"
+            f"Citations:\n{citations_md}\n\n"
+            "Decision log:\n"
+            f"```json\n{decision_md}\n```\n\n"
+            "Tool traces:\n"
+            f"```json\n{tool_md}\n```\n\n"
+            "Debug:\n"
+            f"```json\n{debug_md}\n```"
+        )
 
     graph = _ensure_graph()
     # graph.invoke 会返回最终 state, 其中包含 docs 和 answer.
@@ -99,24 +294,140 @@ def chat(user_text: str, history: list[tuple[str, str]]):
     return f"{answer}\n\nCitations:\n{citations_md}"
 
 
+def _env_badge_text() -> str:
+    provider = os.getenv("LLM_PROVIDER", "").lower().strip() or "fallback"
+    if provider == "ollama":
+        model = os.getenv("OLLAMA_MODEL", "") or "unknown"
+        base_url = os.getenv("OLLAMA_BASE_URL", "") or "http://localhost:11434"
+        return f"provider=ollama, model={model}, base_url={base_url}"
+    return f"provider={provider}"
+
+
+def chat_v2(
+    user_text: str,
+    history: list[list[str]],
+    max_rounds: int,
+) -> tuple[list[list[str]], list[dict[str, str]], list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
+    # 中文注释: v2 UI 回调, 输出 chat history + inspector.
+    if not user_text:
+        return history, [], [], [], {}
+
+    if not PERSIST_DIR.exists():
+        answer = "Index not found. Click 'Build index' first."
+        history = history + [[user_text, answer]]
+        return history, [], [], [], {"error": "index_missing"}
+
+    provider = os.getenv("LLM_PROVIDER", "").lower().strip()
+    if provider == "ollama":
+        retriever = _ensure_retriever()
+        out = run_agentic_chat(question=user_text, retriever=retriever, max_rounds=max_rounds)
+        answer = str(out.get("answer", ""))
+        citations = out.get("citations", [])
+        decision_log = out.get("decision_log", [])
+        tool_traces = out.get("tool_traces", [])
+        debug = out.get("debug", {})
+        history = history + [[user_text, answer]]
+        return history, list(citations), list(decision_log), list(tool_traces), dict(debug)
+
+    graph = _ensure_graph()
+    out = graph.invoke({"question": user_text})
+    answer = str(out.get("answer", ""))
+    docs = out.get("docs", [])
+    citations = extract_citations(docs)
+    history = history + [[user_text, answer]]
+    return history, list(citations), [], [], {"note": "non-ollama provider, agentic loop disabled"}
+
+
 def main() -> None:
     with gr.Blocks(title="RiskAgent-RAG") as demo:
-        gr.Markdown("# RiskAgent-RAG\nMVP: Gradio + LangChain + Chroma + LangGraph")
-
-        with gr.Row():
-            build_btn = gr.Button("Build index", variant="primary")
-            status = gr.Textbox(label="Status", interactive=False)
-
-        chat_ui = gr.ChatInterface(
-            fn=chat,
+        gr.HTML(
+            """
+            <div class="ra-header">
+              <h1 class="ra-title">RiskAgent-RAG</h1>
+              <p class="ra-subtitle">Cold-theme local demo. Agentic RAG loop with citations, tool traces, and inspector.</p>
+              <div class="ra-pill">UI: Gradio. RAG: LangChain + Chroma. Orchestration: LangGraph. Local LLM: Ollama.</div>
+            </div>
+            """
         )
 
+        with gr.Row(equal_height=True):
+            with gr.Column(scale=1, min_width=320):
+                with gr.Group(elem_classes=["ra-panel"]):
+                    gr.Markdown("### Control Panel")
+                    build_btn = gr.Button("Build index", variant="primary")
+                    status = gr.Textbox(label="Status", interactive=False)
+
+                with gr.Group(elem_classes=["ra-panel"]):
+                    gr.Markdown("### Runtime")
+                    env_badge = gr.Textbox(
+                        label="Active provider",
+                        value=_env_badge_text(),
+                        interactive=False,
+                    )
+                    max_rounds = gr.Slider(
+                        minimum=0,
+                        maximum=3,
+                        value=2,
+                        step=1,
+                        label="max_rounds",
+                        info="0 means no re-retrieve.",
+                    )
+
+
+            with gr.Column(scale=2, min_width=520):
+                chatbot = gr.Chatbot(
+                    label="Chat",
+                    height=520,
+                    elem_classes=["ra-chat"],
+                )
+                user_text = gr.Textbox(
+                    label="Message",
+                    placeholder="Ask a question...",
+                )
+                with gr.Row():
+                    send_btn = gr.Button("Send", variant="primary")
+                    clear_btn = gr.Button("Clear")
+
+                with gr.Accordion("Inspector", open=False, elem_classes=["ra-inspector"]):
+                    with gr.Tab("Citations"):
+                        citations_json = gr.JSON(label="citations")
+                    with gr.Tab("Decision log"):
+                        decision_json = gr.JSON(label="decision_log")
+                    with gr.Tab("Tool traces"):
+                        tool_json = gr.JSON(label="tool_traces")
+                    with gr.Tab("Debug"):
+                        debug_json = gr.JSON(label="debug")
+
+        state = gr.State([])
+
+        def _on_send(message: str, history: list[list[str]], rounds: int):
+            new_history, citations, decisions, tools, debug = chat_v2(message, history, rounds)
+            return new_history, new_history, citations, decisions, tools, debug
+
+        def _on_clear():
+            return [], [], [], [], [], {}
+
         # 事件绑定.
-        # 点击 build 按钮后, status 会显示本次 ingest 的统计信息.
-
         build_btn.click(fn=on_build_index, inputs=None, outputs=status)
+        build_btn.click(fn=_env_badge_text, inputs=None, outputs=env_badge)
 
-    demo.launch()
+        send_btn.click(
+            fn=_on_send,
+            inputs=[user_text, state, max_rounds],
+            outputs=[state, chatbot, citations_json, decision_json, tool_json, debug_json],
+        )
+        user_text.submit(
+            fn=_on_send,
+            inputs=[user_text, state, max_rounds],
+            outputs=[state, chatbot, citations_json, decision_json, tool_json, debug_json],
+        )
+        clear_btn.click(
+            fn=_on_clear,
+            inputs=None,
+            outputs=[state, chatbot, citations_json, decision_json, tool_json, debug_json],
+        )
+
+    demo.launch(css=_COOL_CSS)
 
 
 if __name__ == "__main__":

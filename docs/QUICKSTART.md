@@ -66,16 +66,15 @@ conda run -n LangChain python gradio_app.py
 conda run -n LangChain python demo_cli.py --rebuild-index --question "what is FRTB"
 ```
 
-- e2e smoke test(输出落盘到 logs/smoke_result.json)
+- e2e smoke test(unittest 验收用例)
 
 ```bash
-conda run -n LangChain python smoke_test.py
+conda run -n LangChain python -m unittest tests.test_week1_acceptance.Week1AcceptanceTest.test_week1_smoke_test_equivalent
 ```
 
 ## 8. 运行评测
 
-评测会跑 20 个问题, 并输出 coverage 报告到 logs/eval_summary.json.
+评测会跑 20 个问题, 并输出 coverage.
 
 ```bash
-conda run -n LangChain python scripts/run_questions.py --rebuild-index
-```
+conda run -n LangChain python -m unittest tests.test_week2_acceptance

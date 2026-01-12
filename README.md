@@ -5,7 +5,7 @@
 ## 文档目录
 
 - `docs/QUICKSTART.md`
-  - 本地快速启动, 包含安装依赖, 准备语料, UI 和 CLI 运行方式, 以及评测脚本
+  - 本地快速启动, 包含安装依赖, 准备语料, UI 和 CLI 运行方式, 以及测试
 - `docs/ROADMAP.md`
   - 迭代计划与验收口径, 聚焦本地可运行 demo 的多 agent 主线
 - `docs/ARCHITECTURE.md`
@@ -32,7 +32,7 @@ conda run -n LangChain python demo_cli.py --rebuild-index --question "what is FR
 - 评测
 
 ```bash
-conda run -n LangChain python scripts/run_questions.py --rebuild-index
+conda run -n LangChain python -m unittest tests.test_week2_acceptance
 ```
 
 ## 技术栈

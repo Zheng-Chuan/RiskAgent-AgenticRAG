@@ -326,6 +326,14 @@ def chat_v2(
         decision_log = out.get("decision_log", [])
         tool_traces = out.get("tool_traces", [])
         debug = out.get("debug", {})
+        status_val = out.get("status", "ok")
+        failure_reason = out.get("failure_reason")
+        
+        if status_val == "failed" and failure_reason:
+            answer = f"⚠️ Validation failed: {failure_reason.get('message', '')}\n\n{answer}"
+            debug["validation_status"] = status_val
+            debug["failure_reason"] = failure_reason
+        
         history = history + [[user_text, answer]]
         return history, list(citations), list(decision_log), list(tool_traces), dict(debug)
 

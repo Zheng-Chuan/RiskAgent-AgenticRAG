@@ -20,9 +20,11 @@ from typing import Any, Optional
 from langchain_core.documents import Document  # type: ignore[import-not-found]
 
 from riskagent_rag.agents.data_agent import run_data_agent
+from riskagent_rag.artifacts.storage import save_artifact
 from riskagent_rag.contracts.week3 import Week3Request
 from riskagent_rag.llm.generate import generate_answer
 from riskagent_rag.rag.pipeline import extract_citations
+from riskagent_rag.validators.gates import validate_response
 
 
 def _try_parse_json(text: str) -> Optional[dict[str, Any]]:
@@ -312,16 +314,63 @@ def run_agentic_chat(
     citations = extract_citations(docs)
     answer_with_citations = _attach_citations_to_each_paragraph(answer, citations)
 
+    claims: list[dict[str, Any]] = []
+    evidence_set: list[dict[str, Any]] = []
+    for idx, doc in enumerate(docs):
+        evidence_id = f"ev_{idx}"
+        evidence_set.append({
+            "evidence_id": evidence_id,
+            "source": doc.metadata.get("source", ""),
+            "chunk_id": doc.metadata.get("chunk_id", ""),
+            "text": doc.page_content[:200],
+        })
+
+    failure_reason = validate_response(
+        report=answer_with_citations,
+        claims=claims,
+        evidence_set=evidence_set,
+        tool_traces=tool_traces,
+        docs=docs,
+    )
+
+    status = "ok" if failure_reason is None else "failed"
+
+    request_id = str(uuid.uuid4())
+    request_data = {
+        "question": question,
+        "max_rounds": max_rounds,
+    }
+    
+    debug_info: dict[str, Any] = {
+        "final_query": current_query,
+        "critique_reason": critique_reason,
+        "tool_args": tool_args,
+        "tool_should_call": should_call_tool,
+    }
+    
+    response_data: dict[str, Any] = {
+        "answer": answer_with_citations,
+        "citations": citations,
+        "decision_log": decision_log,
+        "tool_traces": tool_traces,
+        "status": status,
+        "failure_reason": failure_reason,
+        "debug": debug_info,
+    }
+
+    try:
+        artifact_path = save_artifact(request_id, request_data, response_data)
+        debug_info["artifact_path"] = artifact_path
+    except Exception as e:
+        debug_info["artifact_error"] = str(e)
+
     return {
         "answer": answer_with_citations,
         "docs": docs,
         "citations": citations,
         "decision_log": decision_log,
         "tool_traces": tool_traces,
-        "debug": {
-            "final_query": current_query,
-            "critique_reason": critique_reason,
-            "tool_args": tool_args,
-            "tool_should_call": should_call_tool,
-        },
+        "status": status,
+        "failure_reason": failure_reason,
+        "debug": response_data["debug"],
     }

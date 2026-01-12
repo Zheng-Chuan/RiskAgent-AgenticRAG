@@ -44,3 +44,4 @@ logs/
 # Project specific
 .chroma/
 models/
+.artifacts/

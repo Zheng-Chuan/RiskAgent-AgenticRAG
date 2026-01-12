@@ -26,8 +26,9 @@ if str(SRC_DIR) not in sys.path:
     sys.path.insert(0, str(SRC_DIR))
 
 from riskagent_rag.graph.workflow import build_rag_graph
+from riskagent_rag.orchestration.langgraph_runner import run_langgraph_agentic_chat
+from riskagent_rag.rag.agentic_loop import run_agentic_chat
 from riskagent_rag.rag.pipeline import build_index, extract_citations, load_index
-from riskagent_rag.week3.agentic_loop import run_agentic_chat
 
 
 SOURCES_DIR = PROJECT_ROOT / "docs" / "sources"
@@ -320,7 +321,14 @@ def chat_v2(
     provider = os.getenv("LLM_PROVIDER", "").lower().strip()
     if provider == "ollama":
         retriever = _ensure_retriever()
-        out = run_agentic_chat(question=user_text, retriever=retriever, max_rounds=max_rounds)
+        
+        use_langgraph = os.getenv("USE_LANGGRAPH", "").lower().strip() in ("true", "1", "yes")
+        
+        if use_langgraph:
+            out = run_langgraph_agentic_chat(question=user_text, retriever=retriever, max_rounds=max_rounds)
+        else:
+            out = run_agentic_chat(question=user_text, retriever=retriever, max_rounds=max_rounds)
+        
         answer = str(out.get("answer", ""))
         citations = out.get("citations", [])
         decision_log = out.get("decision_log", [])
@@ -328,6 +336,11 @@ def chat_v2(
         debug = out.get("debug", {})
         status_val = out.get("status", "ok")
         failure_reason = out.get("failure_reason")
+        
+        if use_langgraph:
+            debug["runner"] = "langgraph"
+        else:
+            debug["runner"] = "pure_function"
         
         if status_val == "failed" and failure_reason:
             answer = f"⚠️ Validation failed: {failure_reason.get('message', '')}\n\n{answer}"

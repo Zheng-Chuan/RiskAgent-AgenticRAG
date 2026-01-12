@@ -118,15 +118,16 @@ LLM strategy:
       - 如无法回指, 必须标记为 numeric_inconsistent
     - refusal gate
       - retrieval empty 或 evidence empty 时必须拒答并给 next_actions
-  - [ ] LangGraph 编排层(后续演进)
+  - [x] LangGraph 编排层(后续演进)
     - 先保留每个 step 为可单测的纯函数, 再用 LangGraph 作为编排层
     - 目标是统一 state, trace, conditional edges, 便于后续扩展与可视化
+    - 通过环境变量 USE_LANGGRAPH=true 启用
 - 验收
   - [x] 1 条端到端场景命令可跑通
     - 清空 index -> ingest -> agentic loop -> tool use -> validator -> 落盘 artifacts
   - [x] 输出必须可被 schema 解析, 且包含 tool_traces 与 decision_log
   - [x] 失败路径可解释, 输出包含 failure_reason.category
-  - [ ] LangGraph 编排层可选启用, 输出与纯函数 runner 保持一致 schema
+  - [x] LangGraph 编排层可选启用, 输出与纯函数 runner 保持一致 schema
 
 ### Week 4: 结构化输出与评测升级
 

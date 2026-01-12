@@ -25,8 +25,12 @@ if str(SRC_DIR) not in sys.path:
     # 后续如果引入 pyproject.toml, 可以去掉该 hack.
     sys.path.insert(0, str(SRC_DIR))
 
+from riskagent_rag.config.langsmith import get_langsmith_status, setup_langsmith
 from riskagent_rag.graph.workflow import build_rag_graph
-from riskagent_rag.orchestration.langgraph_runner import run_langgraph_agentic_chat
+from riskagent_rag.orchestration.langgraph_runner import (
+    run_langgraph_agentic_chat,
+    visualize_graph_mermaid,
+)
 from riskagent_rag.rag.agentic_loop import run_agentic_chat
 from riskagent_rag.rag.pipeline import build_index, extract_citations, load_index
 
@@ -297,11 +301,28 @@ def chat(user_text: str, history: list[tuple[str, str]]):
 
 def _env_badge_text() -> str:
     provider = os.getenv("LLM_PROVIDER", "").lower().strip() or "fallback"
+    use_langgraph = os.getenv("USE_LANGGRAPH", "").lower().strip() in ("true", "1", "yes")
+    langsmith_status = get_langsmith_status()
+    
+    lines = []
     if provider == "ollama":
         model = os.getenv("OLLAMA_MODEL", "") or "unknown"
         base_url = os.getenv("OLLAMA_BASE_URL", "") or "http://localhost:11434"
-        return f"provider=ollama, model={model}, base_url={base_url}"
-    return f"provider={provider}"
+        lines.append(f"provider=ollama, model={model}")
+        lines.append(f"base_url={base_url}")
+    else:
+        lines.append(f"provider={provider}")
+    
+    lines.append(f"langgraph={'enabled' if use_langgraph else 'disabled'}")
+    
+    if langsmith_status["enabled"] == "true":
+        lines.append(f"langsmith=enabled, project={langsmith_status['project']}")
+        if langsmith_status["url"]:
+            lines.append(f"追踪: {langsmith_status['url']}")
+    else:
+        lines.append("langsmith=disabled")
+    
+    return "\n".join(lines)
 
 
 def chat_v2(
@@ -360,6 +381,9 @@ def chat_v2(
 
 
 def main() -> None:
+    # 中文注释: 启动时自动配置 LangSmith 追踪
+    setup_langsmith(project_name="RiskAgent-RAG")
+    
     with gr.Blocks(title="RiskAgent-RAG") as demo:
         gr.HTML(
             """
@@ -418,6 +442,21 @@ def main() -> None:
                         tool_json = gr.JSON(label="tool_traces")
                     with gr.Tab("Debug"):
                         debug_json = gr.JSON(label="debug")
+                    with gr.Tab("Graph"):
+                        gr.Markdown("### LangGraph 结构可视化")
+                        gr.Markdown("当前 agentic loop 的执行流程图 (需要设置 USE_LANGGRAPH=true 启用)")
+                        graph_viz = gr.Code(
+                            value=visualize_graph_mermaid(),
+                            language="mermaid",
+                            label="Mermaid 流程图",
+                            lines=20,
+                        )
+                        gr.Markdown("""
+                        **查看方式**:
+                        1. 复制上面的 Mermaid 代码到 [Mermaid Live Editor](https://mermaid.live/) 查看
+                        2. 在支持 Mermaid 的 Markdown 编辑器中查看
+                        3. 查看 `docs/langgraph_visualization.md` 文件
+                        """)
 
         state = gr.State([])
 

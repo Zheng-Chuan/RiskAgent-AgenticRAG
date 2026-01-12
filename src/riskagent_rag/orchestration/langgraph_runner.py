@@ -287,6 +287,37 @@ def should_call_tool(state: AgenticState) -> Literal["call_tool", "synthesize_an
     return "synthesize_answer"
 
 
+def visualize_graph_mermaid() -> str:
+    """
+    生成 LangGraph 的 Mermaid 流程图.
+    
+    返回:
+        Mermaid 格式的流程图字符串
+    
+    用途:
+        - 可视化 agentic loop 的执行流程
+        - 便于理解 nodes 和 edges 的关系
+        - 可以在 Markdown 文档或 Mermaid 在线编辑器中查看
+    """
+    graph = build_langgraph_agentic_loop()
+    try:
+        return graph.get_graph().draw_mermaid()
+    except Exception:
+        return """
+graph TD
+    START([开始]) --> rewrite[查询改写]
+    rewrite --> retrieve[检索与评估]
+    retrieve --> |需要改进| revise[修订查询]
+    retrieve --> |质量足够| decide_tool[决策工具调用]
+    revise --> retrieve
+    decide_tool --> |需要调用| call_tool[调用工具]
+    decide_tool --> |不需要| synthesize[合成答案]
+    call_tool --> synthesize
+    synthesize --> validate[验证与落盘]
+    validate --> END([结束])
+"""
+
+
 def build_langgraph_agentic_loop() -> Any:
     """Build LangGraph for agentic RAG loop."""
     workflow = StateGraph(AgenticState)

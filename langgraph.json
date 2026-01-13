@@ -1,0 +1,7 @@
+{
+  "dependencies": ["."],
+  "graphs": {
+    "agentic_rag": "./src/riskagent_rag/orchestration/langgraph_runner.py:build_langgraph_agentic_loop"
+  },
+  "env": ".env"
+}

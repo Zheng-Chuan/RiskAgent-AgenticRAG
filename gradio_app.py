@@ -445,17 +445,18 @@ def main() -> None:
                     with gr.Tab("Graph"):
                         gr.Markdown("### LangGraph 结构可视化")
                         gr.Markdown("当前 agentic loop 的执行流程图 (需要设置 USE_LANGGRAPH=true 启用)")
-                        graph_viz = gr.Code(
+                        graph_viz = gr.Textbox(
                             value=visualize_graph_mermaid(),
-                            language="mermaid",
-                            label="Mermaid 流程图",
+                            label="Mermaid 流程图代码",
                             lines=20,
+                            max_lines=30,
+                            interactive=False,
                         )
                         gr.Markdown("""
                         **查看方式**:
                         1. 复制上面的 Mermaid 代码到 [Mermaid Live Editor](https://mermaid.live/) 查看
                         2. 在支持 Mermaid 的 Markdown 编辑器中查看
-                        3. 查看 `docs/langgraph_visualization.md` 文件
+                        3. 查看 `docs/ARCHITECTURE.md` 文件
                         """)
 
         state = gr.State([])

@@ -12,7 +12,7 @@ from langgraph.graph import END, StateGraph  # type: ignore[import-not-found]
 
 from riskagent_rag.agents.data_agent import run_data_agent
 from riskagent_rag.artifacts.storage import save_artifact
-from riskagent_rag.contracts.week3 import Week3Request
+from riskagent_rag.contracts.structured import StructuredRequest
 from riskagent_rag.rag.pipeline import extract_citations
 from riskagent_rag.validators.gates import validate_response
 from riskagent_rag.rag.agentic_loop import (
@@ -46,6 +46,8 @@ class AgenticState(TypedDict, total=False):
     
     answer: str
     citations: list[dict[str, str]]
+    claims: list[dict[str, Any]]
+    evidence_set: list[dict[str, Any]]
     decision_log: list[dict[str, Any]]
     
     status: str
@@ -166,7 +168,7 @@ def node_call_tool(state: AgenticState) -> AgenticState:
     tool_traces = state.get("tool_traces", [])
     
     if desk:
-        request = Week3Request(
+        request = StructuredRequest(
             request_id=str(uuid.uuid4()),
             query=question,
             as_of=as_of,
@@ -216,15 +218,23 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
     answer = state["answer"]
     docs = state["docs"]
     tool_traces = state.get("tool_traces", [])
+    tool_output = state.get("tool_output")
     
     claims: list[dict[str, Any]] = []
     evidence_set: list[dict[str, Any]] = []
     for idx, doc in enumerate(docs):
         evidence_id = f"ev_{idx}"
+        start_index_raw = doc.metadata.get("start_index", 0)
+        try:
+            start_index = int(start_index_raw)
+        except Exception:
+            start_index = 0
         evidence_set.append({
             "evidence_id": evidence_id,
             "source": doc.metadata.get("source", ""),
             "chunk_id": doc.metadata.get("chunk_id", ""),
+            "start_index": start_index,
+            "snippet": (doc.page_content or "")[:200],
             "text": doc.page_content[:200],
         })
     
@@ -239,6 +249,8 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
     status = "ok" if failure_reason is None else "failed"
     state["status"] = status
     state["failure_reason"] = failure_reason
+    state["claims"] = claims
+    state["evidence_set"] = evidence_set
     
     debug_info: dict[str, Any] = {
         "final_query": state["current_query"],
@@ -255,15 +267,58 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
     response_data: dict[str, Any] = {
         "answer": answer,
         "citations": state["citations"],
+        "claims": claims,
+        "evidence_set": evidence_set,
         "decision_log": state.get("decision_log", []),
         "tool_traces": tool_traces,
         "status": status,
         "failure_reason": failure_reason,
         "debug": debug_info,
     }
+
+    breaches: list[dict[str, Any]] = []
+    if isinstance(tool_output, dict):
+        raw_breaches = tool_output.get("breaches")
+        if isinstance(raw_breaches, list):
+            breaches = raw_breaches
+
+    structured_evidence_set: list[dict[str, Any]] = []
+    for idx, doc in enumerate(docs):
+        evidence_id = f"ev_{idx}"
+        start_index_raw = doc.metadata.get("start_index", 0)
+        try:
+            start_index = int(start_index_raw)
+        except Exception:
+            start_index = 0
+        structured_evidence_set.append(
+            {
+                "evidence_id": evidence_id,
+                "source": str(doc.metadata.get("source", "")),
+                "chunk_id": str(doc.metadata.get("chunk_id", "")),
+                "start_index": start_index,
+                "snippet": (doc.page_content or "")[:200],
+            }
+        )
+
+    structured_payload: dict[str, Any] = {
+        "request_id": request_id,
+        "report": answer,
+        "breaches": breaches,
+        "evidence_set": structured_evidence_set,
+        "claims": claims,
+        "tool_traces": tool_traces,
+        "decision_log": state.get("decision_log", []),
+        "status": status,
+        "failure_reason": failure_reason,
+    }
     
     try:
-        artifact_path = save_artifact(request_id, request_data, response_data)
+        artifact_path = save_artifact(
+            request_id,
+            request_data,
+            response_data,
+            structured_response_data=structured_payload,
+        )
         debug_info["artifact_path"] = artifact_path
     except Exception as e:
         debug_info["artifact_error"] = str(e)

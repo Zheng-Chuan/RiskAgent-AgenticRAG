@@ -1,6 +1,6 @@
 """Mock risk tool for local demo.
 
-中文注释: Week3 先用本地 mock tool 结构跑通.
+中文注释: 先用本地 mock tool 结构跑通.
 后续可替换为真实数据源, 但 contract 保持稳定.
 """
 

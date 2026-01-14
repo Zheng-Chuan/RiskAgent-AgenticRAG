@@ -20,7 +20,8 @@ def _is_valid_citation(c: dict) -> bool:
     chunk_id = str(c.get("chunk_id", ""))
     if not source or not chunk_id:
         return False
-    return "docs/sources" in source.replace("\\", "/")
+    normalized = "/" + source.replace("\\", "/").strip("/") + "/"
+    return "/corpus/" in normalized
  
  
 class Week2AcceptanceTest(unittest.TestCase):
@@ -31,12 +32,16 @@ class Week2AcceptanceTest(unittest.TestCase):
     def setUp(self) -> None:
         # 中文注释, 默认使用 fake embeddings, 避免首次运行需要下载模型.
         os.environ.setdefault("EMBEDDINGS_PROVIDER", "fake")
+
+        # 中文注释: 默认连接本地 Docker Milvus.
+        os.environ.setdefault("MILVUS_HOST", "localhost")
+        os.environ.setdefault("MILVUS_PORT", "19530")
  
         self.project_root = pathlib.Path(__file__).resolve().parent.parent
-        self.sources_dir = self.project_root / "docs" / "sources"
+        self.sources_dir = self.project_root / "corpus"
         self.questions_path = self.project_root / "tests" / "data" / "questions.json"
         self._tmp = tempfile.TemporaryDirectory()
-        self.persist_dir = pathlib.Path(self._tmp.name) / "chroma"
+        self.persist_dir = pathlib.Path(self._tmp.name) / "milvus"
  
     def tearDown(self) -> None:
         self._tmp.cleanup()

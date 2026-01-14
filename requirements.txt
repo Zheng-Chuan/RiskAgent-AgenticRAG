@@ -2,9 +2,10 @@ gradio
 langgraph
 langchain
 langchain-community
+langchain-milvus
 langchain-openai
 langchain-huggingface
 sentence-transformers
-chromadb
+pymilvus
 pydantic
 python-dotenv

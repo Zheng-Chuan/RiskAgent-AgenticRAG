@@ -64,11 +64,12 @@ def build_rag_graph(retriever):
     # StateGraph 描述节点和边. compile 后得到可 invoke 的 runnable.
     g: StateGraph = StateGraph(RAGState)
     g.add_node("retrieve", retrieve_node)
-    g.add_node("answer", answer_node)
+    # LangGraph 0.2+ 要求 node 名不得与 state key 重名, 将节点命名为 answer_node 避免冲突.
+    g.add_node("answer_node", answer_node)
 
     # entry_point 是 graph 的起点.
     g.set_entry_point("retrieve")
-    g.add_edge("retrieve", "answer")
-    g.add_edge("answer", END)
+    g.add_edge("retrieve", "answer_node")
+    g.add_edge("answer_node", END)
 
     return g.compile()

@@ -3,8 +3,8 @@
 这个模块把 ingest 和 retrieval 相关步骤串起来, 给 UI 或 CLI 调用.
 
 最小链路.
-- build_index: 读取 docs/sources 下的 markdown, 切分 chunks, 写入 Chroma 持久化目录.
-- load_index: 从 Chroma 持久化目录恢复向量库.
+- build_index: 读取 docs/sources 下的 markdown, 切分 chunks, 写入 Milvus 持久化目录.
+- load_index: 从 Milvus 持久化目录恢复向量库.
 - extract_citations: 将检索到的 Document 元数据转成可展示的 citations 结构.
 
 注意.
@@ -18,9 +18,9 @@ import shutil
 
 from langchain_core.documents import Document
 
-from riskagent_rag.rag.chroma_index import (
-    build_chroma_vectorstore,
-    load_chroma_vectorstore,
+from riskagent_rag.rag.milvus_index import (
+    build_milvus_vectorstore,
+    load_milvus_vectorstore,
     split_documents,
 )
 from riskagent_rag.rag.source_loader import load_markdown_sources
@@ -43,7 +43,7 @@ def build_index(
     sources_dir: pathlib.Path,
     persist_dir: pathlib.Path,
 ) -> IndexBuildResult:
-    # 从 sources_dir 加载 markdown, 切分为 chunks, 并写入 Chroma.
+    # 从 sources_dir 加载 markdown, 切分为 chunks, 并写入 Milvus.
     # 返回 source_count 和 chunk_count, 便于 UI 展示.
     # 技术难点: ingest 的稳定性决定了后续检索与评测是否可信.
     # - sources_dir 为空或编码异常时, 需要明确给出可解释提示, 不能 silent fail.
@@ -55,7 +55,7 @@ def build_index(
 
     sources = load_markdown_sources(sources_dir)
     chunks = split_documents(sources)
-    build_chroma_vectorstore(chunks, persist_dir)
+    build_milvus_vectorstore(chunks, persist_dir)
     return IndexBuildResult(
         source_count=len(sources),
         chunk_count=len(chunks),
@@ -64,8 +64,8 @@ def build_index(
 
 
 def load_index(persist_dir: pathlib.Path):
-    # 加载已有 Chroma 向量库.
-    return load_chroma_vectorstore(persist_dir)
+    # 加载已有 Milvus 向量库.
+    return load_milvus_vectorstore(persist_dir)
 
 
 def extract_citations(docs: list[Document]) -> list[dict[str, str]]:

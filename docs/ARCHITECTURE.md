@@ -3,19 +3,20 @@
 ## 高层目标
 
 - 面向企业内部软件工程师
-- 使用 RAG 提供基于语料的解释
-- answer 必须带 citations
-- multi-agent 结构, 便于后续扩展
+- 用 RAG 基于语料回答
+- answer 必须带 citations 方便回溯到原文
+- 编排层用 LangGraph
 - LLM provider 可插拔
 
 ## 开源大模型接入
 
-原则: 不绑定单一厂商, 统一通过 OpenAI compatible 接口对接.
+原则 不绑定单一厂商 统一走 OpenAI compatible 接口
 
-- 商业 API: 直接配置 `LLM_API_KEY`, `LLM_BASE_URL`, `LLM_MODEL`
-- 开源模型: 在云端或本地用 vLLM, TGI, Ollama 等启动 OpenAI compatible server, 再通过 `LLM_BASE_URL` 接入
+- 商业 API 配 `LLM_API_KEY` `LLM_BASE_URL` `LLM_MODEL`
+- 开源模型 用 vLLM TGI Ollama 起一个 OpenAI compatible server 再配 `LLM_BASE_URL`
 
-说明: Week 1 允许无 key 的 deterministic fallback, 先验证 RAG 链路与 citations. Week 2 会引入真实 LLM, 并将 LLM provider 切换为 OpenAI compatible server.
+说明 没有 key 时会走 deterministic fallback 先把 RAG 链路和引用跑通
+有 key 后再切换到真实 LLM
 
 ## 核心模块
 
@@ -23,9 +24,9 @@
   - ingest, chunk, index
   - retrieve
 - `riskagent_rag.llm`
-  - provider interface
-  - openai compatible client
-  - mock client
+  - LLM 接入封装
+  - OpenAI compatible client
+  - fallback client
 - `riskagent_rag.agents`
   - retrieval agent
   - explanation agent
@@ -33,7 +34,7 @@
 
 ## 数据流
 
-sources -> chunk -> embeddings -> chroma
+sources -> chunk -> embeddings -> milvus
 query -> retrieve -> contexts -> multi-agent -> answer + citations
 
 ## LangGraph Agentic Loop 可视化
@@ -49,28 +50,28 @@ config:
     curve: linear
 ---
 graph TD;
-	__start__([<p>__start__</p>]):::first
-	rewrite(rewrite)
-	retrieve_and_critique(retrieve_and_critique)
-	revise_query(revise_query)
-	decide_tool_use(decide_tool_use)
-	call_tool(call_tool)
-	synthesize_answer(synthesize_answer)
-	validate_and_save(validate_and_save)
-	__end__([<p>__end__</p>]):::last
-	__start__ --> rewrite;
-	call_tool --> synthesize_answer;
-	decide_tool_use -.-> call_tool;
-	decide_tool_use -.-> synthesize_answer;
-	retrieve_and_critique -.-> decide_tool_use;
-	retrieve_and_critique -.-> revise_query;
-	revise_query --> retrieve_and_critique;
-	rewrite --> retrieve_and_critique;
-	synthesize_answer --> validate_and_save;
-	validate_and_save --> __end__;
-	classDef default fill:#f2f0ff,line-height:1.2
-	classDef first fill-opacity:0
-	classDef last fill:#bfb6fc
+  __start__([<p>__start__</p>]):::first
+  rewrite(rewrite)
+  retrieve_and_critique(retrieve_and_critique)
+  revise_query(revise_query)
+  decide_tool_use(decide_tool_use)
+  call_tool(call_tool)
+  synthesize_answer(synthesize_answer)
+  validate_and_save(validate_and_save)
+  __end__([<p>__end__</p>]):::last
+  __start__ --> rewrite;
+  call_tool --> synthesize_answer;
+  decide_tool_use -.-> call_tool;
+  decide_tool_use -.-> synthesize_answer;
+  retrieve_and_critique -.-> decide_tool_use;
+  retrieve_and_critique -.-> revise_query;
+  revise_query --> retrieve_and_critique;
+  rewrite --> retrieve_and_critique;
+  synthesize_answer --> validate_and_save;
+  validate_and_save --> __end__;
+  classDef default fill:#f2f0ff,line-height:1.2
+  classDef first fill-opacity:0
+  classDef last fill:#bfb6fc
 ```
 
 ### 节点说明

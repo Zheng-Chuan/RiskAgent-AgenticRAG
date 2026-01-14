@@ -1,4 +1,4 @@
-# 中文注释: Week3 LangGraph 验收测试
+# 中文注释: LangGraph 验收测试
 # 用途: 验证 LangGraph runner 与纯函数 runner 的输出 schema 一致性
 
 import os
@@ -17,8 +17,8 @@ from riskagent_rag.orchestration.langgraph_runner import run_langgraph_agentic_c
 from riskagent_rag.rag.agentic_loop import run_agentic_chat  # type: ignore[import-not-found]
 
 
-class Week3LangGraphTest(unittest.TestCase):
-    """Week3 LangGraph 验收测试."""
+class ContractLangGraphTest(unittest.TestCase):
+    """LangGraph 验收测试."""
 
     def test_langgraph_output_schema_matches_pure_function(self):
         """测试 LangGraph runner 输出 schema 与纯函数 runner 一致."""

@@ -1,21 +1,39 @@
 # RiskAgent-RAG Docs
 
-该项目用于将金融衍生品与风险管理相关资料, 以 RAG + multi-agent 的方式转化为面向企业内部软件工程师的通俗解释, 并在回答中提供可追溯 citations.
+这个项目想解决的是看资料很费劲这个问题
+你把问题丢进来
+它会用工程师更容易读的方式讲一遍
+同时把引用贴出来
+你随时可以回到原文核对
 
 ## 文档目录
 
 - `docs/QUICKSTART.md`
-  - 本地快速启动, 包含安装依赖, 准备语料, UI 和 CLI 运行方式, 以及测试
+  - 新手从这里开始. 装依赖, 准备语料, 启动 UI 和 CLI, 跑测试
 - `docs/ROADMAP.md`
-  - 迭代计划与验收口径, 聚焦本地可运行 demo 的多 agent 主线
+  - 我们打算怎么做, 每一阶段怎么验收
 - `docs/ARCHITECTURE.md`
-  - 高层目标与模块拆分, 以及 LLM provider 的接入原则
+  - 代码怎么拆, 数据怎么流, LLM 怎么接
 - `docs/INTERVIEW.md`
-  - 50 道 MultiAgent RAG 面试题, 边做边补答案
+  - 50 道多智能体和 RAG 面试题, 做项目时顺手把答案补全
 
 ## 快速入口
 
-推荐使用 conda 环境 `LangChain`.
+推荐使用 conda 环境 `LangChain`
+
+## 本地中间件
+
+本项目用 Docker compose 启动本地中间件
+
+```bash
+docker compose -f deploy/dev/docker-compose.yml up -d
+```
+
+Docker Desktop 分组名 riskagent-rag
+
+- **Milvus**
+  - 容器名 riskagent-rag-milvus
+  - 端口 19530
 
 - UI
 
@@ -38,30 +56,36 @@ conda run -n LangChain python -m unittest tests.test_week2_acceptance
 ## 技术栈
 
 - UI: Gradio
-- Multi-agent orchestration: LangGraph
-- LLM provider: OpenAI compatible API via pluggable adapter layer
+- Agent 编排: LangGraph
+- LLM 接入: OpenAI compatible API
 - RAG framework: LangChain
-- Vector store: Chroma
+- Vector store: Milvus
 
 ## 文档与语料管理
 
-- 语料默认放在 `docs/sources/`.
-- 索引默认落地到 `.chroma/`.
-- 建议每次语料变更后重新构建索引, 保证 citations 与内容一致.
+- 语料默认放在 `corpus/`
+- 索引默认落地到 `.milvus/` 这是 Milvus Lite 的单文件落盘
+- 语料变了建议重新 build index 不然引用可能会对不上
+
+如需使用 Docker Milvus 请设置环境变量 MILVUS_HOST=localhost MILVUS_PORT=19530
 
 ## 开源大模型接入说明
 
-这个项目会接入开源大模型, 但我们不把它写死成某一个具体厂商.
+这个项目支持接入开源大模型
+但不会把某一家厂商写死在代码里
 
-当前实现采用 OpenAI compatible 的方式对接 LLM. 这意味着你可以:
+当前实现走 OpenAI compatible 接口对接 LLM
+所以你可以
 
 - 使用商业 API(例如 OpenAI compatible provider)
 - 使用开源模型推理服务(例如 vLLM, TGI, Ollama), 只要它提供 OpenAI compatible endpoint
 
-配置方式是通过环境变量:
+配置方式走环境变量
 
-- `LLM_API_KEY`(可选, 部分服务需要)
-- `LLM_BASE_URL`(你的推理服务 base url)
-- `LLM_MODEL`(模型名)
+- `LLM_API_KEY` 可选 部分服务需要
+- `LLM_BASE_URL` 你的推理服务 base url
+- `LLM_MODEL` 模型名
 
-为了保证 Week 1 可复现, 没有配置 key 时会走 deterministic fallback, 先验证 RAG 链路与 citations.
+为了保证本地可复现
+没有配置 key 时会走 deterministic fallback
+先把检索链路和引用跑通

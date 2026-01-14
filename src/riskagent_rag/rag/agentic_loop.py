@@ -1,12 +1,12 @@
-"""Week3 agentic loop.
+"""Agentic loop.
 
-中文注释: 单 agent 的 agentic RAG loop.
-- rewrite: 将用户问题改写为更适合检索的 query
-- critique: 判断当前 retrieval 是否足够, 不足则给出改进 query
-- re-retrieve: 最多重试 max_rounds
-- final answer: 用 LLM 基于 docs 输出最终回答
+中文注释 单 agent 的 agentic RAG loop
+- rewrite 将用户问题改写为更适合检索的 query
+- critique 判断当前 retrieval 是否足够 不足则给出改进 query
+- re-retrieve 最多重试 max_rounds
+- final answer 用 LLM 基于 docs 输出最终回答
 
-注意: citations 必须来自 retriever 返回 docs 的 metadata, 不能依赖模型自造.
+注意 citations 必须来自 retriever 返回 docs 的 metadata 不能依赖模型自造
 """
 
 from __future__ import annotations
@@ -21,7 +21,7 @@ from langchain_core.documents import Document  # type: ignore[import-not-found]
 
 from riskagent_rag.agents.data_agent import run_data_agent
 from riskagent_rag.artifacts.storage import save_artifact
-from riskagent_rag.contracts.week3 import Week3Request
+from riskagent_rag.contracts.structured import StructuredRequest
 from riskagent_rag.llm.generate import generate_answer
 from riskagent_rag.rag.pipeline import extract_citations
 from riskagent_rag.validators.gates import validate_response
@@ -64,7 +64,7 @@ def _call_ollama(prompt: str) -> str:
 
 
 def _utc_today_date() -> str:
-    # 中文注释: Week3 tool use 的默认 as_of.
+    # 中文注释 tool use 的默认 as_of
     return datetime.datetime.utcnow().date().isoformat()
 
 
@@ -185,8 +185,8 @@ def _synthesize_answer_with_tool(
 
 
 def _attach_citations_to_each_paragraph(answer: str, citations: list[dict[str, str]]) -> str:
-    # 中文注释: Week3 B 口径, 每段关键结论必须可回指 citations.
-    # 这里先用最小实现: 给每个段落追加同一组 citations.
+    # 中文注释 每段关键结论必须可回指 citations
+    # 这里先用最小实现 给每个段落追加同一组 citations
     if not answer.strip():
         return answer
 
@@ -287,7 +287,7 @@ def run_agentic_chat(
             abs_delta_limit = 1000000.0
 
         if desk:
-            request = Week3Request(
+            request = StructuredRequest(
                 request_id=str(uuid.uuid4()),
                 query=question,
                 as_of=as_of,
@@ -318,10 +318,17 @@ def run_agentic_chat(
     evidence_set: list[dict[str, Any]] = []
     for idx, doc in enumerate(docs):
         evidence_id = f"ev_{idx}"
+        start_index_raw = doc.metadata.get("start_index", 0)
+        try:
+            start_index = int(start_index_raw)
+        except Exception:
+            start_index = 0
         evidence_set.append({
             "evidence_id": evidence_id,
             "source": doc.metadata.get("source", ""),
             "chunk_id": doc.metadata.get("chunk_id", ""),
+            "start_index": start_index,
+            "snippet": (doc.page_content or "")[:200],
             "text": doc.page_content[:200],
         })
 
@@ -358,8 +365,49 @@ def run_agentic_chat(
         "debug": debug_info,
     }
 
+    breaches: list[dict[str, Any]] = []
+    if isinstance(tool_output, dict):
+        raw_breaches = tool_output.get("breaches")
+        if isinstance(raw_breaches, list):
+            breaches = raw_breaches
+
+    structured_evidence_set: list[dict[str, Any]] = []
+    for idx, doc in enumerate(docs):
+        evidence_id = f"ev_{idx}"
+        start_index_raw = doc.metadata.get("start_index", 0)
+        try:
+            start_index = int(start_index_raw)
+        except Exception:
+            start_index = 0
+        structured_evidence_set.append(
+            {
+                "evidence_id": evidence_id,
+                "source": str(doc.metadata.get("source", "")),
+                "chunk_id": str(doc.metadata.get("chunk_id", "")),
+                "start_index": start_index,
+                "snippet": (doc.page_content or "")[:200],
+            }
+        )
+
+    structured_payload: dict[str, Any] = {
+        "request_id": request_id,
+        "report": answer_with_citations,
+        "breaches": breaches,
+        "evidence_set": structured_evidence_set,
+        "claims": claims,
+        "tool_traces": tool_traces,
+        "decision_log": decision_log,
+        "status": status,
+        "failure_reason": failure_reason,
+    }
+
     try:
-        artifact_path = save_artifact(request_id, request_data, response_data)
+        artifact_path = save_artifact(
+            request_id,
+            request_data,
+            response_data,
+            structured_response_data=structured_payload,
+        )
         debug_info["artifact_path"] = artifact_path
     except Exception as e:
         debug_info["artifact_error"] = str(e)

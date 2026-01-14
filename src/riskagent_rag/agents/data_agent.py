@@ -9,7 +9,12 @@ from __future__ import annotations
 import datetime
 from typing import Any, Optional
 
-from riskagent_rag.contracts.week3 import FailureReason, ToolTrace, Week3Request, build_tool_trace
+from riskagent_rag.contracts.structured import (
+    FailureReason,
+    StructuredRequest,
+    ToolTrace,
+    build_tool_trace,
+)
 from riskagent_rag.tools.mock_risk_tool import monitor_desk_exposure
 
 
@@ -19,7 +24,7 @@ def _utc_now_iso() -> str:
 
 
 def run_data_agent(
-    request: Week3Request,
+    request: StructuredRequest,
     *,
     as_of: Optional[str] = None,
 ) -> tuple[dict[str, Any], ToolTrace, Optional[FailureReason]]:

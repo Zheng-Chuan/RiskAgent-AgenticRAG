@@ -3,18 +3,19 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "riskagent_rag"
+name = "riskagent-rag"
 version = "0.1.0"
-description = "RiskAgent RAG System"
+description = "RiskAgent-RAG System"
 dependencies = [
     "gradio",
     "langgraph",
     "langchain",
     "langchain-community",
+    "langchain-milvus",
     "langchain-openai",
     "langchain-huggingface",
     "sentence-transformers",
-    "chromadb",
+    "pymilvus",
     "pydantic",
     "python-dotenv"
 ]

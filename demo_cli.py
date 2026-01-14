@@ -24,7 +24,7 @@ def _parse_args() -> argparse.Namespace:
     parser.add_argument("--question", required=True)
     parser.add_argument("--rebuild-index", action="store_true")
     parser.add_argument("--sources-dir", default=str(_project_root() / "docs" / "sources"))
-    parser.add_argument("--persist-dir", default=str(_project_root() / ".chroma"))
+    parser.add_argument("--persist-dir", default=str(_project_root() / ".milvus"))
     parser.add_argument("--out", default=str(_project_root() / "logs" / "demo_result.json"))
     return parser.parse_args()
 
@@ -35,8 +35,9 @@ def main() -> None:
     project_root = _project_root()
     _ensure_src_on_path(project_root)
 
-    from riskagent_rag.graph.workflow import build_rag_graph
-    from riskagent_rag.rag.pipeline import build_index, extract_citations, load_index
+    from riskagent_rag.orchestration.langgraph_runner import run_langgraph_agentic_chat
+    from riskagent_rag.rag.agentic_loop import run_agentic_chat
+    from riskagent_rag.rag.pipeline import build_index, load_index
 
     sources_dir = pathlib.Path(args.sources_dir)
     persist_dir = pathlib.Path(args.persist_dir)
@@ -46,26 +47,45 @@ def main() -> None:
         # Week 2 会把 rebuild 作为日常回归的一部分.
         build_index(sources_dir=sources_dir, persist_dir=persist_dir)
 
+    # Load index and retriever
     vectorstore = load_index(persist_dir)
     retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
-    graph = build_rag_graph(retriever)
 
-    request_id = str(uuid.uuid4())
-    # 技术难点: request_id 便于把一次问答的输入输出与日志关联.
-    # Week 2 引入评测脚本时, request_id 也便于落盘与对比.
-    out = graph.invoke({"question": args.question})
+    # Check Environment Variable
+    import os
+    use_langgraph = os.getenv("USE_LANGGRAPH", "").lower().strip() in ("true", "1", "yes")
+    
+    print(f"Running with: use_langgraph={use_langgraph}")
 
+    if use_langgraph:
+        out = run_langgraph_agentic_chat(question=args.question, retriever=retriever)
+    else:
+        out = run_agentic_chat(question=args.question, retriever=retriever)
+
+    # Extract results
     answer = out.get("answer", "")
-    docs = out.get("docs", [])
-    citations = extract_citations(docs)
+    citations = out.get("citations", [])
+    claims = out.get("claims", [])
+    evidence_set = out.get("evidence_set", [])
+    decision_log = out.get("decision_log", [])
+    tool_traces = out.get("tool_traces", [])
+    status = out.get("status", "ok")
+    failure_reason = out.get("failure_reason")
 
     result = {
-        "request_id": request_id,
+        "request_id": str(uuid.uuid4()), # Note: run_langgraph_agentic_chat might generate its own request_id internally for artifacts, but here we generate one for CLI output wrapping
         "question": args.question,
         "answer": answer,
         "citations": citations,
+        "claims": claims,
+        "evidence_set": evidence_set,
+        "decision_log": decision_log,
+        "tool_traces": tool_traces,
+        "status": status,
+        "failure_reason": failure_reason,
         "sources_dir": str(sources_dir),
         "persist_dir": str(persist_dir),
+        "runner": "langgraph" if use_langgraph else "agentic_loop"
     }
 
     # 技术难点: 输出落盘是 Week 2 的基础.

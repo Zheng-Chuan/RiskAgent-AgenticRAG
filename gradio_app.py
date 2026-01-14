@@ -16,7 +16,7 @@ import gradio as gr
 #
 # 目录约定.
 # - docs/sources: 放置 markdown 语料.
-# - .chroma: Chroma 持久化目录.
+# - .milvus: Milvus Lite 持久化目录.
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parent
 SRC_DIR = PROJECT_ROOT / "src"
@@ -35,8 +35,8 @@ from riskagent_rag.rag.agentic_loop import run_agentic_chat
 from riskagent_rag.rag.pipeline import build_index, extract_citations, load_index
 
 
-SOURCES_DIR = PROJECT_ROOT / "docs" / "sources"
-PERSIST_DIR = PROJECT_ROOT / ".chroma"
+SOURCES_DIR = PROJECT_ROOT / "corpus"
+PERSIST_DIR = PROJECT_ROOT / ".milvus"
 
 _graph = None
 _retriever = None
@@ -211,7 +211,7 @@ def _ensure_graph() -> Any:
 
 
 def _ensure_retriever() -> Any:
-    # 中文注释: Week3 agentic loop 需要直接使用 retriever.
+    # 中文注释 agentic loop 需要直接使用 retriever
     global _retriever
     if _retriever is not None:
         return _retriever
@@ -223,7 +223,7 @@ def _ensure_retriever() -> Any:
 
 def on_build_index() -> str:
     # UI 按钮回调.
-    # 从 docs/sources 构建向量库, 落地到 .chroma.
+    # 从 docs/sources 构建向量库, 落地到 .milvus.
     # 技术难点: ingest 必须稳定, 否则 Week 2 的引用覆盖率无法对比.
     result = build_index(sources_dir=SOURCES_DIR, persist_dir=PERSIST_DIR)
 
@@ -390,7 +390,7 @@ def main() -> None:
             <div class="ra-header">
               <h1 class="ra-title">RiskAgent-RAG</h1>
               <p class="ra-subtitle">Cold-theme local demo. Agentic RAG loop with citations, tool traces, and inspector.</p>
-              <div class="ra-pill">UI: Gradio. RAG: LangChain + Chroma. Orchestration: LangGraph. Local LLM: Ollama.</div>
+              <div class="ra-pill">UI: Gradio. RAG: LangChain + Milvus. Orchestration: LangGraph. Local LLM: Ollama.</div>
             </div>
             """
         )

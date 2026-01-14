@@ -1,4 +1,4 @@
-# 中文注释: Week3 artifacts 和 validator 验收测试
+# 中文注释: artifacts 和 validator 验收测试
 # 用途: 验证 artifacts 落盘和 validator gate 功能
 
 import json
@@ -23,8 +23,8 @@ from riskagent_rag.validators.gates import (  # type: ignore[import-not-found]
 )
 
 
-class Week3ArtifactsValidatorTest(unittest.TestCase):
-    """Week3 artifacts 和 validator 验收测试."""
+class ContractArtifactsValidatorTest(unittest.TestCase):
+    """artifacts 和 validator 验收测试."""
 
     def test_artifacts_save_and_load(self):
         """测试 artifacts 落盘和加载功能."""

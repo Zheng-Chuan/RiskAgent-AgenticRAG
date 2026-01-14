@@ -12,6 +12,7 @@ def save_artifact(
     request_id: str,
     request_data: dict[str, Any],
     response_data: dict[str, Any],
+    structured_response_data: dict[str, Any] | None = None,
     artifacts_dir: str = ".artifacts",
 ) -> str:
     """
@@ -47,6 +48,33 @@ def save_artifact(
 
     with open(filepath, "w", encoding="utf-8") as f:
         json.dump(artifact, f, indent=2, ensure_ascii=False)
+
+    # 中文注释: 将 artifacts 按 bundle 目录落盘, 便于回放和评测.
+    # 保持上面的单文件 JSON 兼容现有 tests.
+    bundle_dir = artifacts_path / f"{timestamp}_{request_id}"
+    try:
+        bundle_dir.mkdir(parents=True, exist_ok=True)
+        with open(bundle_dir / "request.json", "w", encoding="utf-8") as f:
+            json.dump(request_data, f, indent=2, ensure_ascii=False)
+        with open(bundle_dir / "response.json", "w", encoding="utf-8") as f:
+            json.dump(response_data, f, indent=2, ensure_ascii=False)
+
+        # 中文注释: 如果 response_data 或 structured_response_data 能对齐结构化 contract, 则额外输出规范化文件.
+        try:
+            from riskagent_rag.contracts.structured import parse_structured_response
+
+            candidate = structured_response_data or response_data
+            obj = parse_structured_response(candidate)
+            if hasattr(obj, "model_dump"):
+                payload = obj.model_dump()  # type: ignore[attr-defined]
+            else:
+                payload = obj.dict()
+            with open(bundle_dir / "structured_response.json", "w", encoding="utf-8") as f:
+                json.dump(payload, f, indent=2, ensure_ascii=False)
+        except Exception:
+            pass
+    except Exception:
+        pass
 
     return str(filepath)
 

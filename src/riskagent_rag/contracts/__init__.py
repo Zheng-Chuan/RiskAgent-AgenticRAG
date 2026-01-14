@@ -6,5 +6,5 @@
 from __future__ import annotations
 
 __all__ = [
-    "week3",
+    "structured",
 ]

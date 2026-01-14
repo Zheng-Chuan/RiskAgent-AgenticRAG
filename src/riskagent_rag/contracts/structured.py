@@ -1,6 +1,6 @@
-"""Week3 contract models.
+"""Structured contract models.
 
-中文注释: 该文件落地 docs/ROADMAP.md Week3 contract v1.
+中文注释: 该文件定义结构化输入输出合同.
 目标是让输出结构可验证, 可回归, 可用于后续 Validator 和评测.
 """
 
@@ -23,6 +23,11 @@ FailureCategory = Literal[
     "tool_error",
     "numeric_inconsistent",
     "evidence_not_supporting",
+    "evidence_missing",
+    "evidence_not_found",
+    "evidence_incomplete",
+    "refusal_incomplete",
+    "refusal_unclear",
     "parse_error",
 ]
 
@@ -88,8 +93,8 @@ class Decision(_StrictBaseModel):
     alternatives: list[str] = Field(default_factory=list)
 
 
-class Week3Request(_StrictBaseModel):
-    # 中文注释: Week3 场景输入.
+class StructuredRequest(_StrictBaseModel):
+    # 中文注释: 结构化输入.
     request_id: str
     query: str
     as_of: str
@@ -97,8 +102,8 @@ class Week3Request(_StrictBaseModel):
     abs_delta_limit: float
 
 
-class Week3Response(_StrictBaseModel):
-    # 中文注释: Week3 场景输出.
+class StructuredResponse(_StrictBaseModel):
+    # 中文注释: 结构化输出.
     request_id: str
     report: str
     breaches: list[dict[str, Any]]
@@ -110,11 +115,11 @@ class Week3Response(_StrictBaseModel):
     failure_reason: Optional[FailureReason] = None
 
 
-def parse_week3_response(data: dict[str, Any]) -> Week3Response:
+def parse_structured_response(data: dict[str, Any]) -> StructuredResponse:
     # 中文注释: 兼容 pydantic v1 和 v2 的解析入口.
-    if hasattr(Week3Response, "model_validate"):
-        return Week3Response.model_validate(data)  # type: ignore[attr-defined]
-    return Week3Response.parse_obj(data)
+    if hasattr(StructuredResponse, "model_validate"):
+        return StructuredResponse.model_validate(data)  # type: ignore[attr-defined]
+    return StructuredResponse.parse_obj(data)
 
 
 def build_tool_trace(

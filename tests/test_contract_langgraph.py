@@ -6,6 +6,7 @@ import sys
 import unittest
 from pathlib import Path
 from unittest.mock import MagicMock
+from unittest.mock import patch
 
 # 中文注释: 确保 src 在 sys.path 中, 便于导入项目模块
 project_root = Path(__file__).parent.parent
@@ -122,6 +123,25 @@ class ContractLangGraphTest(unittest.TestCase):
                 os.environ["LLM_PROVIDER"] = original_provider
             else:
                 os.environ.pop("LLM_PROVIDER", None)
+
+    def test_langgraph_respects_max_rounds_for_retrieval(self):
+        # 中文注释: 锁定 max_rounds 行为 防止 LangGraph 多跑一轮检索
+        os.environ["LLM_PROVIDER"] = "fallback"
+
+        mock_retriever = MagicMock()
+        mock_retriever.invoke.return_value = []
+
+        with patch(
+            "riskagent_rag.rag.agentic_primitives.critique_retrieval",
+            return_value=(False, "improved query", "insufficient"),
+        ):
+            _out = run_langgraph_agentic_chat(
+                question="What is delta?",
+                retriever=mock_retriever,
+                max_rounds=2,
+            )
+
+        self.assertEqual(mock_retriever.invoke.call_count, 2)
 
 
 if __name__ == "__main__":

@@ -13,16 +13,9 @@ from langgraph.graph import END, StateGraph  # type: ignore[import-not-found]
 from riskagent_rag.agents.data_agent import run_data_agent
 from riskagent_rag.artifacts.storage import save_artifact
 from riskagent_rag.contracts.structured import StructuredRequest
+from riskagent_rag.rag import agentic_primitives
 from riskagent_rag.rag.pipeline import extract_citations
 from riskagent_rag.validators.gates import validate_response
-from riskagent_rag.rag.agentic_loop import (
-    _attach_citations_to_each_paragraph,
-    _critique_retrieval,
-    _decide_tool_use,
-    _rewrite_query,
-    _synthesize_answer_with_tool,
-    _utc_today_date,
-)
 
 
 class AgenticState(TypedDict, total=False):
@@ -33,6 +26,7 @@ class AgenticState(TypedDict, total=False):
     retriever: Any
     
     current_query: str
+    improved_query: str
     current_round: int
     docs: list[Document]
     critique_reason: str
@@ -58,9 +52,10 @@ class AgenticState(TypedDict, total=False):
 def node_rewrite(state: AgenticState) -> AgenticState:
     """Node: rewrite query for better retrieval."""
     question = state["question"]
-    rewritten = _rewrite_query(question)
+    rewritten = agentic_primitives.rewrite_query(question)
     
     state["current_query"] = rewritten
+    state["improved_query"] = ""
     state["current_round"] = 0
     state["decision_log"] = state.get("decision_log", [])
     state["decision_log"].append({
@@ -84,18 +79,19 @@ def node_retrieve_and_critique(state: AgenticState) -> AgenticState:
     
     docs = retriever.invoke(current_query)
     
-    sufficient, improved_query, critique_reason = _critique_retrieval(question, docs)
-    
-    should_continue = not sufficient and current_round < max_rounds
+    sufficient, improved_query, critique_reason = agentic_primitives.critique_retrieval(question, docs)
+    next_round = current_round + 1
+    should_continue = (not sufficient) and (next_round < max_rounds)
     
     state["docs"] = docs
     state["critique_reason"] = critique_reason
+    state["improved_query"] = improved_query
     state["should_continue"] = should_continue
-    state["current_round"] = current_round + 1
+    state["current_round"] = next_round
     
     decision_log = state.get("decision_log", [])
     decision_log.append({
-        "step_id": f"retrieve_round_{current_round}",
+        "step_id": f"retrieve_round_{next_round}",
         "agent": "AgenticLoop",
         "rationale": critique_reason or "retrieval done",
         "chosen": "continue" if should_continue else "stop",
@@ -109,18 +105,17 @@ def node_retrieve_and_critique(state: AgenticState) -> AgenticState:
 def node_revise_query(state: AgenticState) -> AgenticState:
     """Node: revise query based on critique."""
     question = state["question"]
-    critique_reason = state["critique_reason"]
     current_query = state["current_query"]
-    
-    rewritten = _rewrite_query(f"{question}\n\nPrevious issue: {critique_reason}")
-    state["current_query"] = rewritten
+    improved_query = str(state.get("improved_query", "")).strip()
+    next_query = improved_query or question
+    state["current_query"] = next_query
     
     decision_log = state.get("decision_log", [])
     decision_log.append({
         "step_id": "revise_query",
         "agent": "AgenticLoop",
         "rationale": "revise query based on critique",
-        "chosen": rewritten,
+        "chosen": next_query,
         "alternatives": [current_query],
     })
     state["decision_log"] = decision_log
@@ -131,7 +126,7 @@ def node_revise_query(state: AgenticState) -> AgenticState:
 def node_decide_tool_use(state: AgenticState) -> AgenticState:
     """Node: decide whether to call tool."""
     question = state["question"]
-    should_call, tool_args, tool_reason = _decide_tool_use(question)
+    should_call, tool_args, tool_reason = agentic_primitives.decide_tool_use(question)
     
     state["should_call_tool"] = should_call
     state["tool_args"] = tool_args
@@ -157,7 +152,7 @@ def node_call_tool(state: AgenticState) -> AgenticState:
     tool_args = state["tool_args"]
     
     desk = str(tool_args.get("desk", "")).strip()
-    as_of = str(tool_args.get("as_of", "")).strip() or _utc_today_date()
+    as_of = str(tool_args.get("as_of", "")).strip() or agentic_primitives.utc_today_date()
     abs_delta_limit_raw = tool_args.get("abs_delta_limit", 1000000)
     try:
         abs_delta_limit = float(abs_delta_limit_raw)
@@ -203,9 +198,13 @@ def node_synthesize_answer(state: AgenticState) -> AgenticState:
     docs = state["docs"]
     tool_output = state.get("tool_output")
     
-    answer = _synthesize_answer_with_tool(question=question, docs=docs, tool_output=tool_output)
+    answer = agentic_primitives.synthesize_answer_with_tool(
+        question=question,
+        docs=docs,
+        tool_output=tool_output,
+    )
     citations = extract_citations(docs)
-    answer_with_citations = _attach_citations_to_each_paragraph(answer, citations)
+    answer_with_citations = agentic_primitives.attach_citations_to_each_paragraph(answer, citations)
     
     state["answer"] = answer_with_citations
     state["citations"] = citations
@@ -221,22 +220,7 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
     tool_output = state.get("tool_output")
     
     claims: list[dict[str, Any]] = []
-    evidence_set: list[dict[str, Any]] = []
-    for idx, doc in enumerate(docs):
-        evidence_id = f"ev_{idx}"
-        start_index_raw = doc.metadata.get("start_index", 0)
-        try:
-            start_index = int(start_index_raw)
-        except Exception:
-            start_index = 0
-        evidence_set.append({
-            "evidence_id": evidence_id,
-            "source": doc.metadata.get("source", ""),
-            "chunk_id": doc.metadata.get("chunk_id", ""),
-            "start_index": start_index,
-            "snippet": (doc.page_content or "")[:200],
-            "text": doc.page_content[:200],
-        })
+    evidence_set = agentic_primitives.build_evidence_set_from_docs(docs, include_text=True)
     
     failure_reason = validate_response(
         report=answer,
@@ -282,23 +266,7 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
         if isinstance(raw_breaches, list):
             breaches = raw_breaches
 
-    structured_evidence_set: list[dict[str, Any]] = []
-    for idx, doc in enumerate(docs):
-        evidence_id = f"ev_{idx}"
-        start_index_raw = doc.metadata.get("start_index", 0)
-        try:
-            start_index = int(start_index_raw)
-        except Exception:
-            start_index = 0
-        structured_evidence_set.append(
-            {
-                "evidence_id": evidence_id,
-                "source": str(doc.metadata.get("source", "")),
-                "chunk_id": str(doc.metadata.get("chunk_id", "")),
-                "start_index": start_index,
-                "snippet": (doc.page_content or "")[:200],
-            }
-        )
+    structured_evidence_set = agentic_primitives.build_evidence_set_from_docs(docs, include_text=False)
 
     structured_payload: dict[str, Any] = {
         "request_id": request_id,
@@ -434,6 +402,7 @@ def run_langgraph_agentic_chat(
         "max_rounds": max_rounds,
         "retriever": retriever,
         "current_query": "",
+        "improved_query": "",
         "current_round": 0,
         "docs": [],
         "critique_reason": "",

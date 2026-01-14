@@ -23,7 +23,7 @@ def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--question", required=True)
     parser.add_argument("--rebuild-index", action="store_true")
-    parser.add_argument("--sources-dir", default=str(_project_root() / "docs" / "sources"))
+    parser.add_argument("--sources-dir", default=str(_project_root() / "corpus"))
     parser.add_argument("--persist-dir", default=str(_project_root() / ".milvus"))
     parser.add_argument("--out", default=str(_project_root() / "logs" / "demo_result.json"))
     return parser.parse_args()

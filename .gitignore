@@ -47,6 +47,5 @@ logs/
 deploy/dev/milvus/volumes/
 deploy/dev/mysql/data/
 models/
-.chroma/
 .artifacts/
 .langgraph_api/

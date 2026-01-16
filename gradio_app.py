@@ -168,7 +168,7 @@ def on_build_index() -> str:
             "Index ready. "
             f"sources={result.source_count}, chunks={result.chunk_count}, persist_dir={result.persist_dir}"
         )
-    except Exception as e:
+    except Exception as e:  # pylint: disable=broad-exception-caught
         return f"Error building index: {e}"
 
 
@@ -180,7 +180,7 @@ def _env_badge_text() -> str:
 def chat_v2(
     user_text: str,
     history: list[list[str]],
-    max_rounds: int,
+    _max_rounds: int,
 ) -> tuple[list[list[str]], list[dict[str, str]], list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
     """处理用户对话"""
     if not user_text:
@@ -212,6 +212,7 @@ def chat_v2(
 
 
 def main() -> None:
+    # pylint: disable=no-member
     with gr.Blocks(title="RiskAgent-RAG", css=_COOL_CSS) as demo:
         gr.HTML(
             """
@@ -316,6 +317,8 @@ def main() -> None:
             outputs=[state, chatbot, citations_json, decision_json, tool_json, debug_json],
         )
 
+    # pylint: disable=no-member
+    # Gradio events are dynamically added, Pylint cannot detect them correctly.
     demo.launch()
 
 

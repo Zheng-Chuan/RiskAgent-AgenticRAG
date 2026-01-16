@@ -4,13 +4,13 @@
 """
 from __future__ import annotations
 
-import os
+import os  # pylint: disable=unused-import
 import pathlib
 import time
 import urllib.error
 import urllib.request
 from typing import Any, Dict
-from uuid import uuid4
+from uuid import uuid4  # pylint: disable=unused-import
 
 from langchain_core.documents import Document
 from langchain_core.vectorstores import VectorStore
@@ -63,7 +63,7 @@ def _wait_for_milvus_ready(connection_args: Dict[str, Any]) -> None:
             with urllib.request.urlopen(url, timeout=2) as resp:
                 if 200 <= resp.status < 300:
                     return
-        except Exception as e:
+        except Exception as e:  # pylint: disable=broad-exception-caught
             last_err = e
         time.sleep(1)
 

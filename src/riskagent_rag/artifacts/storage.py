@@ -70,31 +70,27 @@ def save_artifact(
                 payload = obj.dict()
             with open(bundle_dir / "structured_response.json", "w", encoding="utf-8") as f:
                 json.dump(payload, f, indent=2, ensure_ascii=False)
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             pass
-    except Exception:
-        pass
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        print(f"Error saving artifact: {e}")
+        return False
 
     return str(filepath)
 
 
-def load_artifact(filepath: str) -> dict[str, Any]:
-    """
-    从文件加载 artifact.
+def load_artifact(filepath: str) -> dict[str, Any] | None:
+    """加载 artifact"""
+    path = Path(filepath)
+    if not path.exists():
+        return None
 
-    参数:
-        filepath: artifact 文件路径
-
-    返回:
-        artifact 数据字典
-
-    用途:
-        - 回放历史运行
-        - 回归测试
-        - 问题归因
-    """
-    with open(filepath, "r", encoding="utf-8") as f:
-        return json.load(f)
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+        return data
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        print(f"Error loading artifact {filepath}: {e}")
+        return None
 
 
 def list_artifacts(artifacts_dir: str = ".artifacts") -> list[str]:

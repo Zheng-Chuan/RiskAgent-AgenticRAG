@@ -20,7 +20,7 @@ def _parse_args() -> argparse.Namespace:
     # 默认值通过 settings 获取, 但允许 CLI 覆盖 (虽然 settings 目前写死了一些路径, 但可扩展)
     # 为了简化 CLI, 暂移除手动指定 dir 的参数，或者让它们覆盖 settings (暂未实现 settings 动态覆盖)
     # 这里保持原有参数以兼容旧习惯，但实际 system 内部使用的是 settings.
-    # TODO: 让 CLI 参数能动态修改 settings
+    # TODO: 让 CLI 参数能动态修改 settings  # pylint: disable=fixme
     parser.add_argument("--out", default=str(_project_root() / "logs" / "demo_result.json"))
     return parser.parse_args()
 

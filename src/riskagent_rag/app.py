@@ -8,8 +8,6 @@ import shutil
 from dataclasses import dataclass
 from typing import Any
 
-from langchain_core.vectorstores import VectorStore
-
 from riskagent_rag.config.langsmith import setup_langsmith
 from riskagent_rag.config.settings import settings
 from riskagent_rag.graph.workflow import build_rag_graph
@@ -87,7 +85,7 @@ class RiskAgentSystem:
         if not settings.paths.milvus_lite_dir.exists():
             return {"status": "error", "message": "Index not found. Please build index first."}
 
-        graph, retriever = self._ensure_resources()
+        _graph, retriever = self._ensure_resources()
         use_langgraph = settings.features.use_langgraph
 
         if use_langgraph:

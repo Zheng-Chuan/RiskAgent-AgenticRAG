@@ -7,7 +7,7 @@ from __future__ import annotations
 import importlib
 import os
 import pathlib
-from typing import Any
+from typing import Any  # pylint: disable=unused-import
 
 from langchain_core.embeddings import Embeddings
 
@@ -43,7 +43,7 @@ def build_embeddings() -> Embeddings:
     try:
         mod = importlib.import_module("langchain_huggingface")
         HuggingFaceEmbeddings = getattr(mod, "HuggingFaceEmbeddings")
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         from langchain_community.embeddings import HuggingFaceEmbeddings
 
     return HuggingFaceEmbeddings(model_name=resolved_model)
@@ -61,7 +61,7 @@ def preload_embeddings_model() -> dict[str, str]:
     embeddings = build_embeddings()
     try:
         embeddings.embed_query("warmup")
-    except Exception:
+    except Exception:  # pylint: disable=broad-exception-caught
         pass
 
     return {

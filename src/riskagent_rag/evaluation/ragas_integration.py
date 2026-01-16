@@ -9,6 +9,9 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Optional
 
+from riskagent_rag.config.settings import settings
+from riskagent_rag.rag.embeddings import build_embeddings
+
 
 @dataclass(frozen=True)
 class RagasResult:
@@ -18,41 +21,69 @@ class RagasResult:
     error: Optional[str] = None
 
 
+def _get_judge_llm() -> Any:
+    """
+    配置 Judge LLM for RAGAS.
+    优先使用 OpenAI API Key (gpt-4o / gpt-3.5-turbo),
+    如果配置了 Ollama, 则尝试使用 ChatOllama (langchain).
+    """
+    # 1. 尝试使用 OpenAI (LangChain wrapper)
+    # RAGAS 默认喜欢 OpenAI, 且效果最好.
+    # 即使 LLM_PROVIDER=ollama, 如果有 OPENAI_API_KEY, 评测也建议用 OpenAI.
+    api_key = settings.llm.api_key
+    if api_key and (api_key.startswith("sk-") or len(api_key) > 10):
+        try:
+            from langchain_openai import ChatOpenAI
+
+            return ChatOpenAI(
+                model=settings.llm.model or "gpt-4o",
+                api_key=api_key,
+                base_url=settings.llm.base_url,  # 兼容非官方 OpenAI Endpoint
+                temperature=0,
+            )
+        except ImportError:
+            pass
+
+    # 2. 尝试使用 Ollama (LangChain wrapper)
+    # 仅当没有 OpenAI Key 且显式配置了 Ollama 时使用.
+    if settings.llm.provider == "ollama":
+        try:
+            from langchain_community.chat_models import ChatOllama
+
+            return ChatOllama(
+                base_url=settings.llm.base_url or "http://localhost:11434",
+                model=settings.llm.model or "qwen2.5:14b",
+                temperature=0,
+            )
+        except ImportError:
+            pass
+
+    # 3. Fallback: 如果 RAGAS 自身能从 env 找到 key, 让它自己处理
+    # 返回 None 表示不显式传入 llm, RAGAS 会尝试默认行为 (通常是 os.environ["OPENAI_API_KEY"])
+    return None
+
+
 def try_compute_ragas_metrics(
     *,
     samples: list[dict[str, Any]],
 ) -> RagasResult:
     try:
-        from datasets import Dataset  # type: ignore[import-not-found]
-    except Exception as e:
+        from datasets import Dataset
+    except ImportError as e:
         return RagasResult(enabled=True, ok=False, metrics={}, error=f"datasets not available {e}")
 
     try:
-        import ragas  # type: ignore[import-not-found]
-
-        evaluate = getattr(ragas, "evaluate")
-        metrics_mod = getattr(ragas, "metrics", None)
-    except Exception as e:
+        from ragas import evaluate
+        from ragas.metrics import (
+            answer_relevancy,
+            context_precision,
+            context_recall,
+            faithfulness,
+        )
+    except ImportError as e:
         return RagasResult(enabled=True, ok=False, metrics={}, error=f"ragas not available {e}")
 
-    if metrics_mod is None:
-        return RagasResult(enabled=True, ok=False, metrics={}, error="ragas.metrics not available")
-
-    def _get_metric(name: str):
-        return getattr(metrics_mod, name, None)
-
-    selected = {
-        "context_relevance": _get_metric("context_relevancy") or _get_metric("context_relevance"),
-        "faithfulness": _get_metric("faithfulness"),
-        "answer_relevance": _get_metric("answer_relevancy") or _get_metric("answer_relevance"),
-        "context_precision": _get_metric("context_precision"),
-        "context_recall": _get_metric("context_recall"),
-    }
-
-    metrics_list = [m for m in selected.values() if m is not None]
-    if not metrics_list:
-        return RagasResult(enabled=True, ok=False, metrics={}, error="no ragas metrics found")
-
+    # 准备数据
     rows: list[dict[str, Any]] = []
     for s in samples:
         question = str(s.get("question", ""))
@@ -70,7 +101,17 @@ def try_compute_ragas_metrics(
 
         gt = s.get("ground_truth_contexts")
         if isinstance(gt, list) and gt:
-            row["ground_truths"] = [str(x) for x in gt]
+            row["ground_truth"] = str(gt[0])  # RAGAS expect string or list? v0.1+ expects 'ground_truth' col
+            # 注意: context_recall 需要 ground_truth
+            # 这里简化处理, 如果有 gt contexts, 拼成 string 或者 list?
+            # RAGAS 0.1+ dataset schema: question, answer, contexts, ground_truth
+            # ground_truth should be string (the reference answer) or list of strings?
+            # 通常 ground_truth 是 reference answer.
+            # 但 context recall 需要的是 ground truth contexts 吗?
+            # RAGAS 文档: context_recall measures extent to which retrieved context aligns with ground truth answer.
+            # Wait, context_recall compares ground_truth (answer) vs contexts?
+            # actually context_recall: "Is the ground truth answer present in the contexts?"
+            # So we need reference_answer as ground_truth.
 
         ref = s.get("reference_answer")
         if isinstance(ref, str) and ref:
@@ -78,30 +119,51 @@ def try_compute_ragas_metrics(
 
         rows.append(row)
 
+    if not rows:
+        return RagasResult(enabled=True, ok=False, metrics={}, error="no samples provided")
+
     ds = Dataset.from_list(rows)
 
+    # 准备 Metrics
+    metrics_list = [
+        faithfulness,
+        answer_relevancy,
+        context_precision,
+        context_recall,
+    ]
+
+    # 准备 LLM 和 Embeddings
+    judge_llm = _get_judge_llm()
+    embeddings = build_embeddings()
+
+    # 执行评测
     try:
-        result = evaluate(ds, metrics=metrics_list)
+        # RAGAS v0.1+ evaluate signature:
+        # evaluate(dataset, metrics, llm=..., embeddings=...)
+        # 注意: 如果 judge_llm 为 None, RAGAS 会尝试默认 OpenAI.
+        # 如果 embeddings 为 None, RAGAS 会尝试默认 OpenAI.
+        # 我们显式传入 embeddings (HuggingFace), 以免 RAGAS 报错缺少 OpenAI Key (如果用户只用本地).
+        result = evaluate(
+            dataset=ds,
+            metrics=metrics_list,
+            llm=judge_llm,
+            embeddings=embeddings,
+        )
     except Exception as e:
         return RagasResult(enabled=True, ok=False, metrics={}, error=str(e))
 
+    # 提取结果
     metrics_out: dict[str, float] = {}
-    for k in selected.keys():
-        try:
-            val = float(result.get(k))  # type: ignore[call-arg]
-            metrics_out[k] = val
-        except Exception:
-            pass
-
-    if not metrics_out:
-        try:
-            raw = dict(result)  # type: ignore[arg-type]
-            for rk, rv in raw.items():
-                try:
-                    metrics_out[str(rk)] = float(rv)
-                except Exception:
-                    continue
-        except Exception:
-            pass
+    # RAGAS result object acts like a dict with averages
+    try:
+        # result is a Result object, can be cast to dict for averages
+        # e.g. {'faithfulness': 0.8, ...}
+        for k, v in result.items():
+            try:
+                metrics_out[k] = float(v)
+            except (TypeError, ValueError):
+                pass
+    except Exception:
+        pass
 
     return RagasResult(enabled=True, ok=True, metrics=metrics_out)

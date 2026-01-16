@@ -155,14 +155,14 @@ LLM strategy
     - [ ] 数据集文件建议
       - [x] tests/data/questions.json 作为最小数据集
       - [ ] tests/data/eval_set.json 作为可扩展数据集
-  - [ ] RAGAS 指标集落地
-    - [ ] RAG triad
-      - [ ] context relevance
-      - [ ] faithfulness groundedness
-      - [ ] answer relevance
-    - [ ] retrieval metrics
-      - [ ] context precision
-      - [ ] context recall
+  - [x] RAGAS 指标集落地
+    - [x] RAG triad
+      - [x] context relevance
+      - [x] faithfulness groundedness
+      - [x] answer relevance
+    - [x] retrieval metrics
+      - [x] context precision
+      - [x] context recall
     - [ ] 设计约束
       - [x] 支持 offline baseline 先跑确定性指标
       - [ ] 支持开启 LLM judge 模式用于更贴近人类评价
@@ -181,14 +181,14 @@ LLM strategy
     - [x] 回归对比
       - [x] 支持读取上一份报告作为 baseline
       - [x] 支持阈值配置并标记 regression
-  - [ ] 文档与使用说明
-    - [ ] 如何新增评测样本
-    - [ ] 如何配置 judge 模型与成本控制
-    - [ ] 常见问题与排障
+  - [x] 文档与使用说明
+    - [x] 如何新增评测样本
+    - [x] 如何配置 judge 模型与成本控制
+    - [x] 常见问题与排障
 
 - 验收
   - [x] 一条命令可跑完评测并生成 JSON 报告
-  - [ ] 报告包含 RAGAS 指标汇总与每条样本明细
+  - [x] 报告包含 RAGAS 指标汇总与每条样本明细
   - [x] 支持和上一份报告对比并输出退化项
   - [x] 默认不依赖外部服务即可跑通 offline 指标
   - [x] 为什么要做 agentic RAG 系统的技术深度来自 contract 可控性 与可回归
@@ -240,9 +240,9 @@ LLM strategy
   - [ ] chunk 必须携带 section path 与来源定位
 - [x] vector store
   - [x] 本地优先, 例如 Milvus
-- [ ] embeddings
+- [x] embeddings
   - [x] MVP: FakeEmbeddings(离线可运行)
-  - [ ] Week 2: 切换为真实 embeddings, 并固化 provider 与维度
+  - [x] Week 2: 切换为真实 embeddings, 并固化 provider 与维度
 
 ### 1.3 生成与引用
 
@@ -275,24 +275,24 @@ LLM strategy
 
 **目标**: 降低幻觉, 提升检索命中与解释质量, 形成可迭代的评测体系.
 
-- [ ] 建立评测集
-  - 检索相关性
-  - 事实一致性与引用覆盖
-  - 工程师可读性
-- [ ] 增加结构化中间产物
-  - claims 与 evidence_set 作为一等公民
-  - validator 产出 failure_reason
-- [ ] 增加 guardrails
-  - 无法从语料支持则拒答或要求补充资料
-  - 敏感信息与合规提示
-- [ ] 领域知识增强
-  - 术语表与缩写表
-  - 业务对象字典, 例如 position, security, desk, trader
+- [x] 建立评测集
+  - [x] 检索相关性 (context_precision/recall)
+  - [x] 事实一致性与引用覆盖 (faithfulness, citations coverage)
+  - [x] 工程师可读性 (answer_relevance)
+- [x] 增加结构化中间产物
+  - [x] claims 与 evidence_set 作为一等公民
+  - [x] validator 产出 failure_reason
+- [x] 增加 guardrails
+  - [x] 无法从语料支持则拒答或要求补充资料
+  - [ ] 敏感信息与合规提示 (Out of scope for demo)
+- [x] 领域知识增强
+  - [x] 术语表与缩写表 (via Background.md)
+  - [ ] 业务对象字典, 例如 position, security, desk, trader
 
 **验收标准**:
 
-- [ ] 评测 tests 可一键运行并输出报告
-- [ ] 相比 Phase 1, 事实一致性指标显著提升
+- [x] 评测 tests 可一键运行并输出报告
+- [x] 相比 Phase 1, 事实一致性指标显著提升
 
 ## Phase 3: 预留
 

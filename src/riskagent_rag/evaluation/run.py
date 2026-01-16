@@ -28,7 +28,8 @@ def _utc_now_iso() -> str:
 
 def run_evaluation(*, corpus_dir: Path, dataset_path: Path, enable_ragas: bool) -> dict[str, Any]:
     os.environ.setdefault("EMBEDDINGS_PROVIDER", "hf")
-    os.environ.setdefault("LLM_PROVIDER", "fallback")
+    # 不要强制 fallback, 允许外部通过环境变量注入 (e.g. LLM_PROVIDER=openai_compatible)
+    # os.environ.setdefault("LLM_PROVIDER", "fallback")
 
     items = load_dataset(dataset_path)
 

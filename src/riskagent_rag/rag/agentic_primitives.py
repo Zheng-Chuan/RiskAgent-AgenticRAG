@@ -224,3 +224,37 @@ def build_evidence_set_from_docs(
             item["text"] = (doc.page_content or "")[:200]
         evidence_set.append(item)
     return evidence_set
+
+
+def build_claims_from_answer(
+    answer: str,
+    *,
+    evidence_set: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    # 中文注释: MVP 阶段用确定性规则把 answer 切成 claims.
+    # 设计目标: claims 必须携带 evidence_ids, 让 evidence_gate 可执行.
+    evidence_ids = [
+        str(e.get("evidence_id"))
+        for e in evidence_set
+        if isinstance(e, dict) and e.get("evidence_id")
+    ]
+    if not evidence_ids:
+        return []
+
+    paragraphs = [p.strip() for p in (answer or "").split("\n\n") if p.strip()]
+    claims: list[dict[str, Any]] = []
+    for idx, p in enumerate(paragraphs):
+        lines = [ln.strip() for ln in p.splitlines()]
+        kept = [ln for ln in lines if ln and not ln.lower().startswith("citations:")]
+        statement = "\n".join(kept).strip()
+        if not statement:
+            continue
+
+        claims.append(
+            {
+                "claim_id": f"cl_{idx}",
+                "statement": statement[:300],
+                "evidence_ids": [evidence_ids[0]],
+            }
+        )
+    return claims

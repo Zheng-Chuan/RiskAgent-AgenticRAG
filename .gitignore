@@ -46,6 +46,9 @@ logs/
 .milvus_docker/
 deploy/dev/milvus/volumes/
 deploy/dev/mysql/data/
-models/
+models/hf/
+models/hf/**
+!models/embeddings/
+!models/embeddings/**
 .artifacts/
 .langgraph_api/

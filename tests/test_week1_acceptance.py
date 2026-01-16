@@ -31,12 +31,17 @@ class Week1AcceptanceTest(unittest.TestCase):
         ensure_src_on_path()
 
     def setUp(self) -> None:
-        # 中文注释, 默认使用 fake embeddings, 避免首次运行需要下载模型.
-        os.environ.setdefault("EMBEDDINGS_PROVIDER", "fake")
+        # 中文注释, 默认使用真实 embeddings, 用于锁定检索质量与 citations 行为.
+        os.environ.setdefault("EMBEDDINGS_PROVIDER", "hf")
 
-        # 中文注释: 默认连接本地 Docker Milvus.
-        os.environ.setdefault("MILVUS_HOST", "localhost")
-        os.environ.setdefault("MILVUS_PORT", "19530")
+        # 中文注释: 单测默认走 Milvus Lite(本地文件), 避免依赖 Docker 中间件.
+        # 如需切换到 Docker Milvus, 设置环境变量 RISKAGENT_USE_DOCKER_MILVUS=true.
+        use_docker_milvus = os.getenv("RISKAGENT_USE_DOCKER_MILVUS", "").lower().strip() in ("true", "1", "yes")
+        if not use_docker_milvus:
+            os.environ.pop("MILVUS_URI", None)
+            os.environ.pop("MILVUS_HOST", None)
+            os.environ.pop("MILVUS_PORT", None)
+            os.environ["MILVUS_WAIT_READY"] = "false"
 
         self.project_root = pathlib.Path(__file__).resolve().parent.parent
         self.sources_dir = self.project_root / "corpus"

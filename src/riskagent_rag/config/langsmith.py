@@ -61,9 +61,9 @@ def setup_langsmith(
     endpoint = os.getenv("LANGCHAIN_ENDPOINT", "https://api.smith.langchain.com")
     os.environ["LANGCHAIN_ENDPOINT"] = endpoint
     
-    print(f"✅ LangSmith 追踪已启用")
+    print("✅ LangSmith 追踪已启用")
     print(f"   项目: {project_name}")
-    print(f"   查看追踪: https://smith.langchain.com/")
+    print("   查看追踪: https://smith.langchain.com/")
     
     return True
 

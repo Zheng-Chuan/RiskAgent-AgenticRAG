@@ -6,6 +6,7 @@ langchain-milvus
 langchain-openai
 langchain-huggingface
 sentence-transformers
-pymilvus
+pymilvus[milvus_lite]
 pydantic
 python-dotenv
+pylint

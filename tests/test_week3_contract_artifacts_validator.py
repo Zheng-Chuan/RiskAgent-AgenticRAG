@@ -1,7 +1,6 @@
 # 中文注释: artifacts 和 validator 验收测试
 # 用途: 验证 artifacts 落盘和 validator gate 功能
 
-import json
 import os
 import sys
 import tempfile

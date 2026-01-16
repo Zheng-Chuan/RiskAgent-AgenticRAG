@@ -178,8 +178,11 @@ def run_agentic_chat(
     citations = extract_citations(docs)
     answer_with_citations = _attach_citations_to_each_paragraph(answer, citations)
 
-    claims: list[dict[str, Any]] = []
     evidence_set = agentic_primitives.build_evidence_set_from_docs(docs, include_text=True)
+    claims = agentic_primitives.build_claims_from_answer(
+        answer_with_citations,
+        evidence_set=evidence_set,
+    )
 
     failure_reason = validate_response(
         report=answer_with_citations,
@@ -207,6 +210,8 @@ def run_agentic_chat(
     response_data: dict[str, Any] = {
         "answer": answer_with_citations,
         "citations": citations,
+        "claims": claims,
+        "evidence_set": evidence_set,
         "decision_log": decision_log,
         "tool_traces": tool_traces,
         "status": status,
@@ -220,23 +225,7 @@ def run_agentic_chat(
         if isinstance(raw_breaches, list):
             breaches = raw_breaches
 
-    structured_evidence_set: list[dict[str, Any]] = []
-    for idx, doc in enumerate(docs):
-        evidence_id = f"ev_{idx}"
-        start_index_raw = doc.metadata.get("start_index", 0)
-        try:
-            start_index = int(start_index_raw)
-        except Exception:
-            start_index = 0
-        structured_evidence_set.append(
-            {
-                "evidence_id": evidence_id,
-                "source": str(doc.metadata.get("source", "")),
-                "chunk_id": str(doc.metadata.get("chunk_id", "")),
-                "start_index": start_index,
-                "snippet": (doc.page_content or "")[:200],
-            }
-        )
+    structured_evidence_set = agentic_primitives.build_evidence_set_from_docs(docs, include_text=False)
 
     structured_payload: dict[str, Any] = {
         "request_id": request_id,
@@ -265,6 +254,8 @@ def run_agentic_chat(
         "answer": answer_with_citations,
         "docs": docs,
         "citations": citations,
+        "claims": claims,
+        "evidence_set": structured_evidence_set,
         "decision_log": decision_log,
         "tool_traces": tool_traces,
         "status": status,

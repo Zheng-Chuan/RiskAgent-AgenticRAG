@@ -1,13 +1,16 @@
 from __future__ import annotations
 
+import importlib
 import unittest
 
 from tests.conftest import ensure_src_on_path
 
 ensure_src_on_path()
 
-from riskagent_rag.evaluation.citations import compute_citations_coverage, is_valid_citation
-from riskagent_rag.evaluation.reporting import compare_reports
+citations_mod = importlib.import_module("riskagent_rag.evaluation.citations")
+compute_citations_coverage = citations_mod.compute_citations_coverage
+is_valid_citation = citations_mod.is_valid_citation
+compare_reports = importlib.import_module("riskagent_rag.evaluation.reporting").compare_reports
 
 
 class EvaluationReportingTest(unittest.TestCase):

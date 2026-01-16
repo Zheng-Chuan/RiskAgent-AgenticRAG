@@ -27,7 +27,7 @@ def _utc_now_iso() -> str:
 
 
 def run_evaluation(*, corpus_dir: Path, dataset_path: Path, enable_ragas: bool) -> dict[str, Any]:
-    os.environ.setdefault("EMBEDDINGS_PROVIDER", "fake")
+    os.environ.setdefault("EMBEDDINGS_PROVIDER", "hf")
     os.environ.setdefault("LLM_PROVIDER", "fallback")
 
     items = load_dataset(dataset_path)

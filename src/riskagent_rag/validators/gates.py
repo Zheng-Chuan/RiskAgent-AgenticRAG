@@ -1,6 +1,7 @@
 # 中文注释: validator gates 实现, 确定性规则校验
 # 用途: 在 LLM 输出后进行结构化校验, fail fast, 避免下游错误
 
+import re
 from typing import Any, Optional
 
 
@@ -30,7 +31,7 @@ def evidence_gate(
 
     for claim in claims:
         claim_evidence_ids = claim.get("evidence_ids", [])
-        
+
         if not claim_evidence_ids:
             return {
                 "category": "evidence_missing",
@@ -81,11 +82,9 @@ def numeric_consistency_gate(
         - MVP 阶段先做最小校验: 如果 report 或 claims 提到数字, 必须有 tool_traces
         - 后续可以用正则提取数字, 与 tool_traces 的输出做精确匹配
     """
-    import re
-
-    has_numbers_in_report = bool(re.search(r'\d+', report))
+    has_numbers_in_report = bool(re.search(r"\d+", report))
     has_numbers_in_claims = any(
-        re.search(r'\d+', claim.get("statement", ""))
+        re.search(r"\d+", claim.get("statement", ""))
         for claim in claims
     )
 

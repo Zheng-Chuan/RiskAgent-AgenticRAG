@@ -1,5 +1,7 @@
 # QUICKSTART
 
+本项目默认在 conda 环境 `LangChain` 中运行，下面示例命令也默认使用 `conda run -n LangChain ...`。
+
 ## 1. 安装依赖
 
 在项目根目录跑下面命令

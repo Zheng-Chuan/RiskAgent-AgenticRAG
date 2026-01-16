@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import pathlib
 import sys
 import uuid
@@ -29,15 +30,15 @@ def _parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+_ensure_src_on_path(_project_root())
+
+from riskagent_rag.orchestration.langgraph_runner import run_langgraph_agentic_chat
+from riskagent_rag.rag.agentic_loop import run_agentic_chat
+from riskagent_rag.rag.pipeline import build_index, load_index
+
+
 def main() -> None:
     args = _parse_args()
-
-    project_root = _project_root()
-    _ensure_src_on_path(project_root)
-
-    from riskagent_rag.orchestration.langgraph_runner import run_langgraph_agentic_chat
-    from riskagent_rag.rag.agentic_loop import run_agentic_chat
-    from riskagent_rag.rag.pipeline import build_index, load_index
 
     sources_dir = pathlib.Path(args.sources_dir)
     persist_dir = pathlib.Path(args.persist_dir)
@@ -52,9 +53,8 @@ def main() -> None:
     retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
 
     # Check Environment Variable
-    import os
     use_langgraph = os.getenv("USE_LANGGRAPH", "").lower().strip() in ("true", "1", "yes")
-    
+
     print(f"Running with: use_langgraph={use_langgraph}")
 
     if use_langgraph:
@@ -62,30 +62,20 @@ def main() -> None:
     else:
         out = run_agentic_chat(question=args.question, retriever=retriever)
 
-    # Extract results
-    answer = out.get("answer", "")
-    citations = out.get("citations", [])
-    claims = out.get("claims", [])
-    evidence_set = out.get("evidence_set", [])
-    decision_log = out.get("decision_log", [])
-    tool_traces = out.get("tool_traces", [])
-    status = out.get("status", "ok")
-    failure_reason = out.get("failure_reason")
-
     result = {
-        "request_id": str(uuid.uuid4()), # Note: run_langgraph_agentic_chat might generate its own request_id internally for artifacts, but here we generate one for CLI output wrapping
+        "request_id": str(uuid.uuid4()),
         "question": args.question,
-        "answer": answer,
-        "citations": citations,
-        "claims": claims,
-        "evidence_set": evidence_set,
-        "decision_log": decision_log,
-        "tool_traces": tool_traces,
-        "status": status,
-        "failure_reason": failure_reason,
+        "answer": out.get("answer", ""),
+        "citations": out.get("citations", []),
+        "claims": out.get("claims", []),
+        "evidence_set": out.get("evidence_set", []),
+        "decision_log": out.get("decision_log", []),
+        "tool_traces": out.get("tool_traces", []),
+        "status": out.get("status", "ok"),
+        "failure_reason": out.get("failure_reason"),
         "sources_dir": str(sources_dir),
         "persist_dir": str(persist_dir),
-        "runner": "langgraph" if use_langgraph else "agentic_loop"
+        "runner": "langgraph" if use_langgraph else "agentic_loop",
     }
 
     # 技术难点: 输出落盘是 Week 2 的基础.

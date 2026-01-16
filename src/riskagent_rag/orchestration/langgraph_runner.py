@@ -7,9 +7,6 @@ import json
 import uuid
 from typing import Any, Literal, Optional, TypedDict
 
-from langchain_core.documents import Document  # type: ignore[import-not-found]
-from langgraph.graph import END, StateGraph  # type: ignore[import-not-found]
-
 from riskagent_rag.agents.data_agent import run_data_agent
 from riskagent_rag.artifacts.storage import save_artifact
 from riskagent_rag.contracts.structured import StructuredRequest
@@ -20,30 +17,30 @@ from riskagent_rag.validators.gates import validate_response
 
 class AgenticState(TypedDict, total=False):
     """LangGraph state schema for agentic RAG loop."""
-    
+
     question: str
     max_rounds: int
     retriever: Any
-    
+
     current_query: str
     improved_query: str
     current_round: int
-    docs: list[Document]
+    docs: list[Any]
     critique_reason: str
     should_continue: bool
-    
+
     should_call_tool: bool
     tool_args: dict[str, Any]
     tool_reason: str
     tool_output: Optional[dict[str, Any]]
     tool_traces: list[dict[str, Any]]
-    
+
     answer: str
     citations: list[dict[str, str]]
     claims: list[dict[str, Any]]
     evidence_set: list[dict[str, Any]]
     decision_log: list[dict[str, Any]]
-    
+
     status: str
     failure_reason: Optional[dict[str, Any]]
     debug: dict[str, Any]
@@ -53,7 +50,7 @@ def node_rewrite(state: AgenticState) -> AgenticState:
     """Node: rewrite query for better retrieval."""
     question = state["question"]
     rewritten = agentic_primitives.rewrite_query(question)
-    
+
     state["current_query"] = rewritten
     state["improved_query"] = ""
     state["current_round"] = 0
@@ -65,7 +62,7 @@ def node_rewrite(state: AgenticState) -> AgenticState:
         "chosen": rewritten,
         "alternatives": [question],
     })
-    
+
     return state
 
 
@@ -76,13 +73,13 @@ def node_retrieve_and_critique(state: AgenticState) -> AgenticState:
     question = state["question"]
     max_rounds = state["max_rounds"]
     current_round = state.get("current_round", 0)
-    
+
     docs = retriever.invoke(current_query)
-    
+
     sufficient, improved_query, critique_reason = agentic_primitives.critique_retrieval(question, docs)
     next_round = current_round + 1
     should_continue = (not sufficient) and (next_round < max_rounds)
-    
+
     state["docs"] = docs
     state["critique_reason"] = critique_reason
     state["improved_query"] = improved_query
@@ -98,7 +95,7 @@ def node_retrieve_and_critique(state: AgenticState) -> AgenticState:
         "alternatives": [f"docs_count={len(docs)}"],
     })
     state["decision_log"] = decision_log
-    
+
     return state
 
 
@@ -109,7 +106,7 @@ def node_revise_query(state: AgenticState) -> AgenticState:
     improved_query = str(state.get("improved_query", "")).strip()
     next_query = improved_query or question
     state["current_query"] = next_query
-    
+
     decision_log = state.get("decision_log", [])
     decision_log.append({
         "step_id": "revise_query",
@@ -119,7 +116,7 @@ def node_revise_query(state: AgenticState) -> AgenticState:
         "alternatives": [current_query],
     })
     state["decision_log"] = decision_log
-    
+
     return state
 
 
@@ -127,7 +124,7 @@ def node_decide_tool_use(state: AgenticState) -> AgenticState:
     """Node: decide whether to call tool."""
     question = state["question"]
     should_call, tool_args, tool_reason = agentic_primitives.decide_tool_use(question)
-    
+
     state["should_call_tool"] = should_call
     state["tool_args"] = tool_args
     state["tool_reason"] = tool_reason
@@ -142,7 +139,7 @@ def node_decide_tool_use(state: AgenticState) -> AgenticState:
         "alternatives": [json.dumps(tool_args, ensure_ascii=False)],
     })
     state["decision_log"] = decision_log
-    
+
     return state
 
 
@@ -150,7 +147,7 @@ def node_call_tool(state: AgenticState) -> AgenticState:
     """Node: call tool and collect traces."""
     question = state["question"]
     tool_args = state["tool_args"]
-    
+
     desk = str(tool_args.get("desk", "")).strip()
     as_of = str(tool_args.get("as_of", "")).strip() or agentic_primitives.utc_today_date()
     abs_delta_limit_raw = tool_args.get("abs_delta_limit", 1000000)
@@ -158,10 +155,10 @@ def node_call_tool(state: AgenticState) -> AgenticState:
         abs_delta_limit = float(abs_delta_limit_raw)
     except Exception:
         abs_delta_limit = 1000000.0
-    
+
     tool_output: Optional[dict[str, Any]] = None
     tool_traces = state.get("tool_traces", [])
-    
+
     if desk:
         request = StructuredRequest(
             request_id=str(uuid.uuid4()),
@@ -188,7 +185,7 @@ def node_call_tool(state: AgenticState) -> AgenticState:
     
     state["tool_output"] = tool_output
     state["tool_traces"] = tool_traces
-    
+
     return state
 
 
@@ -197,7 +194,7 @@ def node_synthesize_answer(state: AgenticState) -> AgenticState:
     question = state["question"]
     docs = state["docs"]
     tool_output = state.get("tool_output")
-    
+
     answer = agentic_primitives.synthesize_answer_with_tool(
         question=question,
         docs=docs,
@@ -205,10 +202,10 @@ def node_synthesize_answer(state: AgenticState) -> AgenticState:
     )
     citations = extract_citations(docs)
     answer_with_citations = agentic_primitives.attach_citations_to_each_paragraph(answer, citations)
-    
+
     state["answer"] = answer_with_citations
     state["citations"] = citations
-    
+
     return state
 
 
@@ -218,9 +215,12 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
     docs = state["docs"]
     tool_traces = state.get("tool_traces", [])
     tool_output = state.get("tool_output")
-    
-    claims: list[dict[str, Any]] = []
+
     evidence_set = agentic_primitives.build_evidence_set_from_docs(docs, include_text=True)
+    claims = agentic_primitives.build_claims_from_answer(
+        answer,
+        evidence_set=evidence_set,
+    )
     
     failure_reason = validate_response(
         report=answer,
@@ -229,7 +229,7 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
         tool_traces=tool_traces,
         docs=docs,
     )
-    
+
     status = "ok" if failure_reason is None else "failed"
     state["status"] = status
     state["failure_reason"] = failure_reason
@@ -242,7 +242,7 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
         "tool_args": state.get("tool_args", {}),
         "tool_should_call": state.get("should_call_tool", False),
     }
-    
+
     request_id = str(uuid.uuid4())
     request_data = {
         "question": state["question"],
@@ -279,7 +279,7 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
         "status": status,
         "failure_reason": failure_reason,
     }
-    
+
     try:
         artifact_path = save_artifact(
             request_id,
@@ -290,9 +290,9 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
         debug_info["artifact_path"] = artifact_path
     except Exception as e:
         debug_info["artifact_error"] = str(e)
-    
+
     state["debug"] = debug_info
-    
+
     return state
 
 
@@ -313,10 +313,10 @@ def should_call_tool(state: AgenticState) -> Literal["call_tool", "synthesize_an
 def visualize_graph_mermaid() -> str:
     """
     生成 LangGraph 的 Mermaid 流程图.
-    
+
     返回:
         Mermaid 格式的流程图字符串
-    
+
     用途:
         - 可视化 agentic loop 的执行流程
         - 便于理解 nodes 和 edges 的关系
@@ -343,8 +343,13 @@ graph TD
 
 def build_langgraph_agentic_loop() -> Any:
     """Build LangGraph for agentic RAG loop."""
+    try:
+        from langgraph.graph import END, StateGraph  # type: ignore[import-not-found]
+    except ImportError as e:
+        raise RuntimeError("Missing optional dependency: langgraph") from e
+
     workflow = StateGraph(AgenticState)
-    
+
     workflow.add_node("rewrite", node_rewrite)
     workflow.add_node("retrieve_and_critique", node_retrieve_and_critique)
     workflow.add_node("revise_query", node_revise_query)
@@ -375,7 +380,7 @@ def build_langgraph_agentic_loop() -> Any:
     workflow.add_edge("call_tool", "synthesize_answer")
     workflow.add_edge("synthesize_answer", "validate_and_save")
     workflow.add_edge("validate_and_save", END)
-    
+
     return workflow.compile()
 
 
@@ -386,17 +391,17 @@ def run_langgraph_agentic_chat(
 ) -> dict[str, Any]:
     """
     Run agentic chat using LangGraph orchestration.
-    
+
     参数:
         question: 用户问题
         retriever: 检索器实例
         max_rounds: 最大重试轮数
-    
+
     返回:
         与 run_agentic_chat 相同的输出 schema
     """
     graph = build_langgraph_agentic_loop()
-    
+
     initial_state: AgenticState = {
         "question": question,
         "max_rounds": max_rounds,
@@ -419,13 +424,18 @@ def run_langgraph_agentic_chat(
         "failure_reason": None,
         "debug": {},
     }
-    
+
     final_state = graph.invoke(initial_state)
-    
+
     return {
         "answer": final_state["answer"],
         "docs": final_state["docs"],
         "citations": final_state["citations"],
+        "claims": final_state.get("claims", []),
+        "evidence_set": agentic_primitives.build_evidence_set_from_docs(
+            final_state.get("docs", []),
+            include_text=False,
+        ),
         "decision_log": final_state["decision_log"],
         "tool_traces": final_state["tool_traces"],
         "status": final_state["status"],

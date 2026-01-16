@@ -30,7 +30,7 @@ class ContractMilestone1AcceptanceTest(unittest.TestCase):
             abs_delta_limit=1000000,
         )
 
-        tool_output, trace, failure_reason = run_data_agent(request)
+        tool_output, trace, _failure_reason = run_data_agent(request)
 
         self.assertIsNotNone(trace)
         self.assertEqual(trace.tool_name, "monitor_desk_exposure")
@@ -38,6 +38,6 @@ class ContractMilestone1AcceptanceTest(unittest.TestCase):
         self.assertIsInstance(trace.tool_output, dict)
         self.assertTrue(trace.started_at, "trace missing started_at")
         self.assertTrue(trace.finished_at, "trace missing finished_at")
-        
+
         self.assertIsInstance(tool_output, dict)
         self.assertIn("exposure", tool_output)

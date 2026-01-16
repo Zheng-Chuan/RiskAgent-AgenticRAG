@@ -38,8 +38,10 @@ from riskagent_rag.rag.pipeline import build_index, extract_citations, load_inde
 SOURCES_DIR = PROJECT_ROOT / "corpus"
 PERSIST_DIR = PROJECT_ROOT / ".milvus"
 
-_graph = None
-_retriever = None
+_STATE: dict[str, Any] = {
+    "graph": None,
+    "retriever": None,
+}
 
 
 _COOL_CSS = """
@@ -196,9 +198,8 @@ def _ensure_graph() -> Any:
     # build index 后会重置缓存, 重新加载最新向量库.
     # 技术难点: UI 交互是有状态的, 但向量库在磁盘上可能被重建.
     # - 如果不重置缓存, 用户会看到旧索引的检索结果, citations 会失真.
-    global _graph
-    if _graph is not None:
-        return _graph
+    if _STATE["graph"] is not None:
+        return _STATE["graph"]
 
     # 从本地持久化目录加载向量库, 并构建 retriever.
     vectorstore = load_index(PERSIST_DIR)
@@ -206,19 +207,18 @@ def _ensure_graph() -> Any:
     # 业务不清晰点: k 值和检索策略未来如何定义.
     # - Week 2 会基于种子问题集做调参, 并把策略固化.
     # 编排最小 LangGraph: retrieve -> answer.
-    _graph = build_rag_graph(retriever)
-    return _graph
+    _STATE["graph"] = build_rag_graph(retriever)
+    return _STATE["graph"]
 
 
 def _ensure_retriever() -> Any:
     # 中文注释 agentic loop 需要直接使用 retriever
-    global _retriever
-    if _retriever is not None:
-        return _retriever
+    if _STATE["retriever"] is not None:
+        return _STATE["retriever"]
 
     vectorstore = load_index(PERSIST_DIR)
-    _retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
-    return _retriever
+    _STATE["retriever"] = vectorstore.as_retriever(search_kwargs={"k": 4})
+    return _STATE["retriever"]
 
 
 def on_build_index() -> str:
@@ -227,12 +227,9 @@ def on_build_index() -> str:
     # 技术难点: ingest 必须稳定, 否则 Week 2 的引用覆盖率无法对比.
     result = build_index(sources_dir=SOURCES_DIR, persist_dir=PERSIST_DIR)
 
-    global _graph
     # 索引更新后重置 graph 缓存, 确保后续问题使用新索引.
-    _graph = None
-
-    global _retriever
-    _retriever = None
+    _STATE["graph"] = None
+    _STATE["retriever"] = None
 
     return (
         "Index ready. "
@@ -240,7 +237,7 @@ def on_build_index() -> str:
     )
 
 
-def chat(user_text: str, history: list[tuple[str, str]]):
+def chat(user_text: str, _history: list[tuple[str, str]]):
     # ChatInterface 回调.
     # history 当前未用, 先保持参数以满足 Gradio 的签名要求.
     # 业务不清晰点: 是否需要多轮对话记忆.
@@ -303,7 +300,7 @@ def _env_badge_text() -> str:
     provider = os.getenv("LLM_PROVIDER", "").lower().strip() or "fallback"
     use_langgraph = os.getenv("USE_LANGGRAPH", "").lower().strip() in ("true", "1", "yes")
     langsmith_status = get_langsmith_status()
-    
+
     lines = []
     if provider == "ollama":
         model = os.getenv("OLLAMA_MODEL", "") or "unknown"
@@ -312,16 +309,16 @@ def _env_badge_text() -> str:
         lines.append(f"base_url={base_url}")
     else:
         lines.append(f"provider={provider}")
-    
+
     lines.append(f"langgraph={'enabled' if use_langgraph else 'disabled'}")
-    
+
     if langsmith_status["enabled"] == "true":
         lines.append(f"langsmith=enabled, project={langsmith_status['project']}")
         if langsmith_status["url"]:
             lines.append(f"追踪: {langsmith_status['url']}")
     else:
         lines.append("langsmith=disabled")
-    
+
     return "\n".join(lines)
 
 
@@ -342,14 +339,14 @@ def chat_v2(
     provider = os.getenv("LLM_PROVIDER", "").lower().strip()
     if provider == "ollama":
         retriever = _ensure_retriever()
-        
+
         use_langgraph = os.getenv("USE_LANGGRAPH", "").lower().strip() in ("true", "1", "yes")
-        
+
         if use_langgraph:
             out = run_langgraph_agentic_chat(question=user_text, retriever=retriever, max_rounds=max_rounds)
         else:
             out = run_agentic_chat(question=user_text, retriever=retriever, max_rounds=max_rounds)
-        
+
         answer = str(out.get("answer", ""))
         citations = out.get("citations", [])
         decision_log = out.get("decision_log", [])
@@ -357,17 +354,17 @@ def chat_v2(
         debug = out.get("debug", {})
         status_val = out.get("status", "ok")
         failure_reason = out.get("failure_reason")
-        
+
         if use_langgraph:
             debug["runner"] = "langgraph"
         else:
             debug["runner"] = "pure_function"
-        
+
         if status_val == "failed" and failure_reason:
             answer = f"⚠️ Validation failed: {failure_reason.get('message', '')}\n\n{answer}"
             debug["validation_status"] = status_val
             debug["failure_reason"] = failure_reason
-        
+
         history = history + [[user_text, answer]]
         return history, list(citations), list(decision_log), list(tool_traces), dict(debug)
 
@@ -383,7 +380,7 @@ def chat_v2(
 def main() -> None:
     # 中文注释: 启动时自动配置 LangSmith 追踪
     setup_langsmith(project_name="RiskAgent-RAG")
-    
+
     with gr.Blocks(title="RiskAgent-RAG") as demo:
         gr.HTML(
             """

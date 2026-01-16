@@ -1,14 +1,15 @@
 from __future__ import annotations
 
+import importlib
 import unittest
 
 from tests.conftest import ensure_src_on_path
 
-a = ensure_src_on_path
-
 ensure_src_on_path()
 
-from riskagent_rag.evaluation.ragas_integration import try_compute_ragas_metrics
+try_compute_ragas_metrics = importlib.import_module(
+    "riskagent_rag.evaluation.ragas_integration"
+).try_compute_ragas_metrics
 
 
 class EvaluationRagasIntegrationTest(unittest.TestCase):

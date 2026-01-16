@@ -19,9 +19,22 @@
 
 ## 快速入口
 
-推荐使用 conda 环境 `LangChain`
+推荐使用 conda 环境 `LangChain`。
 
-## 本地中间件
+### 1. 开发环境安装 (关键)
+
+为了避免 import 报错，请务必以 editable 模式安装本项目：
+
+```bash
+# 方式一：使用 Makefile (推荐)
+make install
+
+# 方式二：手动 pip
+pip install -e .
+```
+
+### 2. 启动本地中间件
+
 
 本项目用 Docker compose 启动本地中间件
 
@@ -35,19 +48,19 @@ Docker Desktop 分组名 riskagent-rag
   - 容器名 riskagent-rag-milvus
   - 端口 19530
 
-- UI
+### 3. 启动 UI
 
 ```bash
 conda run -n LangChain python gradio_app.py
 ```
 
-- CLI
+### 4. 启动 CLI
 
 ```bash
 conda run -n LangChain python demo_cli.py --rebuild-index --question "what is FRTB"
 ```
 
-- 评测
+### 5. 运行评测
 
 ```bash
 conda run -n LangChain python -m unittest tests.test_week2_acceptance

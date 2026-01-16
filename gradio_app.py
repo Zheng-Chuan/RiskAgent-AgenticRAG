@@ -205,7 +205,7 @@ def chat_v2(
 
     # 如果发生系统错误
     if "message" in out and out.get("status") == "error":
-         answer = f"⚠️ System Error: {out['message']}"
+        answer = f"⚠️ System Error: {out['message']}"
 
     history = history + [[user_text, answer]]
     return history, list(citations), list(decision_log), list(tool_traces), dict(debug)

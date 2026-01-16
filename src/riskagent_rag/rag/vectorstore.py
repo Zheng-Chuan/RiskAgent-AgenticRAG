@@ -147,7 +147,7 @@ def load_milvus_vectorstore(persist_dir: pathlib.Path) -> VectorStore:
                 from langchain_core.vectorstores import InMemoryVectorStore
                 path = persist_dir / "inmemory_vectorstore.json"
                 if path.exists():
-                     return InMemoryVectorStore.load(str(path), embedding=embeddings)
+                    return InMemoryVectorStore.load(str(path), embedding=embeddings)
                 # If file doesn't exist, we might still want to try Milvus or return empty
                 # For now let's fall through
 

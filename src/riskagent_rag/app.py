@@ -101,7 +101,7 @@ class RiskAgentSystem:
         
         # 统一补充 citations
         if "citations" not in out and "docs" in out:
-             out["citations"] = extract_citations(out["docs"])
+            out["citations"] = extract_citations(out["docs"])
 
         return out
 

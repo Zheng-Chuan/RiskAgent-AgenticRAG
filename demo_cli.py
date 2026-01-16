@@ -4,9 +4,8 @@ import argparse
 import json
 import pathlib
 import uuid
-import sys
 
-from riskagent_rag.app import RiskAgentSystem, system
+from riskagent_rag.app import system
 from riskagent_rag.config.settings import settings
 
 

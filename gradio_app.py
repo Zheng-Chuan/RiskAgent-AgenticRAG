@@ -3,7 +3,7 @@ from __future__ import annotations
 import gradio as gr
 from typing import Any
 
-from riskagent_rag.app import RiskAgentSystem, system
+from riskagent_rag.app import system
 
 # Gradio 入口文件.
 # MVP 目标是 1 条命令启动 UI, 并跑通 build index -> ask -> answer + citations.
@@ -273,7 +273,7 @@ def main() -> None:
                     with gr.Tab("Graph"):
                         gr.Markdown("### LangGraph 结构可视化")
                         gr.Markdown("当前 agentic loop 的执行流程图 (需要设置 USE_LANGGRAPH=true 启用)")
-                        graph_viz = gr.Textbox(
+                        gr.Textbox(
                             value=system.get_graph_visualization(),
                             label="Mermaid 流程图代码",
                             lines=20,

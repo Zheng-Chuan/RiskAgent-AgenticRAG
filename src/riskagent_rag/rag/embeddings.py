@@ -39,7 +39,7 @@ def build_embeddings() -> Embeddings:
 
     local_dir = _local_embeddings_dir_for_model(model_name)
     resolved_model = str(local_dir) if local_dir.exists() else model_name
-    
+
     try:
         mod = importlib.import_module("langchain_huggingface")
         HuggingFaceEmbeddings = getattr(mod, "HuggingFaceEmbeddings")

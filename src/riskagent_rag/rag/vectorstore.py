@@ -22,7 +22,7 @@ from riskagent_rag.rag.embeddings import build_embeddings
 def _connection_args(persist_dir: pathlib.Path) -> Dict[str, Any]:
     """构建 Milvus 连接参数。"""
     cfg = settings.milvus
-    
+
     if cfg.uri:
         base: Dict[str, Any] = {"uri": cfg.uri, "secure": cfg.secure}
     elif cfg.host:
@@ -112,7 +112,7 @@ def build_milvus_vectorstore(
 
     connection_args = _connection_args(persist_dir)
     _wait_for_milvus_ready(connection_args)
-    
+
     index_params = {
         "index_type": cfg.index_type,
         "metric_type": cfg.metric_type,

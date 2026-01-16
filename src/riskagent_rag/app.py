@@ -96,7 +96,7 @@ class RiskAgentSystem:
             # 简单 Agentic Loop 模式
             out = run_agentic_chat(question=question, retriever=retriever)
             out["runner"] = "agentic_loop"
-        
+
         # 统一补充 citations
         if "citations" not in out and "docs" in out:
             out["citations"] = extract_citations(out["docs"])

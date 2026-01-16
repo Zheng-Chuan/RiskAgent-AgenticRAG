@@ -1,0 +1,24 @@
+[MESSAGES CONTROL]
+disable=
+    missing-module-docstring,
+    missing-class-docstring,
+    missing-function-docstring,
+    line-too-long,
+    import-outside-toplevel,
+    too-many-locals,
+    too-few-public-methods,
+    too-many-instance-attributes,
+    invalid-name,
+    wrong-import-order,
+    fixme,
+    broad-exception-caught,
+    no-member,
+    unused-argument,
+    unused-import,
+    unused-variable,
+    ungrouped-imports,
+    duplicate-code
+
+[FORMAT]
+# Even though we disabled line-too-long, setting this helps other tools or if we re-enable it partially
+max-line-length=120

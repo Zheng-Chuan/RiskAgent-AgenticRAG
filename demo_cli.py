@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import importlib
 import json
 import os
 import pathlib
@@ -32,9 +33,13 @@ def _parse_args() -> argparse.Namespace:
 
 _ensure_src_on_path(_project_root())
 
-from riskagent_rag.orchestration.langgraph_runner import run_langgraph_agentic_chat
-from riskagent_rag.rag.agentic_loop import run_agentic_chat
-from riskagent_rag.rag.pipeline import build_index, load_index
+run_langgraph_agentic_chat = importlib.import_module(
+    "riskagent_rag.orchestration.langgraph_runner"
+).run_langgraph_agentic_chat
+run_agentic_chat = importlib.import_module("riskagent_rag.rag.agentic_loop").run_agentic_chat
+_pipeline_mod = importlib.import_module("riskagent_rag.rag.pipeline")
+build_index = _pipeline_mod.build_index
+load_index = _pipeline_mod.load_index
 
 
 def main() -> None:

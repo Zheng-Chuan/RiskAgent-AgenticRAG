@@ -196,13 +196,25 @@ def build_milvus_vectorstore(
     chunks: list[Document],
     persist_dir: pathlib.Path,
 ):
-    # 构建 Milvus 向量库, 默认使用 Milvus Lite 单文件落盘, 便于回归.
+    embeddings = _build_embeddings()
+
+    uri = os.getenv("MILVUS_URI")
+    host = os.getenv("MILVUS_HOST")
+
+    if not uri and not host:
+        from langchain_core.vectorstores import InMemoryVectorStore
+
+        persist_dir.mkdir(parents=True, exist_ok=True)
+        path = persist_dir / "inmemory_vectorstore.json"
+        vectorstore = InMemoryVectorStore.from_documents(documents=chunks, embedding=embeddings)
+        vectorstore.dump(str(path))
+        return vectorstore
+
     try:
         from langchain_milvus import Milvus
     except Exception:
         from langchain_community.vectorstores import Milvus
 
-    embeddings = _build_embeddings()
     connection_args = _connection_args(persist_dir)
     _wait_for_milvus_ready(connection_args)
     collection_name = os.getenv("MILVUS_COLLECTION", "riskagent_rag")
@@ -226,12 +238,22 @@ def build_milvus_vectorstore(
 
 def load_milvus_vectorstore(persist_dir: pathlib.Path):
     # 加载已存在的 Milvus 向量库.
+    embeddings = _build_embeddings()
+
+    uri = os.getenv("MILVUS_URI")
+    host = os.getenv("MILVUS_HOST")
+
+    if not uri and not host:
+        from langchain_core.vectorstores import InMemoryVectorStore
+
+        path = persist_dir / "inmemory_vectorstore.json"
+        return InMemoryVectorStore.load(str(path), embedding=embeddings)
+
     try:
         from langchain_milvus import Milvus
     except Exception:
         from langchain_community.vectorstores import Milvus
 
-    embeddings = _build_embeddings()
     connection_args = _connection_args(persist_dir)
     _wait_for_milvus_ready(connection_args)
     collection_name = os.getenv("MILVUS_COLLECTION", "riskagent_rag")

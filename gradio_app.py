@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import importlib
 import os
 import pathlib
 import sys
@@ -25,14 +26,22 @@ if str(SRC_DIR) not in sys.path:
     # 后续如果引入 pyproject.toml, 可以去掉该 hack.
     sys.path.insert(0, str(SRC_DIR))
 
-from riskagent_rag.config.langsmith import get_langsmith_status, setup_langsmith
-from riskagent_rag.graph.workflow import build_rag_graph
-from riskagent_rag.orchestration.langgraph_runner import (
-    run_langgraph_agentic_chat,
-    visualize_graph_mermaid,
-)
-from riskagent_rag.rag.agentic_loop import run_agentic_chat
-from riskagent_rag.rag.pipeline import build_index, extract_citations, load_index
+_langsmith_mod = importlib.import_module("riskagent_rag.config.langsmith")
+get_langsmith_status = _langsmith_mod.get_langsmith_status
+setup_langsmith = _langsmith_mod.setup_langsmith
+
+build_rag_graph = importlib.import_module("riskagent_rag.graph.workflow").build_rag_graph
+
+_langgraph_runner_mod = importlib.import_module("riskagent_rag.orchestration.langgraph_runner")
+run_langgraph_agentic_chat = _langgraph_runner_mod.run_langgraph_agentic_chat
+visualize_graph_mermaid = _langgraph_runner_mod.visualize_graph_mermaid
+
+run_agentic_chat = importlib.import_module("riskagent_rag.rag.agentic_loop").run_agentic_chat
+
+_pipeline_mod = importlib.import_module("riskagent_rag.rag.pipeline")
+build_index = _pipeline_mod.build_index
+extract_citations = _pipeline_mod.extract_citations
+load_index = _pipeline_mod.load_index
 
 
 SOURCES_DIR = PROJECT_ROOT / "corpus"
@@ -381,7 +390,7 @@ def main() -> None:
     # 中文注释: 启动时自动配置 LangSmith 追踪
     setup_langsmith(project_name="RiskAgent-RAG")
 
-    with gr.Blocks(title="RiskAgent-RAG") as demo:
+    with gr.Blocks(title="RiskAgent-RAG", css=_COOL_CSS) as demo:
         gr.HTML(
             """
             <div class="ra-header">
@@ -485,7 +494,7 @@ def main() -> None:
             outputs=[state, chatbot, citations_json, decision_json, tool_json, debug_json],
         )
 
-    demo.launch(css=_COOL_CSS)
+    demo.launch()
 
 
 if __name__ == "__main__":

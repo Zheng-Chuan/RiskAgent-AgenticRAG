@@ -85,7 +85,7 @@ def node_retrieve_and_critique(state: AgenticState) -> AgenticState:
     state["improved_query"] = improved_query
     state["should_continue"] = should_continue
     state["current_round"] = next_round
-    
+
     decision_log = state.get("decision_log", [])
     decision_log.append({
         "step_id": f"retrieve_round_{next_round}",
@@ -129,7 +129,7 @@ def node_decide_tool_use(state: AgenticState) -> AgenticState:
     state["tool_args"] = tool_args
     state["tool_reason"] = tool_reason
     state["tool_traces"] = state.get("tool_traces", [])
-    
+
     decision_log = state.get("decision_log", [])
     decision_log.append({
         "step_id": "tool_decision",
@@ -182,7 +182,7 @@ def node_call_tool(state: AgenticState) -> AgenticState:
             "alternatives": [json.dumps(tool_args, ensure_ascii=False)],
         })
         state["decision_log"] = decision_log
-    
+
     state["tool_output"] = tool_output
     state["tool_traces"] = tool_traces
 
@@ -221,7 +221,7 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
         answer,
         evidence_set=evidence_set,
     )
-    
+
     failure_reason = validate_response(
         report=answer,
         claims=claims,
@@ -235,7 +235,7 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
     state["failure_reason"] = failure_reason
     state["claims"] = claims
     state["evidence_set"] = evidence_set
-    
+
     debug_info: dict[str, Any] = {
         "final_query": state["current_query"],
         "critique_reason": state.get("critique_reason", ""),
@@ -357,7 +357,7 @@ def build_langgraph_agentic_loop() -> Any:
     workflow.add_node("call_tool", node_call_tool)
     workflow.add_node("synthesize_answer", node_synthesize_answer)
     workflow.add_node("validate_and_save", node_validate_and_save)
-    
+
     workflow.set_entry_point("rewrite")
     workflow.add_edge("rewrite", "retrieve_and_critique")
     workflow.add_conditional_edges(

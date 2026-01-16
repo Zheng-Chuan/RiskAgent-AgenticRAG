@@ -9,4 +9,4 @@ sentence-transformers
 pymilvus[milvus_lite]
 pydantic
 python-dotenv
-pylint
+

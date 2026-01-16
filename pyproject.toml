@@ -18,7 +18,6 @@ dependencies = [
     "pymilvus[milvus_lite]",
     "pydantic",
     "python-dotenv",
-    "pylint"
 ]
 
 [tool.setuptools.packages.find]
@@ -27,40 +26,4 @@ where = ["src"]
 [tool.pyright]
 extraPaths = ["src"]
 
-[tool.pylint.MASTER]
-ignore-paths = [
-    "^models/.*$",
-    "^deploy/.*$",
-    "^docs/.*$",
-]
-init-hook = "import os,sys; sys.path.insert(0, os.path.abspath(os.path.join(os.getcwd(), 'src')))"
 
-[tool.pylint.'MESSAGES CONTROL']
-disable = [
-    "missing-module-docstring",
-    "missing-class-docstring",
-    "missing-function-docstring",
-    "line-too-long",
-    "too-few-public-methods",
-    "broad-exception-caught",
-    "chained-comparison",
-    "import-error",
-    "import-outside-toplevel",
-    "invalid-name",
-    "no-member",
-    "protected-access",
-    "unused-variable",
-    "duplicate-code",
-    "consider-using-with",
-    "wrong-import-position",
-    "too-many-locals",
-    "too-many-statements",
-    "too-many-arguments",
-    "too-many-branches",
-    "consider-iterating-dictionary",
-    "trailing-newlines",
-    "trailing-whitespace",
-]
-
-[tool.pylint.FORMAT]
-max-line-length = 120

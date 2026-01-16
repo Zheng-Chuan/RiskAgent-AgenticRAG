@@ -18,10 +18,10 @@ import shutil
 
 from langchain_core.documents import Document
 
-from riskagent_rag.rag.milvus_index import (
+from riskagent_rag.rag.ingestion import split_documents
+from riskagent_rag.rag.vectorstore import (
     build_milvus_vectorstore,
     load_milvus_vectorstore,
-    split_documents,
 )
 from riskagent_rag.rag.source_loader import load_markdown_sources
 

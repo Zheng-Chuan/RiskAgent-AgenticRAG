@@ -1,57 +1,15 @@
 from __future__ import annotations
 
-import json
-import importlib
-import os
-import pathlib
-import sys
+import gradio as gr
 from typing import Any
 
-import gradio as gr
+from riskagent_rag.app import RiskAgentSystem, system
 
 # Gradio 入口文件.
 # MVP 目标是 1 条命令启动 UI, 并跑通 build index -> ask -> answer + citations.
 #
 # 启动方式.
 # - conda run -n LangChain python gradio_app.py
-#
-# 目录约定.
-# - docs/sources: 放置 markdown 语料.
-# - .milvus: Milvus Lite 持久化目录.
-
-PROJECT_ROOT = pathlib.Path(__file__).resolve().parent
-SRC_DIR = PROJECT_ROOT / "src"
-if str(SRC_DIR) not in sys.path:
-    # 让用户可以直接 python gradio_app.py 启动, 不依赖安装 editable package.
-    # 后续如果引入 pyproject.toml, 可以去掉该 hack.
-    sys.path.insert(0, str(SRC_DIR))
-
-_langsmith_mod = importlib.import_module("riskagent_rag.config.langsmith")
-get_langsmith_status = _langsmith_mod.get_langsmith_status
-setup_langsmith = _langsmith_mod.setup_langsmith
-
-build_rag_graph = importlib.import_module("riskagent_rag.graph.workflow").build_rag_graph
-
-_langgraph_runner_mod = importlib.import_module("riskagent_rag.orchestration.langgraph_runner")
-run_langgraph_agentic_chat = _langgraph_runner_mod.run_langgraph_agentic_chat
-visualize_graph_mermaid = _langgraph_runner_mod.visualize_graph_mermaid
-
-run_agentic_chat = importlib.import_module("riskagent_rag.rag.agentic_loop").run_agentic_chat
-
-_pipeline_mod = importlib.import_module("riskagent_rag.rag.pipeline")
-build_index = _pipeline_mod.build_index
-extract_citations = _pipeline_mod.extract_citations
-load_index = _pipeline_mod.load_index
-
-
-SOURCES_DIR = PROJECT_ROOT / "corpus"
-PERSIST_DIR = PROJECT_ROOT / ".milvus"
-
-_STATE: dict[str, Any] = {
-    "graph": None,
-    "retriever": None,
-}
-
 
 _COOL_CSS = """
 .gradio-container * {
@@ -202,133 +160,21 @@ code, pre {
 """
 
 
-def _ensure_graph() -> Any:
-    # graph 缓存.
-    # build index 后会重置缓存, 重新加载最新向量库.
-    # 技术难点: UI 交互是有状态的, 但向量库在磁盘上可能被重建.
-    # - 如果不重置缓存, 用户会看到旧索引的检索结果, citations 会失真.
-    if _STATE["graph"] is not None:
-        return _STATE["graph"]
-
-    # 从本地持久化目录加载向量库, 并构建 retriever.
-    vectorstore = load_index(PERSIST_DIR)
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
-    # 业务不清晰点: k 值和检索策略未来如何定义.
-    # - Week 2 会基于种子问题集做调参, 并把策略固化.
-    # 编排最小 LangGraph: retrieve -> answer.
-    _STATE["graph"] = build_rag_graph(retriever)
-    return _STATE["graph"]
-
-
-def _ensure_retriever() -> Any:
-    # 中文注释 agentic loop 需要直接使用 retriever
-    if _STATE["retriever"] is not None:
-        return _STATE["retriever"]
-
-    vectorstore = load_index(PERSIST_DIR)
-    _STATE["retriever"] = vectorstore.as_retriever(search_kwargs={"k": 4})
-    return _STATE["retriever"]
-
-
 def on_build_index() -> str:
-    # UI 按钮回调.
-    # 从 docs/sources 构建向量库, 落地到 .milvus.
-    # 技术难点: ingest 必须稳定, 否则 Week 2 的引用覆盖率无法对比.
-    result = build_index(sources_dir=SOURCES_DIR, persist_dir=PERSIST_DIR)
-
-    # 索引更新后重置 graph 缓存, 确保后续问题使用新索引.
-    _STATE["graph"] = None
-    _STATE["retriever"] = None
-
-    return (
-        "Index ready. "
-        f"sources={result.source_count}, chunks={result.chunk_count}, persist_dir={result.persist_dir}"
-    )
-
-
-def chat(user_text: str, _history: list[tuple[str, str]]):
-    # ChatInterface 回调.
-    # history 当前未用, 先保持参数以满足 Gradio 的签名要求.
-    # 业务不清晰点: 是否需要多轮对话记忆.
-    # - 多轮会引入更复杂的 context 管理与成本控制.
-    # - MVP 先做单轮问答, Week 3 再扩展为多角色多轮.
-    if not user_text:
-        return ""
-
-    if not PERSIST_DIR.exists():
-        return "Index not found. Click 'Build index' first."
-
-    provider = os.getenv("LLM_PROVIDER", "").lower().strip()
-    if provider == "ollama":
-        retriever = _ensure_retriever()
-        out = run_agentic_chat(question=user_text, retriever=retriever, max_rounds=2)
-        answer = str(out.get("answer", ""))
-        citations = out.get("citations", [])
-        decision_log = out.get("decision_log", [])
-        tool_traces = out.get("tool_traces", [])
-        debug = out.get("debug", {})
-
-        citations_md = "\n".join(
-            [f"- source={c.get('source','')} chunk_id={c.get('chunk_id','')}" for c in citations]
-        )
-        decision_md = json.dumps(decision_log, ensure_ascii=False, indent=2)
-        tool_md = json.dumps(tool_traces, ensure_ascii=False, indent=2)
-        debug_md = json.dumps(debug, ensure_ascii=False, indent=2)
-
+    """UI 按钮回调: 重建索引"""
+    try:
+        result = system.build_index()
         return (
-            f"{answer}\n\n"
-            f"Citations:\n{citations_md}\n\n"
-            "Decision log:\n"
-            f"```json\n{decision_md}\n```\n\n"
-            "Tool traces:\n"
-            f"```json\n{tool_md}\n```\n\n"
-            "Debug:\n"
-            f"```json\n{debug_md}\n```"
+            "Index ready. "
+            f"sources={result.source_count}, chunks={result.chunk_count}, persist_dir={result.persist_dir}"
         )
-
-    graph = _ensure_graph()
-    # graph.invoke 会返回最终 state, 其中包含 docs 和 answer.
-    out = graph.invoke({"question": user_text})
-
-    answer = out.get("answer", "")
-    docs = out.get("docs", [])
-    citations = extract_citations(docs)
-
-    citations_md = "\n".join(
-        [f"- source={c['source']} chunk_id={c['chunk_id']}" for c in citations]
-    )
-
-    # MVP 先用 markdown 文本展示 citations.
-    # 后续可以改成更结构化的 UI, 例如 DataFrame 或可点击链接.
-    # 技术难点: citations 一旦对外展示就是 contract, 后续字段扩展要考虑兼容.
-
-    return f"{answer}\n\nCitations:\n{citations_md}"
+    except Exception as e:
+        return f"Error building index: {e}"
 
 
 def _env_badge_text() -> str:
-    provider = os.getenv("LLM_PROVIDER", "").lower().strip() or "fallback"
-    use_langgraph = os.getenv("USE_LANGGRAPH", "").lower().strip() in ("true", "1", "yes")
-    langsmith_status = get_langsmith_status()
-
-    lines = []
-    if provider == "ollama":
-        model = os.getenv("OLLAMA_MODEL", "") or "unknown"
-        base_url = os.getenv("OLLAMA_BASE_URL", "") or "http://localhost:11434"
-        lines.append(f"provider=ollama, model={model}")
-        lines.append(f"base_url={base_url}")
-    else:
-        lines.append(f"provider={provider}")
-
-    lines.append(f"langgraph={'enabled' if use_langgraph else 'disabled'}")
-
-    if langsmith_status["enabled"] == "true":
-        lines.append(f"langsmith=enabled, project={langsmith_status['project']}")
-        if langsmith_status["url"]:
-            lines.append(f"追踪: {langsmith_status['url']}")
-    else:
-        lines.append("langsmith=disabled")
-
-    return "\n".join(lines)
+    """UI 状态展示"""
+    return system.get_status()
 
 
 def chat_v2(
@@ -336,60 +182,36 @@ def chat_v2(
     history: list[list[str]],
     max_rounds: int,
 ) -> tuple[list[list[str]], list[dict[str, str]], list[dict[str, Any]], list[dict[str, Any]], dict[str, Any]]:
-    # 中文注释: v2 UI 回调, 输出 chat history + inspector.
+    """处理用户对话"""
     if not user_text:
         return history, [], [], [], {}
 
-    if not PERSIST_DIR.exists():
-        answer = "Index not found. Click 'Build index' first."
-        history = history + [[user_text, answer]]
-        return history, [], [], [], {"error": "index_missing"}
+    # 调用核心系统
+    out = system.chat(question=user_text)
 
-    provider = os.getenv("LLM_PROVIDER", "").lower().strip()
-    if provider == "ollama":
-        retriever = _ensure_retriever()
-
-        use_langgraph = os.getenv("USE_LANGGRAPH", "").lower().strip() in ("true", "1", "yes")
-
-        if use_langgraph:
-            out = run_langgraph_agentic_chat(question=user_text, retriever=retriever, max_rounds=max_rounds)
-        else:
-            out = run_agentic_chat(question=user_text, retriever=retriever, max_rounds=max_rounds)
-
-        answer = str(out.get("answer", ""))
-        citations = out.get("citations", [])
-        decision_log = out.get("decision_log", [])
-        tool_traces = out.get("tool_traces", [])
-        debug = out.get("debug", {})
-        status_val = out.get("status", "ok")
-        failure_reason = out.get("failure_reason")
-
-        if use_langgraph:
-            debug["runner"] = "langgraph"
-        else:
-            debug["runner"] = "pure_function"
-
-        if status_val == "failed" and failure_reason:
-            answer = f"⚠️ Validation failed: {failure_reason.get('message', '')}\n\n{answer}"
-            debug["validation_status"] = status_val
-            debug["failure_reason"] = failure_reason
-
-        history = history + [[user_text, answer]]
-        return history, list(citations), list(decision_log), list(tool_traces), dict(debug)
-
-    graph = _ensure_graph()
-    out = graph.invoke({"question": user_text})
+    # 结果解析
     answer = str(out.get("answer", ""))
-    docs = out.get("docs", [])
-    citations = extract_citations(docs)
+    citations = out.get("citations", [])
+    decision_log = out.get("decision_log", [])
+    tool_traces = out.get("tool_traces", [])
+    debug = out.get("debug", {})
+    status_val = out.get("status", "ok")
+    failure_reason = out.get("failure_reason")
+
+    if status_val == "failed" and failure_reason:
+        answer = f"⚠️ Validation failed: {failure_reason.get('message', '')}\n\n{answer}"
+        debug["validation_status"] = status_val
+        debug["failure_reason"] = failure_reason
+
+    # 如果发生系统错误
+    if "message" in out and out.get("status") == "error":
+         answer = f"⚠️ System Error: {out['message']}"
+
     history = history + [[user_text, answer]]
-    return history, list(citations), [], [], {"note": "non-ollama provider, agentic loop disabled"}
+    return history, list(citations), list(decision_log), list(tool_traces), dict(debug)
 
 
 def main() -> None:
-    # 中文注释: 启动时自动配置 LangSmith 追踪
-    setup_langsmith(project_name="RiskAgent-RAG")
-
     with gr.Blocks(title="RiskAgent-RAG", css=_COOL_CSS) as demo:
         gr.HTML(
             """
@@ -452,7 +274,7 @@ def main() -> None:
                         gr.Markdown("### LangGraph 结构可视化")
                         gr.Markdown("当前 agentic loop 的执行流程图 (需要设置 USE_LANGGRAPH=true 启用)")
                         graph_viz = gr.Textbox(
-                            value=visualize_graph_mermaid(),
+                            value=system.get_graph_visualization(),
                             label="Mermaid 流程图代码",
                             lines=20,
                             max_lines=30,

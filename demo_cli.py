@@ -1,71 +1,46 @@
 from __future__ import annotations
 
 import argparse
-import importlib
 import json
-import os
 import pathlib
-import sys
 import uuid
+import sys
+
+from riskagent_rag.app import RiskAgentSystem, system
+from riskagent_rag.config.settings import settings
 
 
 def _project_root() -> pathlib.Path:
     return pathlib.Path(__file__).resolve().parent
 
 
-def _ensure_src_on_path(project_root: pathlib.Path) -> None:
-    src_dir = project_root / "src"
-    if str(src_dir) not in sys.path:
-        # 技术难点: 为了让脚本可直接运行, 这里做了 path 注入.
-        # 后续如果引入 pyproject.toml 并 pip install -e ., 可以移除这个 hack.
-        sys.path.insert(0, str(src_dir))
-
-
 def _parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--question", required=True)
     parser.add_argument("--rebuild-index", action="store_true")
-    parser.add_argument("--sources-dir", default=str(_project_root() / "corpus"))
-    parser.add_argument("--persist-dir", default=str(_project_root() / ".milvus"))
+    # 默认值通过 settings 获取, 但允许 CLI 覆盖 (虽然 settings 目前写死了一些路径, 但可扩展)
+    # 为了简化 CLI, 暂移除手动指定 dir 的参数，或者让它们覆盖 settings (暂未实现 settings 动态覆盖)
+    # 这里保持原有参数以兼容旧习惯，但实际 system 内部使用的是 settings.
+    # TODO: 让 CLI 参数能动态修改 settings
     parser.add_argument("--out", default=str(_project_root() / "logs" / "demo_result.json"))
     return parser.parse_args()
-
-
-_ensure_src_on_path(_project_root())
-
-run_langgraph_agentic_chat = importlib.import_module(
-    "riskagent_rag.orchestration.langgraph_runner"
-).run_langgraph_agentic_chat
-run_agentic_chat = importlib.import_module("riskagent_rag.rag.agentic_loop").run_agentic_chat
-_pipeline_mod = importlib.import_module("riskagent_rag.rag.pipeline")
-build_index = _pipeline_mod.build_index
-load_index = _pipeline_mod.load_index
 
 
 def main() -> None:
     args = _parse_args()
 
-    sources_dir = pathlib.Path(args.sources_dir)
-    persist_dir = pathlib.Path(args.persist_dir)
-
     if args.rebuild_index:
         # 技术难点: 语料变化后必须 rebuild index, 否则 citations 会指向旧内容.
         # Week 2 会把 rebuild 作为日常回归的一部分.
-        build_index(sources_dir=sources_dir, persist_dir=persist_dir)
+        system.build_index()
 
-    # Load index and retriever
-    vectorstore = load_index(persist_dir)
-    retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
-
-    # Check Environment Variable
-    use_langgraph = os.getenv("USE_LANGGRAPH", "").lower().strip() in ("true", "1", "yes")
+    # System 内部会自动处理配置读取
+    use_langgraph = settings.features.use_langgraph
 
     print(f"Running with: use_langgraph={use_langgraph}")
 
-    if use_langgraph:
-        out = run_langgraph_agentic_chat(question=args.question, retriever=retriever)
-    else:
-        out = run_agentic_chat(question=args.question, retriever=retriever)
+    # 调用核心聊天接口
+    out = system.chat(question=args.question)
 
     result = {
         "request_id": str(uuid.uuid4()),
@@ -78,9 +53,9 @@ def main() -> None:
         "tool_traces": out.get("tool_traces", []),
         "status": out.get("status", "ok"),
         "failure_reason": out.get("failure_reason"),
-        "sources_dir": str(sources_dir),
-        "persist_dir": str(persist_dir),
-        "runner": "langgraph" if use_langgraph else "agentic_loop",
+        "sources_dir": str(settings.paths.corpus_dir),
+        "persist_dir": str(settings.paths.milvus_lite_dir),
+        "runner": out.get("runner", "unknown"),
     }
 
     # 技术难点: 输出落盘是 Week 2 的基础.

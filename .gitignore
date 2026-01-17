@@ -28,6 +28,7 @@ ENV/
 # IDE files
 .idea/
 .vscode/
+.trae/
 *.swp
 *.swo
 
@@ -52,3 +53,4 @@ models/hf/**
 !models/embeddings/**
 .artifacts/
 .langgraph_api/
+tests/reports/

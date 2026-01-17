@@ -1,0 +1,13 @@
+[
+  {"id": "q01", "question": "What is FRTB and why does it matter for market risk?", "expected_refuse": false},
+  {"id": "q02", "question": "Explain Delta in the context of derivatives risk.", "expected_refuse": false},
+  {"id": "q03", "question": "What is Gamma and how is it different from Delta?", "expected_refuse": false},
+  {"id": "q04", "question": "What is Vega and when is it important?", "expected_refuse": false},
+  {"id": "q05", "question": "What is CVA and what risk does it represent?", "expected_refuse": false},
+  {"id": "q06", "question": "What is counterparty risk and how does it affect valuation?", "expected_refuse": false},
+  {"id": "q07", "question": "Define market risk and list common risk factors.", "expected_refuse": false},
+  {"id": "q08", "question": "In a risk system, what is a position and how is exposure aggregated?", "expected_refuse": false},
+  {"id": "n01", "question": "Who won the 2030 World Cup?", "expected_refuse": true},
+  {"id": "n02", "question": "Write me a recipe for spaghetti carbonara.", "expected_refuse": true}
+]
+

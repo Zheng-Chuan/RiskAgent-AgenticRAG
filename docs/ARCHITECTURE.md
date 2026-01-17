@@ -90,3 +90,30 @@ graph TD;
 2. 使用 Mermaid 在线编辑器: https://mermaid.live/
 3. 在支持 Mermaid 的 Markdown 编辑器中查看 (如 Typora, VS Code with Mermaid extension)
 4. 在 Gradio UI 的 Inspector → Graph Tab 中查看
+
+## 质量保障与开发方法论 (Quality Assurance & Methodology)
+
+### Evaluation Driven Development (EDD)
+
+本项目采用 **EDD (评测驱动开发)** 模式，即在开发功能之前，先定义评测样本与通过标准。
+
+- **原则**: 先定义 "Bad Case" (坏样本)，再优化系统直到 Pass。
+- **流程**:
+  1.  发现问题或定义新需求。
+  2.  在评测集 (`tests/data/eval_set.json` 或专用负样本集) 中添加对应的测试用例。
+  3.  运行评测脚本，确认失败 (Red Phase)。
+  4.  修改 Agent 逻辑或 Prompt。
+  5.  再次运行评测，确认通过且无回归 (Green Phase)。
+
+### 拒答机制 (Refusal Mechanism)
+
+为了保证金融场景的可信度，系统必须具备**拒答能力**。
+
+- **架构要求**:
+  - **负样本集 (Negative Dataset)**: 评测集中必须包含 20%+ 的负样本（如库外知识、恶意提问、无意义输入）。
+  - **Refusal Gate**: 在 Agentic Loop 中必须包含显式的拒答门控（Refusal Gate）。
+    - 当检索结果 (`docs`) 为空或相关性 (`context_relevance`) 低于阈值时，必须拒答。
+    - 当生成的 `claims` 无法被 `evidence` 强支撑时，必须拒答或标记为不确定。
+  - **验收标准**:
+    - 正样本拒答率 (False Refusal Rate) < 5%
+    - 负样本拒答率 (True Refusal Rate) > 95%

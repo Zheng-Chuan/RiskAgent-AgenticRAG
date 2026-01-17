@@ -96,11 +96,13 @@ def run_agentic_chat(
     current_query = rewritten
     docs: list[Document] = []
     critique_reason = ""
+    retrieval_sufficient = True
 
     for round_idx in range(max_rounds):
         docs = retriever.invoke(current_query)
 
         sufficient, improved_query, reason = _critique_retrieval(question, docs)
+        retrieval_sufficient = bool(sufficient)
         critique_reason = reason
         decision_log.append(
             {
@@ -129,6 +131,93 @@ def run_agentic_chat(
                 "alternatives": [rewritten],
             }
         )
+
+    if not retrieval_sufficient:
+        answer = agentic_primitives.build_refusal_report(question)
+        citations: list[dict[str, str]] = []
+        answer_with_citations = answer
+        docs = []
+        evidence_set: list[dict[str, Any]] = []
+        claims: list[dict[str, Any]] = []
+        failure_reason = validate_response(
+            report=answer_with_citations,
+            claims=claims,
+            evidence_set=evidence_set,
+            tool_traces=tool_traces,
+            docs=docs,
+        )
+        status = "ok" if failure_reason is None else "failed"
+
+        decision_log.append(
+            {
+                "step_id": "refusal",
+                "agent": "AgenticLoop",
+                "rationale": critique_reason or "retrieval insufficient",
+                "chosen": "refuse",
+                "alternatives": [current_query],
+            }
+        )
+
+        request_id = str(uuid.uuid4())
+        request_data = {
+            "question": question,
+            "max_rounds": max_rounds,
+        }
+
+        debug_info: dict[str, Any] = {
+            "final_query": current_query,
+            "critique_reason": critique_reason,
+            "tool_args": {},
+            "tool_should_call": False,
+        }
+
+        response_data: dict[str, Any] = {
+            "answer": answer_with_citations,
+            "citations": citations,
+            "claims": claims,
+            "evidence_set": evidence_set,
+            "decision_log": decision_log,
+            "tool_traces": tool_traces,
+            "status": status,
+            "failure_reason": failure_reason,
+            "debug": debug_info,
+        }
+
+        structured_payload: dict[str, Any] = {
+            "request_id": request_id,
+            "report": answer_with_citations,
+            "breaches": [],
+            "evidence_set": [],
+            "claims": [],
+            "tool_traces": tool_traces,
+            "decision_log": decision_log,
+            "status": status,
+            "failure_reason": failure_reason,
+        }
+
+        try:
+            artifact_path = save_artifact(
+                request_id,
+                request_data,
+                response_data,
+                structured_response_data=structured_payload,
+            )
+            debug_info["artifact_path"] = artifact_path
+        except Exception as e:
+            debug_info["artifact_error"] = str(e)
+
+        return {
+            "answer": answer_with_citations,
+            "docs": docs,
+            "citations": citations,
+            "claims": claims,
+            "evidence_set": [],
+            "decision_log": decision_log,
+            "tool_traces": tool_traces,
+            "status": status,
+            "failure_reason": failure_reason,
+            "debug": response_data["debug"],
+        }
 
     should_call_tool, tool_args, tool_reason = _decide_tool_use(question)
     decision_log.append(

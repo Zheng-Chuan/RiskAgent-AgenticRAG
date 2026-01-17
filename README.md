@@ -1,4 +1,4 @@
-# RiskAgent-RAG Docs
+# RiskAgent-AgenticRAG Docs
 
 这个项目想解决的是看资料很费劲这个问题
 你把问题丢进来
@@ -14,6 +14,8 @@
   - 我们打算怎么做, 每一阶段怎么验收
 - `docs/ARCHITECTURE.md`
   - 代码怎么拆, 数据怎么流, LLM 怎么接
+- `docs/RENAME.md`
+  - 仓库目录改名与相关配置检查清单
 - `docs/INTERVIEW.md`
   - 50 道多智能体和 RAG 面试题, 做项目时顺手把答案补全
 
@@ -42,10 +44,10 @@ pip install -e .
 docker compose -f deploy/dev/docker-compose.yml up -d
 ```
 
-Docker Desktop 分组名 riskagent-rag
+Docker Desktop 分组名 riskagent-agenticrag
 
 - **Milvus**
-  - 容器名 riskagent-rag-milvus
+  - 容器名 riskagent-agenticrag-milvus
   - 端口 19530
 
 ### 3. 启动 UI
@@ -63,7 +65,7 @@ conda run -n LangChain python demo_cli.py --rebuild-index --question "what is FR
 ### 5. 运行评测
 
 ```bash
-conda run -n LangChain python -m unittest tests.test_week2_acceptance
+conda run -n LangChain python -m unittest tests.test_week2_rag_citation_quality
 ```
 
 ## 技术栈

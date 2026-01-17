@@ -14,7 +14,7 @@ class MilvusConfig:
     user: str | None = None
     password: str | None = None
     secure: bool = False
-    collection_name: str = "riskagent_rag"
+    collection_name: str = "riskagent_agenticrag"
     index_type: str = "IVF_FLAT"
     metric_type: str = "L2"
     nlist: int = 128
@@ -122,7 +122,7 @@ class Settings:
     paths: PathConfig = field(default_factory=PathConfig)
     features: FeatureConfig = field(default_factory=FeatureConfig.from_env)
     
-    project_name: str = "RiskAgent-RAG"
+    project_name: str = "RiskAgent-AgenticRAG"
 
 
 # 单例实例

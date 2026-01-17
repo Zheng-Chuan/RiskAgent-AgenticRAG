@@ -18,6 +18,82 @@ from langchain_core.documents import Document  # type: ignore[import-not-found]
 from riskagent_rag.llm.generate import generate_answer
 
 
+def _tokenize(text: str) -> list[str]:
+    tokens: list[str] = []
+    current: list[str] = []
+    for ch in (text or "").lower():
+        if ch.isalnum():
+            current.append(ch)
+        else:
+            if current:
+                tokens.append("".join(current))
+                current = []
+    if current:
+        tokens.append("".join(current))
+
+    stop = {
+        "the",
+        "a",
+        "an",
+        "and",
+        "or",
+        "to",
+        "of",
+        "in",
+        "on",
+        "for",
+        "with",
+        "is",
+        "are",
+        "was",
+        "were",
+        "what",
+        "why",
+        "how",
+        "when",
+        "where",
+        "who",
+        "explain",
+        "define",
+        "give",
+        "list",
+    }
+    filtered = [t for t in tokens if len(t) >= 3 and t not in stop]
+    return filtered
+
+
+def heuristic_retrieval_sufficient(question: str, docs: list[Document]) -> tuple[bool, float]:
+    q_tokens = set(_tokenize(question))
+    if not q_tokens:
+        return True, 1.0
+    if not docs:
+        return False, 0.0
+
+    best = 0.0
+    for d in docs[:4]:
+        content = getattr(d, "page_content", "") or ""
+        d_tokens = set(_tokenize(content[:2000]))
+        if not d_tokens:
+            continue
+        overlap = len(q_tokens.intersection(d_tokens)) / max(1, len(q_tokens))
+        if overlap > best:
+            best = overlap
+
+    return best >= 0.2, best
+
+
+def build_refusal_report(question: str) -> str:
+    q = (question or "").strip()
+    return (
+        "Could not find evidence in corpus.\n\n"
+        f"Question: {q}\n\n"
+        "Next actions:\n"
+        "- Add relevant documents into corpus and rebuild index\n"
+        "- Rephrase the question with finance risk and derivatives keywords\n"
+        "- If you can share the exact source or document, I can cite and explain it\n"
+    )
+
+
 def try_parse_json(text: str) -> Optional[dict[str, Any]]:
     # 中文注释: LLM 输出不一定严格 JSON, 这里做最小容错.
     raw = (text or "").strip()
@@ -87,8 +163,10 @@ def rewrite_query(question: str) -> str:
 def critique_retrieval(question: str, docs: list[Document]) -> tuple[bool, str, str]:
     provider = os.getenv("LLM_PROVIDER", "").lower().strip()
     if provider != "ollama":
-        # 中文注释: 非 ollama 场景先不做 critique, 直接认为 sufficient.
-        return True, "", "critique skipped: non-ollama provider"
+        sufficient, score = heuristic_retrieval_sufficient(question, docs)
+        if sufficient:
+            return True, "", f"heuristic critique ok overlap={score:.3f}"
+        return False, question, f"heuristic critique insufficient overlap={score:.3f}"
 
     if not docs:
         return False, question, "retrieval returned empty docs"

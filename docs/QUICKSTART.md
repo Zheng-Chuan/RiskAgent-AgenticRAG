@@ -30,11 +30,11 @@ pip install -r requirements.txt
 docker compose -f deploy/dev/docker-compose.yml up -d
 ```
 
-启动后你会在 Docker Desktop 里看到分组名 riskagent-rag
+启动后你会在 Docker Desktop 里看到分组名 riskagent-agenticrag
 里面只有一个 Milvus 容器
 
 - **Milvus**
-  - 容器名 riskagent-rag-milvus
+  - 容器名 riskagent-agenticrag-milvus
   - 端口 19530 和 9091
 
 停止中间件
@@ -101,7 +101,7 @@ conda run -n LangChain python demo_cli.py --rebuild-index --question "what is FR
 - e2e smoke test
 
 ```bash
-conda run -n LangChain python -m unittest tests.test_week1_acceptance.Week1AcceptanceTest.test_week1_smoke_test_equivalent
+conda run -n LangChain python -m unittest tests.test_week1_rag_baseline
 ```
 
 ## 9. 运行评测
@@ -109,4 +109,4 @@ conda run -n LangChain python -m unittest tests.test_week1_acceptance.Week1Accep
 评测会跑 20 个问题, 然后输出 coverage
 
 ```bash
-conda run -n LangChain python -m unittest tests.test_week2_acceptance
+conda run -n LangChain python -m unittest tests.test_week2_rag_citation_quality

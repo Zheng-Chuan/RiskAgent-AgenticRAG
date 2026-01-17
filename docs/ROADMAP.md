@@ -49,7 +49,7 @@ LLM strategy
     - [x] CLI: `conda run -n LangChain python demo_cli.py --rebuild-index --question "what is FRTB"`
   - [x] 返回 citations, 且可定位来源
   - [x] 至少 1 条 e2e smoke test 可通过
-    - [x] `conda run -n LangChain python -m unittest tests.test_week1_acceptance`
+    - [x] `conda run -n LangChain python -m unittest tests.test_week1_rag_baseline`
   - 进度: Week 1 已完成
   - 为什么要做 先把启动方式和回归入口固定住
   - 不然你每改一次代码 都要花时间在环境和手工验证上
@@ -64,7 +64,7 @@ LLM strategy
   - [x] 20 个种子问题集
 - 验收
   - [x] 20 个问题中, 80% 以上回答包含有效 citations
-    - [x] `conda run -n LangChain python -m unittest tests.test_week2_acceptance`
+    - [x] `conda run -n LangChain python -m unittest tests.test_week2_rag_citation_quality`
   - 为什么要做 引用覆盖率是最简单也最管用的指标
   - 它能压住幻觉 也会逼着我们去优化检索和切分
   - 为 Week 3 打基础: Week 3 引入 agentic loop 时, 每条关键结论都必须能回指证据, 否则会放大幻觉.
@@ -165,7 +165,7 @@ LLM strategy
       - [x] context recall
     - [ ] 设计约束
       - [x] 支持 offline baseline 先跑确定性指标
-      - [ ] 支持开启 LLM judge 模式用于更贴近人类评价
+      - [x] 支持开启 LLM judge 模式用于更贴近人类评价
   - [ ] 自定义指标补齐本项目关注点
     - [x] citations coverage
     - [ ] citation precision 抽样或全量校验 evidence 是否支持 claim
@@ -294,9 +294,52 @@ LLM strategy
 - [x] 评测 tests 可一键运行并输出报告
 - [x] 相比 Phase 1, 事实一致性指标显著提升
 
-## Phase 3: 预留
+## Phase 3: Advanced Evaluation & Reliability (2026-02)
 
-说明: Phase 3 暂不在当前范围内. 当前先把本地 demo 的多 agent 协作与评测做扎实.
+**目标**: 将 RAG 系统的"可信度"提升到金融生产级标准. 重点解决拒答质量、引用精准度、领域一致性以及性能优化.
+
+### Week 5: 拒答机制与负样本评测 (Refusal Quality)
+
+- **交付**
+  - [x] 构建负样本数据集 (Negative Dataset)
+    - 包含: 库外知识问题、无意义问题、恶意问题
+  - [x] 优化 Refusal Gate
+    - 目标: 在 Evidence 不足时果断拒答, 并给出"Could not find evidence in corpus"的标准回复
+  - [x] 评测指标: `refusal_rate`
+    - 正样本拒答率应趋近 0%
+    - 负样本拒答率应趋近 100%
+
+### Week 6: 引用精准度与幻觉检测 (Citation Precision)
+
+- **交付**
+  - [ ] 自动化 Citation Judge
+    - 使用 LLM 逐句核对: Answer 中的第 N 句引用的 Chunk M, 是否真的支持该句陈述?
+  - [ ] 评测指标: `citation_precision`
+    - 定义: 有效引用数 / 总引用数
+  - [ ] 评测指标: `hallucination_rate_in_citations`
+    - 定义: 包含无效引用的回答占比
+
+### Week 7: 金融领域一致性 (Domain Consistency)
+
+- **交付**
+  - [ ] 数值一致性校验 (Numeric Consistency)
+    - 自动提取 Answer 中的关键数字, 与 Evidence 或 Tool Output 进行比对
+    - 误差容忍度配置 (e.g., +/- 1%)
+  - [ ] 术语表一致性 (Glossary Check)
+    - 确保 Answer 中使用的术语与 Background.md 定义一致 (e.g., 不要把 "Delta" 解释为 "差值")
+  - [ ] 评测指标: `domain_consistency_score`
+
+### Week 8: 性能优化与自动化流水线 (Performance & CI/CD)
+
+- **交付**
+  - [ ] 性能 Profiling
+    - Token 消耗统计 (Cost Efficiency)
+    - 端到端延迟 (Latency) 分析
+  - [ ] GitHub Actions 集成
+    - 每次 PR 自动运行 Week 1 & 2 的 Smoke Tests
+    - 每日定时运行全量评测 (Week 4 + Phase 3 metrics)
+  - [ ] 生产级部署准备
+    - Docker Compose 生产配置优化
 
 ## 时间规划
 
@@ -306,10 +349,14 @@ LLM strategy
 | --------- | -------- | -------- |
 | Week 1 | 已完成 | baseline RAG demo + citations + smoke test |
 | Week 2 | 已完成 | 真实 embeddings + 稳定 chunk_id + 20 题评测覆盖 |
-| Week 3 | 2026-01-12 to 2026-01-18 | 业务场景多 agent MVP + 工具调用 + guardrails |
-| Week 4 | 2026-01-19 to 2026-01-25 | 结构化输出落盘 + 评测升级 + 文档固化 |
+| Week 3 | 已完成 | 业务场景多 agent MVP + 工具调用 + guardrails |
+| Week 4 | 已完成 | 结构化输出落盘 + 评测升级 + 文档固化 |
+| Week 5 | 已完成 | 负样本集 + Refusal Gate 优化 |
+| Week 6 | 2026-02-08 to 2026-02-14 | Citation Precision 自动化评测 |
+| Week 7 | 2026-02-15 to 2026-02-21 | 领域一致性校验 (数值+术语) |
+| Week 8 | 2026-02-22 to 2026-02-28 | 性能 Profiling + CI/CD 集成 |
 
-**总计**: 4 周
+**总计**: 8 周 (含 Phase 3)
 
 ## 开发建议
 

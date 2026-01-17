@@ -3,9 +3,9 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "riskagent-rag"
+name = "riskagent-agenticrag"
 version = "0.1.0"
-description = "RiskAgent-RAG System"
+description = "RiskAgent-AgenticRAG System"
 dependencies = [
     "gradio",
     "langgraph",
@@ -25,5 +25,4 @@ where = ["src"]
 
 [tool.pyright]
 extraPaths = ["src"]
-
 

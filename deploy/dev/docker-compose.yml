@@ -1,8 +1,8 @@
-name: riskagent-rag
+name: riskagent-agenticrag
 
 services:
   milvus:
-    container_name: riskagent-rag-milvus
+    container_name: riskagent-agenticrag-milvus
     image: milvusdb/milvus:v2.4.12
     command: ["milvus", "run", "standalone"]
     security_opt:

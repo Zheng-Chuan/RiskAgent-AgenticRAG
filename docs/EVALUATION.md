@@ -1,6 +1,6 @@
 # RAGAS 评测指南
 
-本文档介绍如何使用 RAGAS 框架对 RiskAgent-RAG 进行质量评测。
+本文档介绍如何使用 RAGAS 框架对 RiskAgent-AgenticRAG 进行质量评测。
 
 ## 1. 概述
 

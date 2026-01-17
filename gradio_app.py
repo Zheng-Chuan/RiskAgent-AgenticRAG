@@ -213,11 +213,11 @@ def chat_v2(
 
 def main() -> None:
     # pylint: disable=no-member
-    with gr.Blocks(title="RiskAgent-RAG", css=_COOL_CSS) as demo:
+    with gr.Blocks(title="RiskAgent-AgenticRAG", css=_COOL_CSS) as demo:
         gr.HTML(
             """
             <div class="ra-header">
-              <h1 class="ra-title">RiskAgent-RAG</h1>
+              <h1 class="ra-title">RiskAgent-AgenticRAG</h1>
               <p class="ra-subtitle">Cold-theme local demo. Agentic RAG loop with citations, tool traces, and inspector.</p>
               <div class="ra-pill">UI: Gradio. RAG: LangChain + Milvus. Orchestration: LangGraph. Local LLM: Ollama.</div>
             </div>

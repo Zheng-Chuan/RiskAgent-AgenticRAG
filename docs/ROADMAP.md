@@ -319,14 +319,14 @@ LLM strategy
 ### Week 8: 性能优化与自动化流水线 (Performance & CI/CD)
 
 - **交付**
-  - [ ] 性能 Profiling
-    - Token 消耗统计 (Cost Efficiency)
-    - 端到端延迟 (Latency) 分析
-  - [ ] GitHub Actions 集成
-    - 每次 PR 自动运行 Week 1 & 2 的 Smoke Tests
-    - 每日定时运行全量评测 (Week 4 + Phase 3 metrics)
-  - [ ] 生产级部署准备
-    - Docker Compose 生产配置优化
+  - [x] 性能 Profiling
+    - [x] Token 消耗统计 (Cost Efficiency)
+    - [x] 端到端延迟 (Latency) 分析
+  - [x] GitHub Actions 集成
+    - [x] 每次 PR 自动运行关键单测 (Week 1 Week 2 Week 5)
+    - [x] 每日定时运行离线评测并上传报告
+  - [x] 生产级部署准备
+    - [x] Docker Compose 生产配置优化
 
 ## 时间规划
 

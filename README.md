@@ -16,6 +16,10 @@
   - 代码怎么拆, 数据怎么流, LLM 怎么接
 - `docs/RENAME.md`
   - 仓库目录改名与相关配置检查清单
+- `docs/PROFILING.md`
+  - 性能profiling脚本入口与报告字段说明
+- `docs/DEPLOYMENT.md`
+  - Docker compose dev与prod like配置说明
 - `docs/INTERVIEW.md`
   - 50 道多智能体和 RAG 面试题, 做项目时顺手把答案补全
 

@@ -1,12 +1,12 @@
-name: ci
+name: nightly-eval
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
 
 jobs:
-  tests:
+  eval:
     runs-on: ubuntu-latest
     env:
       TOKENIZERS_PARALLELISM: "false"
@@ -28,8 +28,12 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -e .
-      - name: unit tests
+      - name: run evaluation
         run: |
-          python -m unittest tests.test_week1_rag_baseline
-          python -m unittest tests.test_week2_rag_citation_quality
-          python -m unittest tests.test_week5_refusal_quality
+          python -m riskagent_rag.evaluation.run --artifacts-dir .artifacts --dataset tests/data/questions.json
+      - name: upload reports
+        uses: actions/upload-artifact@v4
+        with:
+          name: rag-eval-reports
+          path: .artifacts/reports/*.json
+

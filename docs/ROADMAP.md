@@ -35,6 +35,8 @@ LLM strategy
 
 备注 这个 roadmap 只盯本地可运行 demo 暂时不做生产化
 
+## Week 计划
+
 ### Week 1: baseline 跑通 + 工程化骨架
 
 - 交付
@@ -56,10 +58,31 @@ LLM strategy
   - 为 Week 2 打基础 Week 2 要扩充语料和问题集
   - 需要稳定入口做回归对比 才知道引用质量到底有没有变好
 
+#### Phase 0: 基础强化与项目骨架
+
+**目标**: 先把工程化基础打牢 让后续迭代稳定可扩展
+
+- [x] 确认 conda 环境 LangChain 可用 固化 Python 版本
+- [x] 增加 requirements.txt 不 pin 版本 以当前环境为准
+- [x] 增加最小测试框架 至少覆盖 1 条端到端 smoke test
+- [x] 定义核心抽象
+  - [x] 文档源与元数据 schema
+  - [x] chunk schema
+  - [ ] embedding provider 接口
+  - [x] vector store 接口(Milvus)
+  - [x] graph state schema(LangGraph)
+  - [x] retrieval 输出 schema 必须包含 citations
+
+**验收标准**:
+
+- [x] 项目可在本地一键启动或一键运行 demo
+- [x] 无明文 secrets
+- [x] 至少 1 条端到端测试可通过
+
 ### Week 2: RAG MVP 闭环与引用质量
 
 - 交付
-  - [x] docs/sources 语料接入(至少包含 Background.md)
+  - [x] corpus 语料接入(至少包含 Background.md)
   - [x] chunk 规则与 metadata schema 固化
   - [x] 20 个种子问题集
 - 验收
@@ -68,6 +91,59 @@ LLM strategy
   - 为什么要做 引用覆盖率是最简单也最管用的指标
   - 它能压住幻觉 也会逼着我们去优化检索和切分
   - 为 Week 3 打基础: Week 3 引入 agentic loop 时, 每条关键结论都必须能回指证据, 否则会放大幻觉.
+
+#### Phase 1: RAG MVP 面向工程师的业务解释
+
+**目标**: 跑通 ingest -> index -> retrieve -> generate 的闭环 输出带引用的解释结果
+
+##### 1.1 资料与数据接入
+
+- [x] 定义资料目录约定 例如 corpus
+- [x] 接入第 1 批语料
+  - [x] Background.md
+  - [ ] 可选: 公开可引用的 FRTB CVA Greeks XVA 资料
+- [x] 文档解析
+  - [x] markdown 解析
+  - [ ] 可选: pdf 解析
+
+##### 1.2 切分与索引策略
+
+- [x] chunk 策略
+  - [x] baseline: 按长度切分
+  - [ ] 以标题层级优先 再按长度切分
+  - [ ] chunk 必须携带 section path 与来源定位
+- [x] vector store
+  - [x] 本地优先 例如 Milvus
+- [x] embeddings
+  - [x] MVP: FakeEmbeddings(离线可运行)
+  - [x] Week 2: 切换为真实 embeddings 并固化 provider 与维度
+
+##### 1.3 生成与引用
+
+- [ ] 统一回答模板 面向软件工程师
+  - TLDR
+  - 概念解释
+  - 为什么重要
+  - 在系统里的常见数据流与字段
+  - 典型示例
+  - citations
+- [ ] 引用规则
+  - 每个关键结论必须能对应到至少 1 个 chunk
+  - 模型不确定时必须说明不确定并给出下一步建议
+
+##### 1.4 最小交互形态
+
+- [x] CLI
+  - [x] ingest(build_index)
+  - [x] ask(demo_cli.py)
+  - [ ] chat(多轮对话)
+- [x] 简单 Web UI 例如 Gradio
+
+**验收标准**:
+
+- [x] 给定 20 个种子问题 80% 以上回答包含有效 citations
+- [x] 端到端流程可复现
+  - [x] 清空索引 -> ingest -> 查询 -> 返回答案
 
 ### Week 3: 单 agent 的 agentic RAG MVP
 
@@ -139,6 +215,18 @@ LLM strategy
   - [x] 失败路径可解释, 输出包含 failure_reason.category
   - [x] LangGraph 编排层可选启用, 输出与纯函数 runner 保持一致 schema
 
+#### Phase 2: 质量提升 可评测与可控(结构化与guardrails)
+
+- [x] 增加结构化中间产物
+  - [x] claims 与 evidence_set 作为一等公民
+  - [x] validator 产出 failure_reason
+- [x] 增加 guardrails
+  - [x] 无法从语料支持则拒答或要求补充资料
+  - [ ] 敏感信息与合规提示 (Out of scope for demo)
+- [x] 领域知识增强
+  - [x] 术语表与缩写表 (via Background.md)
+  - [ ] 业务对象字典 例如 position security desk trader
+
 ### Week 4: 基于 RAGAS 的评测模块
 
 - 交付
@@ -193,112 +281,11 @@ LLM strategy
   - [x] 默认不依赖外部服务即可跑通 offline 指标
   - [x] 为什么要做 agentic RAG 系统的技术深度来自 contract 可控性 与可回归
 
-## 设计与阶段拆分(用于实现路径)
-
-说明: 下述 Phase 用于组织工程工作, 但 2026-01 内按上面的 4 周计划完成交付.
-
-## Phase 0: 基础强化与项目骨架
-
-**目标**: 先把工程化基础打牢, 让后续迭代稳定可扩展.
-
-- [x] 确认 conda 环境 LangChain 可用, 固化 Python 版本
-- [x] 增加 requirements.txt, 不 pin 版本, 以当前环境为准
-- [x] 增加最小测试框架, 至少覆盖 1 条端到端 smoke test
-- [x] 定义核心抽象
-  - [x] 文档源与元数据 schema
-  - [x] chunk schema
-  - [ ] embedding provider 接口
-  - [x] vector store 接口(Milvus)
-  - [x] graph state schema(LangGraph)
-  - [x] retrieval 输出 schema, 必须包含 citations
-
-**验收标准**:
-
-- [x] 项目可在本地一键启动或一键运行 demo
-- [x] 无明文 secrets
-- [x] 至少 1 条端到端测试可通过
-
-## Phase 1: RAG MVP, 面向工程师的业务解释
-
-**目标**: 跑通 ingest -> index -> retrieve -> generate 的闭环, 输出带引用的解释结果.
-
-### 1.1 资料与数据接入
-
-- [x] 定义资料目录约定, 例如 docs/sources
-- [x] 接入第 1 批语料
-  - [x] Background.md
-  - [ ] 可选: 公开可引用的 FRTB, CVA, Greeks, XVA 资料
-- [x] 文档解析
-  - [x] markdown 解析
-  - [ ] 可选: pdf 解析
-
-### 1.2 切分与索引策略
-
-- [x] chunk 策略
-  - [x] baseline: 按长度切分
-  - [ ] 以标题层级优先, 再按长度切分
-  - [ ] chunk 必须携带 section path 与来源定位
-- [x] vector store
-  - [x] 本地优先, 例如 Milvus
-- [x] embeddings
-  - [x] MVP: FakeEmbeddings(离线可运行)
-  - [x] Week 2: 切换为真实 embeddings, 并固化 provider 与维度
-
-### 1.3 生成与引用
-
-- [ ] 统一回答模板, 面向软件工程师
-  - TLDR
-  - 概念解释
-  - 为什么重要
-  - 在系统里的常见数据流与字段
-  - 典型示例
-  - citations
-- [ ] 引用规则
-  - 每个关键结论必须能对应到至少 1 个 chunk
-  - 模型不确定时必须说明不确定并给出下一步建议
-
-### 1.4 最小交互形态
-
-- [x] CLI
-  - [x] ingest(build_index)
-  - [x] ask(demo_cli.py)
-  - [ ] chat(多轮对话)
-- [x] 简单 Web UI, 例如 Gradio
-
-**验收标准**:
-
-- [x] 给定 20 个种子问题, 80% 以上回答包含有效 citations
-- [x] 端到端流程可复现
-  - [x] 清空索引 -> ingest -> 查询 -> 返回答案
-
-## Phase 2: 质量提升, 可评测与可控
-
-**目标**: 降低幻觉, 提升检索命中与解释质量, 形成可迭代的评测体系.
-
-- [x] 建立评测集
-  - [x] 检索相关性 (context_precision/recall)
-  - [x] 事实一致性与引用覆盖 (faithfulness, citations coverage)
-  - [x] 工程师可读性 (answer_relevance)
-- [x] 增加结构化中间产物
-  - [x] claims 与 evidence_set 作为一等公民
-  - [x] validator 产出 failure_reason
-- [x] 增加 guardrails
-  - [x] 无法从语料支持则拒答或要求补充资料
-  - [ ] 敏感信息与合规提示 (Out of scope for demo)
-- [x] 领域知识增强
-  - [x] 术语表与缩写表 (via Background.md)
-  - [ ] 业务对象字典, 例如 position, security, desk, trader
-
-**验收标准**:
-
-- [x] 评测 tests 可一键运行并输出报告
-- [x] 相比 Phase 1, 事实一致性指标显著提升
-
-## Phase 3: Advanced Evaluation & Reliability (2026-02)
-
-**目标**: 将 RAG 系统的"可信度"提升到金融生产级标准. 重点解决拒答质量、引用精准度、领域一致性以及性能优化.
-
 ### Week 5: 拒答机制与负样本评测 (Refusal Quality)
+
+#### Phase 3: Advanced Evaluation & Reliability (2026-02)
+
+**目标**: 将 RAG 系统的"可信度"提升到金融生产级标准 重点解决拒答质量 引用精准度 领域一致性 以及性能优化
 
 - **交付**
   - [x] 构建负样本数据集 (Negative Dataset)
@@ -360,7 +347,7 @@ LLM strategy
 
 ## 开发建议
 
-1. 每完成一个 Phase 就提交 Git, 保持可回溯
+1. 每完成一个 Week 就提交 Git, 保持可回溯
 2. 以数据口径与引用为第一优先级, 宁可少答也不要编造
 3. 每周至少 1 次 demo, 记录输入输出与问题清单
 4. 先做 CLI 后做 UI, 降低早期复杂度

@@ -9,8 +9,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Any, Optional
 
-from riskagent_rag.config.settings import settings
 from riskagent_rag.rag.embeddings import build_embeddings
+from riskagent_rag.evaluation.judge_llm import get_judge_llm
 
 
 @dataclass(frozen=True)
@@ -19,48 +19,6 @@ class RagasResult:
     ok: bool
     metrics: dict[str, float]
     error: Optional[str] = None
-
-
-def _get_judge_llm() -> Any:
-    """
-    配置 Judge LLM for RAGAS.
-    优先使用 OpenAI API Key (gpt-4o / gpt-3.5-turbo),
-    如果配置了 Ollama, 则尝试使用 ChatOllama (langchain).
-    """
-    # 1. 尝试使用 OpenAI (LangChain wrapper)
-    # RAGAS 默认喜欢 OpenAI, 且效果最好.
-    # 即使 LLM_PROVIDER=ollama, 如果有 OPENAI_API_KEY, 评测也建议用 OpenAI.
-    api_key = settings.llm.api_key
-    if api_key and (api_key.startswith("sk-") or len(api_key) > 10):
-        try:
-            from langchain_openai import ChatOpenAI
-
-            return ChatOpenAI(
-                model=settings.llm.model or "gpt-4o",
-                api_key=api_key,
-                base_url=settings.llm.base_url,  # 兼容非官方 OpenAI Endpoint
-                temperature=0,
-            )
-        except ImportError:
-            pass
-
-    # 2. 尝试使用 Ollama (LangChain wrapper)
-    # 仅当没有 OpenAI Key 且显式配置了 Ollama 时使用.
-    if settings.llm.provider == "ollama":
-        try:
-            from langchain_community.chat_models import ChatOllama
-
-            return ChatOllama(
-                base_url=settings.llm.base_url or "http://localhost:11434",
-                model=settings.llm.model or "qwen2.5:14b",
-                temperature=0,
-            )
-        except ImportError:
-            pass
-
-    # 3. Fallback: 如果 RAGAS 自身能从 env 找到 key, 让它自己处理
-    # 返回 None 表示不显式传入 llm, RAGAS 会尝试默认行为 (通常是 os.environ["OPENAI_API_KEY"])
-    return None
 
 
 def try_compute_ragas_metrics(
@@ -133,7 +91,7 @@ def try_compute_ragas_metrics(
     ]
 
     # 准备 LLM 和 Embeddings
-    judge_llm = _get_judge_llm()
+    judge_llm = get_judge_llm()
     embeddings = build_embeddings()
 
     # 执行评测

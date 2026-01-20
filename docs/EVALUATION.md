@@ -56,12 +56,18 @@ export LLM_MODEL="qwen2.5:14b"
 conda run -n LangChain python -m riskagent_rag.evaluation.run --enable-ragas
 ```
 
+```bash
+# 开启 citation precision judge
+conda run -n LangChain python -m riskagent_rag.evaluation.run --enable-citation-judge
+```
+
 ### 3.2 常用参数
 
 *   `--corpus-dir`: 语料目录 (默认 `corpus`)
 *   `--dataset`: 评测数据集路径 (默认 `tests/data/questions.json`)
 *   `--artifacts-dir`: 报告输出目录 (默认 `.artifacts`)
 *   --baseline`: 指定基线报告路径用于对比 (默认自动查找最新)
+*   `--enable-citation-judge`: 开启 citation precision judge (需要可用的 judge LLM)
 
 示例:
 

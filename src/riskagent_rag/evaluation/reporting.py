@@ -100,7 +100,7 @@ def compare_reports(
         minimum=minimum,
     )
 
-    return {
+    out: dict[str, Any] = {
         "citations_coverage": {
             "current": check.current,
             "baseline": check.baseline,
@@ -108,5 +108,25 @@ def compare_reports(
             "regression": check.regression,
             "tolerance": tolerance,
             "minimum": minimum,
-        }
+        },
     }
+
+    if "citation_precision" in current_metrics and "citation_precision" in baseline_metrics:
+        current_citation_precision = float(current_metrics.get("citation_precision", 0.0))
+        baseline_citation_precision = float(baseline_metrics.get("citation_precision", 0.0))
+        citation_precision_check = compare_metric_higher_is_better(
+            current=current_citation_precision,
+            baseline=baseline_citation_precision,
+            tolerance=tolerance,
+            minimum=minimum,
+        )
+        out["citation_precision"] = {
+            "current": citation_precision_check.current,
+            "baseline": citation_precision_check.baseline,
+            "delta": citation_precision_check.delta,
+            "regression": citation_precision_check.regression,
+            "tolerance": tolerance,
+            "minimum": minimum,
+        }
+
+    return out

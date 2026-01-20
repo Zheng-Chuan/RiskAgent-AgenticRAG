@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any
 
 from riskagent_rag.evaluation.citations import compute_citations_coverage, is_valid_citation
+from riskagent_rag.evaluation.citation_precision import try_compute_citation_precision
 from riskagent_rag.evaluation.dataset import load_dataset
 from riskagent_rag.evaluation.ragas_integration import try_compute_ragas_metrics
 from riskagent_rag.evaluation.reporting import compare_reports, find_latest_report, load_report, write_report
@@ -81,6 +82,21 @@ def run_evaluation(*, corpus_dir: Path, dataset_path: Path, enable_ragas: bool) 
                 "metrics": out.metrics,
                 "error": out.error,
             }
+        enable_citation_judge = os.getenv("EVAL_ENABLE_CITATION_JUDGE", "").lower().strip() in {
+            "true",
+            "1",
+            "yes",
+        }
+        citation_judge = None
+        if enable_citation_judge:
+            out = try_compute_citation_precision(samples=samples)
+            citation_judge = {
+                "enabled": out.enabled,
+                "ok": out.ok,
+                "metrics": out.metrics,
+                "error": out.error,
+                "details": out.details,
+            }
         report: dict[str, Any] = {
             "generated_at": _utc_now_iso(),
             "inputs": {
@@ -100,6 +116,13 @@ def run_evaluation(*, corpus_dir: Path, dataset_path: Path, enable_ragas: bool) 
 
         if ragas_result is not None:
             report["ragas"] = ragas_result
+        if citation_judge is not None:
+            report["citation_judge"] = citation_judge
+            if citation_judge.get("ok") and isinstance(citation_judge.get("metrics"), dict):
+                try:
+                    report["metrics"]["citation_precision"] = float(citation_judge["metrics"].get("citation_precision", 0.0))
+                except (TypeError, ValueError):
+                    pass
 
         return report
 
@@ -111,6 +134,7 @@ def main() -> None:
     parser.add_argument("--artifacts-dir", default=".artifacts")
     parser.add_argument("--baseline", default="")
     parser.add_argument("--enable-ragas", action="store_true")
+    parser.add_argument("--enable-citation-judge", action="store_true")
     parser.add_argument("--tolerance", type=float, default=float(os.getenv("EVAL_TOLERANCE", "0")))
     parser.add_argument("--minimum", type=float, default=float(os.getenv("EVAL_MINIMUM", "0.8")))
     args = parser.parse_args()
@@ -123,6 +147,8 @@ def main() -> None:
         "1",
         "yes",
     }
+    if bool(args.enable_citation_judge):
+        os.environ["EVAL_ENABLE_CITATION_JUDGE"] = "true"
 
     report = run_evaluation(corpus_dir=corpus_dir, dataset_path=dataset_path, enable_ragas=enable_ragas)
 

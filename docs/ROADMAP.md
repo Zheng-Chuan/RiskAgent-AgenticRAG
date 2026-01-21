@@ -299,12 +299,14 @@ LLM strategy
 ### Week 6: 引用精准度与幻觉检测 (Citation Precision)
 
 - **交付**
-  - [ ] 自动化 Citation Judge
-    - 使用 LLM 逐句核对: Answer 中的第 N 句引用的 Chunk M, 是否真的支持该句陈述?
-  - [ ] 评测指标: `citation_precision`
-    - 定义: 有效引用数 / 总引用数
-  - [ ] 评测指标: `hallucination_rate_in_citations`
-    - 定义: 包含无效引用的回答占比
+  - [x] 自动化 Citation Judge
+    - 支持 auto/llm/heuristic 三种模式
+    - LLM judge 逐句核对 Answer 是否被 contexts 支持
+    - heuristic judge 用确定性规则离线打分用于CI
+  - [x] 评测指标: `citation_precision`
+    - 定义: supported_sentences / total_sentences (按句子粒度)
+  - [x] 评测指标: `hallucination_rate_in_citations`
+    - 定义: 出现 unsupported_sentences 的回答占比
 
 ### Week 7: 金融领域一致性 (Domain Consistency)
 

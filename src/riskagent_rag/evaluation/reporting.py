@@ -76,12 +76,30 @@ def compare_metric_higher_is_better(
     )
 
 
+def compare_metric_lower_is_better(
+    *,
+    current: float,
+    baseline: float,
+    tolerance: float,
+    maximum: float,
+) -> RegressionCheck:
+    delta = current - baseline
+    regression = current > maximum or delta > abs(tolerance)
+    return RegressionCheck(
+        regression=regression,
+        delta=delta,
+        current=current,
+        baseline=baseline,
+    )
+
+
 def compare_reports(
     *,
     current_report: dict[str, Any],
     baseline_report: dict[str, Any],
     tolerance: float = 0.0,
     minimum: float = 0.0,
+    hallucination_maximum: float = 1.0,
 ) -> dict[str, Any]:
     current_metrics = current_report.get("metrics")
     baseline_metrics = baseline_report.get("metrics")
@@ -127,6 +145,24 @@ def compare_reports(
             "regression": citation_precision_check.regression,
             "tolerance": tolerance,
             "minimum": minimum,
+        }
+
+    if "hallucination_rate_in_citations" in current_metrics and "hallucination_rate_in_citations" in baseline_metrics:
+        current_rate = float(current_metrics.get("hallucination_rate_in_citations", 0.0))
+        baseline_rate = float(baseline_metrics.get("hallucination_rate_in_citations", 0.0))
+        rate_check = compare_metric_lower_is_better(
+            current=current_rate,
+            baseline=baseline_rate,
+            tolerance=tolerance,
+            maximum=hallucination_maximum,
+        )
+        out["hallucination_rate_in_citations"] = {
+            "current": rate_check.current,
+            "baseline": rate_check.baseline,
+            "delta": rate_check.delta,
+            "regression": rate_check.regression,
+            "tolerance": tolerance,
+            "maximum": hallucination_maximum,
         }
 
     return out

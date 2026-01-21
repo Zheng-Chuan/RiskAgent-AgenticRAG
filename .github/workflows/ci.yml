@@ -33,3 +33,4 @@ jobs:
           python -m unittest tests.test_week1_rag_baseline
           python -m unittest tests.test_week2_rag_citation_quality
           python -m unittest tests.test_week5_refusal_quality
+          python -m unittest tests.test_week6_citation_precision_quality

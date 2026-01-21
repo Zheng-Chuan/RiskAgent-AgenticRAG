@@ -16,6 +16,10 @@
   - 代码怎么拆, 数据怎么流, LLM 怎么接
 - `docs/RENAME.md`
   - 仓库目录改名与相关配置检查清单
+- `docs/TIMELINE_EXPLAINABILITY.md`
+  - 从 Week1 到 Week8 的可解释性与评估体系演进时间线
+- `docs/PROJECT_TOUR.md`
+  - 项目走读与关键设计决策清单
 - `docs/PROFILING.md`
   - 性能profiling脚本入口与报告字段说明
 - `docs/DEPLOYMENT.md`

@@ -87,9 +87,10 @@ def run_evaluation(*, corpus_dir: Path, dataset_path: Path, enable_ragas: bool) 
             "1",
             "yes",
         }
+        citation_judge_mode = os.getenv("EVAL_CITATION_JUDGE_MODE", "auto").lower().strip() or "auto"
         citation_judge = None
         if enable_citation_judge:
-            out = try_compute_citation_precision(samples=samples)
+            out = try_compute_citation_precision(samples=samples, mode=citation_judge_mode)
             citation_judge = {
                 "enabled": out.enabled,
                 "ok": out.ok,
@@ -123,6 +124,12 @@ def run_evaluation(*, corpus_dir: Path, dataset_path: Path, enable_ragas: bool) 
                     report["metrics"]["citation_precision"] = float(citation_judge["metrics"].get("citation_precision", 0.0))
                 except (TypeError, ValueError):
                     pass
+                try:
+                    report["metrics"]["hallucination_rate_in_citations"] = float(
+                        citation_judge["metrics"].get("hallucination_rate_in_citations", 0.0)
+                    )
+                except (TypeError, ValueError):
+                    pass
 
         return report
 
@@ -135,8 +142,14 @@ def main() -> None:
     parser.add_argument("--baseline", default="")
     parser.add_argument("--enable-ragas", action="store_true")
     parser.add_argument("--enable-citation-judge", action="store_true")
+    parser.add_argument("--citation-judge-mode", default=os.getenv("EVAL_CITATION_JUDGE_MODE", "auto"))
     parser.add_argument("--tolerance", type=float, default=float(os.getenv("EVAL_TOLERANCE", "0")))
     parser.add_argument("--minimum", type=float, default=float(os.getenv("EVAL_MINIMUM", "0.8")))
+    parser.add_argument(
+        "--hallucination-maximum",
+        type=float,
+        default=float(os.getenv("EVAL_HALLUCINATION_MAXIMUM", "1.0")),
+    )
     args = parser.parse_args()
 
     corpus_dir = Path(args.corpus_dir)
@@ -149,6 +162,7 @@ def main() -> None:
     }
     if bool(args.enable_citation_judge):
         os.environ["EVAL_ENABLE_CITATION_JUDGE"] = "true"
+        os.environ["EVAL_CITATION_JUDGE_MODE"] = str(args.citation_judge_mode).lower().strip() or "auto"
 
     report = run_evaluation(corpus_dir=corpus_dir, dataset_path=dataset_path, enable_ragas=enable_ragas)
 
@@ -160,6 +174,7 @@ def main() -> None:
             baseline_report=baseline_report,
             tolerance=args.tolerance,
             minimum=args.minimum,
+            hallucination_maximum=args.hallucination_maximum,
         )
         report["baseline"] = {
             "path": baseline_path,

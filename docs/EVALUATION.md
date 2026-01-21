@@ -68,6 +68,14 @@ conda run -n LangChain python -m riskagent_rag.evaluation.run --enable-citation-
 *   `--artifacts-dir`: 报告输出目录 (默认 `.artifacts`)
 *   --baseline`: 指定基线报告路径用于对比 (默认自动查找最新)
 *   `--enable-citation-judge`: 开启 citation precision judge (需要可用的 judge LLM)
+*   `--citation-judge-mode`: judge 模式, 支持 auto/llm/heuristic (默认 auto)
+*   `--hallucination-maximum`: hallucination_rate_in_citations 的最大阈值(默认 1.0)
+
+### 3.3 Judge 模式说明
+
+*   `auto`: 优先使用 LLM judge, 不可用时 fallback 到 heuristic
+*   `llm`: 强制使用 LLM judge, 不可用则评测失败
+*   `heuristic`: 使用确定性启发式规则离线打分, 适合 CI 或无 Key 环境
 
 示例:
 

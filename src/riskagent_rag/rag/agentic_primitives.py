@@ -11,6 +11,7 @@ from __future__ import annotations
 import datetime
 import json
 import os
+import re
 from typing import Any, Optional
 
 from langchain_core.documents import Document  # type: ignore[import-not-found]
@@ -235,11 +236,27 @@ def synthesize_answer_with_tool(
 
     context = llm_generate._format_context(docs)  # type: ignore[attr-defined]
     tool_json = json.dumps(tool_output, ensure_ascii=False, indent=2)
+    template = (
+        "Use the following markdown structure:\n"
+        "1) TLDR (2-4 bullets)\n"
+        "2) Concept\n"
+        "3) Why it matters\n"
+        "4) Data flow / fields\n"
+        "5) Example\n"
+        "6) Citations (do not fabricate; citations will be attached separately)\n"
+    )
+    compliance = (
+        "Compliance:\n"
+        "- Do not output secrets, credentials, or personal data.\n"
+        "- Do not provide trading or investment advice.\n"
+        "- If information is insufficient, say you do not know and propose next actions.\n"
+        "- Do not invent numbers.\n"
+    )
     prompt = (
         "You are a helpful risk monitoring assistant for software engineers. "
         "Answer using only the provided retrieval context and the tool output. "
-        "If information is insufficient, say you do not know and propose next actions. "
-        "Do not invent numbers.\n\n"
+        "If information is insufficient, say you do not know and propose next actions.\n\n"
+        f"{compliance}\n{template}\n"
         f"Question: {question}\n\n"
         f"Retrieval context:\n{context}\n\n"
         f"Tool output JSON:\n{tool_json}\n"
@@ -298,6 +315,23 @@ def build_evidence_set_from_docs(
             "start_index": start_index,
             "snippet": (doc.page_content or "")[:200],
         }
+        if doc.metadata.get("section_path"):
+            item["section_path"] = str(doc.metadata.get("section_path"))
+        if doc.metadata.get("start_line") is not None:
+            try:
+                item["start_line"] = int(doc.metadata.get("start_line"))
+            except Exception:
+                pass
+        if doc.metadata.get("end_line") is not None:
+            try:
+                item["end_line"] = int(doc.metadata.get("end_line"))
+            except Exception:
+                pass
+        if doc.metadata.get("page") is not None:
+            try:
+                item["page"] = int(doc.metadata.get("page"))
+            except Exception:
+                pass
         if include_text:
             item["text"] = (doc.page_content or "")[:200]
         evidence_set.append(item)
@@ -311,14 +345,24 @@ def build_claims_from_answer(
 ) -> list[dict[str, Any]]:
     # 中文注释: MVP 阶段用确定性规则把 answer 切成 claims.
     # 设计目标: claims 必须携带 evidence_ids, 让 evidence_gate 可执行.
-    evidence_ids = [
-        str(e.get("evidence_id"))
-        for e in evidence_set
-        if isinstance(e, dict) and e.get("evidence_id")
-    ]
+    evidence_by_chunk_id: dict[str, str] = {}
+    evidence_ids: list[str] = []
+    evidence_texts: dict[str, str] = {}
+    for e in evidence_set:
+        if not isinstance(e, dict):
+            continue
+        eid = str(e.get("evidence_id") or "").strip()
+        if not eid:
+            continue
+        evidence_ids.append(eid)
+        chunk_id = str(e.get("chunk_id") or "").strip()
+        if chunk_id:
+            evidence_by_chunk_id[chunk_id] = eid
+        evidence_texts[eid] = str(e.get("snippet") or e.get("text") or "")
     if not evidence_ids:
         return []
 
+    citations_re = re.compile(r"chunk_id=([^\]\s]+)")
     paragraphs = [p.strip() for p in (answer or "").split("\n\n") if p.strip()]
     claims: list[dict[str, Any]] = []
     for idx, p in enumerate(paragraphs):
@@ -328,11 +372,25 @@ def build_claims_from_answer(
         if not statement:
             continue
 
-        claims.append(
-            {
-                "claim_id": f"cl_{idx}",
-                "statement": statement[:300],
-                "evidence_ids": [evidence_ids[0]],
-            }
-        )
+        matched_eids: list[str] = []
+        for m in citations_re.finditer(p):
+            cid = m.group(1).strip()
+            eid = evidence_by_chunk_id.get(cid)
+            if eid and eid not in matched_eids:
+                matched_eids.append(eid)
+
+        if not matched_eids:
+            stoks = set(re.findall(r"[A-Za-z0-9]+|[\u4e00-\u9fff]+", statement.lower()))
+            best_eid = evidence_ids[0]
+            best_score = -1
+            for eid in evidence_ids:
+                et = evidence_texts.get(eid, "").lower()
+                etoks = set(re.findall(r"[A-Za-z0-9]+|[\u4e00-\u9fff]+", et))
+                score = len(stoks & etoks)
+                if score > best_score:
+                    best_score = score
+                    best_eid = eid
+            matched_eids = [best_eid]
+
+        claims.append({"claim_id": f"cl_{idx}", "statement": statement[:300], "evidence_ids": matched_eids})
     return claims

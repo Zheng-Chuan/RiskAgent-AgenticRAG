@@ -129,23 +129,24 @@ def compare_reports(
         },
     }
 
-    if "citation_precision" in current_metrics and "citation_precision" in baseline_metrics:
-        current_citation_precision = float(current_metrics.get("citation_precision", 0.0))
-        baseline_citation_precision = float(baseline_metrics.get("citation_precision", 0.0))
-        citation_precision_check = compare_metric_higher_is_better(
-            current=current_citation_precision,
-            baseline=baseline_citation_precision,
-            tolerance=tolerance,
-            minimum=minimum,
-        )
-        out["citation_precision"] = {
-            "current": citation_precision_check.current,
-            "baseline": citation_precision_check.baseline,
-            "delta": citation_precision_check.delta,
-            "regression": citation_precision_check.regression,
-            "tolerance": tolerance,
-            "minimum": minimum,
-        }
+    for metric in ["citation_precision", "numeric_consistency_score", "glossary_consistency_score", "domain_consistency_score"]:
+        if metric in current_metrics and metric in baseline_metrics:
+            curr = float(current_metrics.get(metric, 0.0))
+            base = float(baseline_metrics.get(metric, 0.0))
+            metric_check = compare_metric_higher_is_better(
+                current=curr,
+                baseline=base,
+                tolerance=tolerance,
+                minimum=minimum,
+            )
+            out[metric] = {
+                "current": metric_check.current,
+                "baseline": metric_check.baseline,
+                "delta": metric_check.delta,
+                "regression": metric_check.regression,
+                "tolerance": tolerance,
+                "minimum": minimum,
+            }
 
     if "hallucination_rate_in_citations" in current_metrics and "hallucination_rate_in_citations" in baseline_metrics:
         current_rate = float(current_metrics.get("hallucination_rate_in_citations", 0.0))

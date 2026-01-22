@@ -17,13 +17,7 @@
 - `docs/RENAME.md`
   - 仓库目录改名与相关配置检查清单
 - `docs/TIMELINE_EXPLAINABILITY.md`
-  - 从 Week1 到 Week8 的可解释性与评估体系演进时间线
-- `docs/PROJECT_TOUR.md`
-  - 项目走读与关键设计决策清单
-- `docs/PROFILING.md`
-  - 性能profiling脚本入口与报告字段说明
-- `docs/DEPLOYMENT.md`
-  - Docker compose dev与prod like配置说明
+  - 从 Week1 到 Week7 的可解释性与评估体系演进时间线
 - `docs/INTERVIEW.md`
   - 50 道多智能体和 RAG 面试题, 做项目时顺手把答案补全
 

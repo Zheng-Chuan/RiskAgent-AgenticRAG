@@ -187,7 +187,12 @@ def chat_v2(
         return history, [], [], [], {}
 
     # 调用核心系统
-    out = system.chat(question=user_text)
+    history_pairs: list[tuple[str, str]] = []
+    for pair in history or []:
+        if not isinstance(pair, list) or len(pair) != 2:
+            continue
+        history_pairs.append((str(pair[0] or ""), str(pair[1] or "")))
+    out = system.chat(question=user_text, history=history_pairs)
 
     # 结果解析
     answer = str(out.get("answer", ""))
@@ -199,13 +204,13 @@ def chat_v2(
     failure_reason = out.get("failure_reason")
 
     if status_val == "failed" and failure_reason:
-        answer = f"⚠️ Validation failed: {failure_reason.get('message', '')}\n\n{answer}"
+        answer = f"Validation failed: {failure_reason.get('message', '')}\n\n{answer}"
         debug["validation_status"] = status_val
         debug["failure_reason"] = failure_reason
 
     # 如果发生系统错误
     if "message" in out and out.get("status") == "error":
-        answer = f"⚠️ System Error: {out['message']}"
+        answer = f"System Error: {out['message']}"
 
     history = history + [[user_text, answer]]
     return history, list(citations), list(decision_log), list(tool_traces), dict(debug)

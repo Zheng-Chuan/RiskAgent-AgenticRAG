@@ -1,0 +1,27 @@
+[
+  {
+    "id": "e1",
+    "question": "What does FRTB stand for?",
+    "reference_answer": "FRTB stands for Fundamental Review of the Trading Book.",
+    "ground_truth_contexts": [
+      "FRTB stands for Fundamental Review of the Trading Book."
+    ]
+  },
+  {
+    "id": "e2",
+    "question": "Explain what Delta means in derivatives risk.",
+    "reference_answer": "Delta is the sensitivity of a derivative's value to small changes in the underlying price level.",
+    "ground_truth_contexts": [
+      "Delta: sensitivity to the underlying price level."
+    ]
+  },
+  {
+    "id": "e3",
+    "question": "What is CVA?",
+    "reference_answer": "CVA stands for Credit Valuation Adjustment and is an adjustment to the risk-free value to account for counterparty default risk.",
+    "ground_truth_contexts": [
+      "CVA stands for Credit Valuation Adjustment."
+    ]
+  }
+]
+

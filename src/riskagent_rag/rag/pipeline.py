@@ -23,7 +23,7 @@ from riskagent_rag.rag.vectorstore import (
     build_milvus_vectorstore,
     load_milvus_vectorstore,
 )
-from riskagent_rag.rag.source_loader import load_markdown_sources
+from riskagent_rag.rag.source_loader import load_sources
 
 
 class IndexBuildResult:
@@ -53,7 +53,7 @@ def build_index(
         # 技术难点: embeddings 或 chunk 规则变化后, 复用旧索引会导致 citations 失真.
         shutil.rmtree(persist_dir)
 
-    sources = load_markdown_sources(sources_dir)
+    sources = load_sources(sources_dir)
     chunks = split_documents(sources)
     build_milvus_vectorstore(chunks, persist_dir)
     return IndexBuildResult(
@@ -68,20 +68,41 @@ def load_index(persist_dir: pathlib.Path):
     return load_milvus_vectorstore(persist_dir)
 
 
-def extract_citations(docs: list[Document]) -> list[dict[str, str]]:
+def extract_citations(docs: list[Document]) -> list[dict[str, Any]]:
     # citations 是一个最小可展示结构.
     # UI 会将其渲染为 markdown 列表.
     # 技术难点: citations 字段一旦对外展示, 就会变成对外 contract.
     # 业务不清晰点: 什么算有效 citations.
     # - 只要能定位 source + chunk_id 就算, 还是要包含 section path, page, score.
     # - 未来还需要定义引用覆盖率, 作为 Week 2 的核心指标.
-    citations: list[dict[str, str]] = []
+    citations: list[dict[str, Any]] = []
     for d in docs:
         meta = d.metadata or {}
-        citations.append(
-            {
-                "source": str(meta.get("source", "")),
-                "chunk_id": str(meta.get("chunk_id", "")),
-            }
-        )
+        item: dict[str, Any] = {
+            "source": str(meta.get("source", "")),
+            "chunk_id": str(meta.get("chunk_id", "")),
+        }
+        if "start_index" in meta:
+            try:
+                item["start_index"] = int(meta.get("start_index"))
+            except Exception:
+                pass
+        if meta.get("section_path"):
+            item["section_path"] = str(meta.get("section_path"))
+        if meta.get("page"):
+            try:
+                item["page"] = int(meta.get("page"))
+            except Exception:
+                pass
+        if meta.get("start_line") is not None:
+            try:
+                item["start_line"] = int(meta.get("start_line"))
+            except Exception:
+                pass
+        if meta.get("end_line") is not None:
+            try:
+                item["end_line"] = int(meta.get("end_line"))
+            except Exception:
+                pass
+        citations.append(item)
     return citations

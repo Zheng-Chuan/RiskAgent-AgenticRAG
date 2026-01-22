@@ -68,7 +68,7 @@ LLM strategy
 - [x] 定义核心抽象
   - [x] 文档源与元数据 schema
   - [x] chunk schema
-  - [ ] embedding provider 接口
+  - [x] embedding provider 接口
   - [x] vector store 接口(Milvus)
   - [x] graph state schema(LangGraph)
   - [x] retrieval 输出 schema 必须包含 citations
@@ -101,17 +101,17 @@ LLM strategy
 - [x] 定义资料目录约定 例如 corpus
 - [x] 接入第 1 批语料
   - [x] Background.md
-  - [ ] 可选: 公开可引用的 FRTB CVA Greeks XVA 资料
+  - [x] 公开可引用的 FRTB CVA Greeks XVA 资料
 - [x] 文档解析
   - [x] markdown 解析
-  - [ ] 可选: pdf 解析
+  - [x] pdf 解析
 
 ##### 1.2 切分与索引策略
 
 - [x] chunk 策略
   - [x] baseline: 按长度切分
-  - [ ] 以标题层级优先 再按长度切分
-  - [ ] chunk 必须携带 section path 与来源定位
+  - [x] 以标题层级优先 再按长度切分
+  - [x] chunk 必须携带 section path 与来源定位
 - [x] vector store
   - [x] 本地优先 例如 Milvus
 - [x] embeddings
@@ -120,14 +120,14 @@ LLM strategy
 
 ##### 1.3 生成与引用
 
-- [ ] 统一回答模板 面向软件工程师
+- [x] 统一回答模板 面向软件工程师
   - TLDR
   - 概念解释
   - 为什么重要
   - 在系统里的常见数据流与字段
   - 典型示例
   - citations
-- [ ] 引用规则
+- [x] 引用规则
   - 每个关键结论必须能对应到至少 1 个 chunk
   - 模型不确定时必须说明不确定并给出下一步建议
 
@@ -136,7 +136,7 @@ LLM strategy
 - [x] CLI
   - [x] ingest(build_index)
   - [x] ask(demo_cli.py)
-  - [ ] chat(多轮对话)
+  - [x] chat(多轮对话)
 - [x] 简单 Web UI 例如 Gradio
 
 **验收标准**:
@@ -222,10 +222,10 @@ LLM strategy
   - [x] validator 产出 failure_reason
 - [x] 增加 guardrails
   - [x] 无法从语料支持则拒答或要求补充资料
-  - [ ] 敏感信息与合规提示 (Out of scope for demo)
+  - [x] 敏感信息与合规提示
 - [x] 领域知识增强
   - [x] 术语表与缩写表 (via Background.md)
-  - [ ] 业务对象字典 例如 position security desk trader
+  - [x] 业务对象字典 例如 position security desk trader
 
 ### Week 4: 基于 RAGAS 的评测模块
 
@@ -240,9 +240,9 @@ LLM strategy
       - [x] contexts
       - [x] citations
       - [x] structured_response.json 作为结构化落盘入口
-    - [ ] 数据集文件建议
+    - [x] 数据集文件建议
       - [x] tests/data/questions.json 作为最小数据集
-      - [ ] tests/data/eval_set.json 作为可扩展数据集
+      - [x] tests/data/eval_set.json 作为可扩展数据集
   - [x] RAGAS 指标集落地
     - [x] RAG triad
       - [x] context relevance
@@ -251,15 +251,15 @@ LLM strategy
     - [x] retrieval metrics
       - [x] context precision
       - [x] context recall
-    - [ ] 设计约束
+    - [x] 设计约束
       - [x] 支持 offline baseline 先跑确定性指标
       - [x] 支持开启 LLM judge 模式用于更贴近人类评价
-  - [ ] 自定义指标补齐本项目关注点
+  - [x] 自定义指标补齐本项目关注点
     - [x] citations coverage
-    - [ ] citation precision 抽样或全量校验 evidence 是否支持 claim
-    - [ ] refusal quality 该拒答时必须拒答
-    - [ ] numeric consistency 报告数字必须等于 tool 输出
-    - [ ] failure taxonomy coverage 每类 failure_reason 至少 1 条用例
+    - [x] citation precision 抽样或全量校验 evidence 是否支持 claim
+    - [x] refusal quality 该拒答时必须拒答
+    - [x] numeric consistency 报告数字必须等于 tool 输出
+    - [x] failure taxonomy coverage 每类 failure_reason 至少 1 条用例
   - [x] 评测运行器与报告
     - [x] 一条命令运行评测
       - [x] conda run -n LangChain python -m riskagent_rag.evaluation.run
@@ -289,46 +289,34 @@ LLM strategy
 
 - **交付**
   - [x] 构建负样本数据集 (Negative Dataset)
-    - 包含: 库外知识问题、无意义问题、恶意问题
+    - [x] 包含: 库外知识问题、无意义问题、恶意问题
   - [x] 优化 Refusal Gate
-    - 目标: 在 Evidence 不足时果断拒答, 并给出"Could not find evidence in corpus"的标准回复
+    - [x] 目标: 在 Evidence 不足时果断拒答, 并给出"Could not find evidence in corpus"的标准回复
   - [x] 评测指标: `refusal_rate`
-    - 正样本拒答率应趋近 0%
-    - 负样本拒答率应趋近 100%
+    - [x] 正样本拒答率应趋近 0%
+    - [x] 负样本拒答率应趋近 100%
 
 ### Week 6: 引用精准度与幻觉检测 (Citation Precision)
 
 - **交付**
   - [x] 自动化 Citation Judge
-    - 支持 auto/llm/heuristic 三种模式
-    - LLM judge 逐句核对 Answer 是否被 contexts 支持
-    - heuristic judge 用确定性规则离线打分用于CI
+    - [x] 支持 auto/llm/heuristic 三种模式
+    - [x] LLM judge 逐句核对 Answer 是否被 contexts 支持
+    - [x] heuristic judge 用确定性规则离线打分用于CI
   - [x] 评测指标: `citation_precision`
-    - 定义: supported_sentences / total_sentences (按句子粒度)
+    - [x] 定义: supported_sentences / total_sentences (按句子粒度)
   - [x] 评测指标: `hallucination_rate_in_citations`
-    - 定义: 出现 unsupported_sentences 的回答占比
+    - [x] 定义: 出现 unsupported_sentences 的回答占比
 
 ### Week 7: 金融领域一致性 (Domain Consistency)
 
 - **交付**
-  - [ ] 数值一致性校验 (Numeric Consistency)
-    - 自动提取 Answer 中的关键数字, 与 Evidence 或 Tool Output 进行比对
-    - 误差容忍度配置 (e.g., +/- 1%)
-  - [ ] 术语表一致性 (Glossary Check)
-    - 确保 Answer 中使用的术语与 Background.md 定义一致 (e.g., 不要把 "Delta" 解释为 "差值")
-  - [ ] 评测指标: `domain_consistency_score`
-
-### Week 8: 性能优化与自动化流水线 (Performance & CI/CD)
-
-- **交付**
-  - [x] 性能 Profiling
-    - [x] Token 消耗统计 (Cost Efficiency)
-    - [x] 端到端延迟 (Latency) 分析
-  - [x] GitHub Actions 集成
-    - [x] 每次 PR 自动运行关键单测 (Week 1 Week 2 Week 5)
-    - [x] 每日定时运行离线评测并上传报告
-  - [x] 生产级部署准备
-    - [x] Docker Compose 生产配置优化
+  - [x] 数值一致性校验 (Numeric Consistency)
+    - [x] 自动提取 Answer 中的关键数字, 与 contexts 进行比对
+    - [x] 误差容忍度配置 (e.g., +/- 1%)
+  - [x] 术语表一致性 (Glossary Check)
+    - [x] 检测术语误用(基于禁用定义关键字)并计分
+  - [x] 评测指标: `domain_consistency_score`
 
 ## 时间规划
 
@@ -341,11 +329,10 @@ LLM strategy
 | Week 3 | 已完成 | 业务场景多 agent MVP + 工具调用 + guardrails |
 | Week 4 | 已完成 | 结构化输出落盘 + 评测升级 + 文档固化 |
 | Week 5 | 已完成 | 负样本集 + Refusal Gate 优化 |
-| Week 6 | 2026-02-08 to 2026-02-14 | Citation Precision 自动化评测 |
-| Week 7 | 2026-02-15 to 2026-02-21 | 领域一致性校验 (数值+术语) |
-| Week 8 | 2026-02-22 to 2026-02-28 | 性能 Profiling + CI/CD 集成 |
+| Week 6 | 已完成 | Citation Precision 自动化评测 |
+| Week 7 | 已完成 | 领域一致性校验 (数值+术语) |
 
-**总计**: 8 周 (含 Phase 3)
+**总计**: 7 周 (含 Phase 3)
 
 ## 开发建议
 

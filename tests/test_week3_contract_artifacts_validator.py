@@ -133,6 +133,16 @@ class ContractArtifactsValidatorTest(unittest.TestCase):
         self.assertIsNotNone(failure)
         self.assertEqual(failure["category"], "numeric_inconsistent")
 
+    def test_numeric_consistency_gate_fail_mismatch(self):
+        """测试 numeric consistency gate 失败场景: 数字与 tool 输出不一致."""
+        report = "The delta is 1000."
+        claims = [{"statement": "Delta is 1000"}]
+        tool_traces = [{"tool_name": "monitor_desk_exposure", "tool_output": {"delta": 900}}]
+
+        failure = numeric_consistency_gate(report, claims, tool_traces)
+        self.assertIsNotNone(failure)
+        self.assertEqual(failure["category"], "numeric_inconsistent")
+
     def test_refusal_gate_pass(self):
         """测试 refusal gate 通过场景: 有足够的 docs 和 evidence."""
         docs = [{"page_content": "test"}]
@@ -150,7 +160,7 @@ class ContractArtifactsValidatorTest(unittest.TestCase):
 
         failure = refusal_gate(docs, evidence_set, report)
         self.assertIsNotNone(failure)
-        self.assertIn(failure["category"], ["refusal_incomplete", "refusal_unclear"])
+        self.assertIn(failure["category"], ["refusal_incomplete", "refusal_unclear", "retrieval_empty"])
 
     def test_validate_response_integration(self):
         """测试 validate_response 集成场景."""

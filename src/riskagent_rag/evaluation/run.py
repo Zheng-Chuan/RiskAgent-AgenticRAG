@@ -17,6 +17,7 @@ from typing import Any
 from riskagent_rag.evaluation.citations import compute_citations_coverage, is_valid_citation
 from riskagent_rag.evaluation.citation_precision import try_compute_citation_precision
 from riskagent_rag.evaluation.dataset import load_dataset
+from riskagent_rag.evaluation.domain_consistency import try_compute_domain_consistency
 from riskagent_rag.evaluation.ragas_integration import try_compute_ragas_metrics
 from riskagent_rag.evaluation.reporting import compare_reports, find_latest_report, load_report, write_report
 from riskagent_rag.graph.workflow import build_rag_graph
@@ -98,6 +99,20 @@ def run_evaluation(*, corpus_dir: Path, dataset_path: Path, enable_ragas: bool) 
                 "error": out.error,
                 "details": out.details,
             }
+
+        try:
+            numeric_tolerance = float(os.getenv("EVAL_NUMERIC_TOLERANCE", "0.01"))
+        except (TypeError, ValueError):
+            numeric_tolerance = 0.01
+        out = try_compute_domain_consistency(samples=samples, tolerance=numeric_tolerance)
+        domain_consistency = {
+            "enabled": out.enabled,
+            "ok": out.ok,
+            "metrics": out.metrics,
+            "error": out.error,
+            "details": out.details,
+        }
+
         report: dict[str, Any] = {
             "generated_at": _utc_now_iso(),
             "inputs": {
@@ -131,6 +146,14 @@ def run_evaluation(*, corpus_dir: Path, dataset_path: Path, enable_ragas: bool) 
                 except (TypeError, ValueError):
                     pass
 
+        report["domain_consistency"] = domain_consistency
+        if domain_consistency.get("ok") and isinstance(domain_consistency.get("metrics"), dict):
+            for k, v in domain_consistency["metrics"].items():
+                try:
+                    report["metrics"][k] = float(v)
+                except (TypeError, ValueError):
+                    pass
+
         return report
 
 
@@ -143,6 +166,7 @@ def main() -> None:
     parser.add_argument("--enable-ragas", action="store_true")
     parser.add_argument("--enable-citation-judge", action="store_true")
     parser.add_argument("--citation-judge-mode", default=os.getenv("EVAL_CITATION_JUDGE_MODE", "auto"))
+    parser.add_argument("--numeric-tolerance", type=float, default=float(os.getenv("EVAL_NUMERIC_TOLERANCE", "0.01")))
     parser.add_argument("--tolerance", type=float, default=float(os.getenv("EVAL_TOLERANCE", "0")))
     parser.add_argument("--minimum", type=float, default=float(os.getenv("EVAL_MINIMUM", "0.8")))
     parser.add_argument(
@@ -163,6 +187,7 @@ def main() -> None:
     if bool(args.enable_citation_judge):
         os.environ["EVAL_ENABLE_CITATION_JUDGE"] = "true"
         os.environ["EVAL_CITATION_JUDGE_MODE"] = str(args.citation_judge_mode).lower().strip() or "auto"
+    os.environ["EVAL_NUMERIC_TOLERANCE"] = str(float(args.numeric_tolerance))
 
     report = run_evaluation(corpus_dir=corpus_dir, dataset_path=dataset_path, enable_ragas=enable_ragas)
 

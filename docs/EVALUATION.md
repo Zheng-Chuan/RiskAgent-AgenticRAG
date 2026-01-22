@@ -66,10 +66,11 @@ conda run -n LangChain python -m riskagent_rag.evaluation.run --enable-citation-
 *   `--corpus-dir`: 语料目录 (默认 `corpus`)
 *   `--dataset`: 评测数据集路径 (默认 `tests/data/questions.json`)
 *   `--artifacts-dir`: 报告输出目录 (默认 `.artifacts`)
-*   --baseline`: 指定基线报告路径用于对比 (默认自动查找最新)
+*   `--baseline`: 指定基线报告路径用于对比 (默认自动查找最新)
 *   `--enable-citation-judge`: 开启 citation precision judge (需要可用的 judge LLM)
 *   `--citation-judge-mode`: judge 模式, 支持 auto/llm/heuristic (默认 auto)
 *   `--hallucination-maximum`: hallucination_rate_in_citations 的最大阈值(默认 1.0)
+*   `--numeric-tolerance`: 数值一致性比对容忍度(默认 0.01, 代表 1%)
 
 ### 3.3 Judge 模式说明
 
@@ -95,6 +96,12 @@ python -m riskagent_rag.evaluation.run \
 1.  **Metrics**: 汇总指标 (如 `citations_coverage`, `ragas.faithfulness` 等)。
 2.  **Samples**: 每条样本的详细输入、输出、引用和单项评分。
 3.  **Baseline Diff**: 如果存在基线，会显示指标变化 (diff)。
+
+Week 7 的领域一致性指标默认会计算并进入 Metrics:
+
+*   `numeric_consistency_score`
+*   `glossary_consistency_score`
+*   `domain_consistency_score`
 
 ## 5. 如何新增评测样本
 

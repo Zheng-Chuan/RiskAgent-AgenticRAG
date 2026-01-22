@@ -18,7 +18,7 @@ from riskagent_rag.orchestration.langgraph_runner import (
 from riskagent_rag.rag.agentic_loop import run_agentic_chat
 from riskagent_rag.rag.ingestion import split_documents
 from riskagent_rag.rag.pipeline import extract_citations
-from riskagent_rag.rag.source_loader import load_markdown_sources
+from riskagent_rag.rag.source_loader import load_sources
 from riskagent_rag.rag.vectorstore import build_milvus_vectorstore, load_milvus_vectorstore
 
 
@@ -54,7 +54,7 @@ class RiskAgentSystem:
         if persist_dir.exists():
             shutil.rmtree(persist_dir)
 
-        sources = load_markdown_sources(sources_dir)
+        sources = load_sources(sources_dir)
         chunks = split_documents(sources)
         build_milvus_vectorstore(chunks, persist_dir)
 
@@ -80,21 +80,22 @@ class RiskAgentSystem:
         self._graph = build_rag_graph(self._retriever)
         return self._graph, self._retriever
 
-    def chat(self, question: str) -> dict[str, Any]:
+    def chat(self, question: str, *, history: list[tuple[str, str]] | None = None) -> dict[str, Any]:
         """处理用户提问"""
         if not settings.paths.milvus_lite_dir.exists():
             return {"status": "error", "message": "Index not found. Please build index first."}
 
         _graph, retriever = self._ensure_resources()
         use_langgraph = settings.features.use_langgraph
+        question_with_history = self._merge_history(question=question, history=history)
 
         if use_langgraph:
             # LangGraph 模式
-            out = run_langgraph_agentic_chat(question=question, retriever=retriever)
+            out = run_langgraph_agentic_chat(question=question_with_history, retriever=retriever)
             out["runner"] = "langgraph"
         else:
             # 简单 Agentic Loop 模式
-            out = run_agentic_chat(question=question, retriever=retriever)
+            out = run_agentic_chat(question=question_with_history, retriever=retriever)
             out["runner"] = "agentic_loop"
 
         # 统一补充 citations
@@ -102,6 +103,20 @@ class RiskAgentSystem:
             out["citations"] = extract_citations(out["docs"])
 
         return out
+
+    def _merge_history(self, *, question: str, history: list[tuple[str, str]] | None) -> str:
+        if not history:
+            return question
+        pairs = []
+        for u, a in history[-3:]:
+            u1 = str(u or "").strip()
+            a1 = str(a or "").strip()
+            if not u1 and not a1:
+                continue
+            pairs.append(f"User: {u1}\nAssistant: {a1}")
+        if not pairs:
+            return question
+        return "Conversation so far:\n" + "\n\n".join(pairs) + "\n\nCurrent question:\n" + str(question or "")
 
     def get_graph_visualization(self) -> str:
         """获取 Mermaid 流程图"""

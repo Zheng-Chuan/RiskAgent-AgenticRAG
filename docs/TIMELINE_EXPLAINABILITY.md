@@ -1,6 +1,6 @@
 # RiskAgent-AgenticRAG 可解释性与评估体系演进时间线
 
-这份文档记录从 Week 1 到 Week 8 我们如何把一个“能回答”的 RAG demo
+这份文档记录从 Week 1 到 Week 7 我们如何把一个“能回答”的 RAG demo
 逐步推进成一个“可解释 可观测 可评估 可回归”的工程系统
 
 核心关注三件事
@@ -240,45 +240,6 @@
 
 ---
 
-## Week 8: 性能与自动化流水线 把“治理能力”工程化
-
-**目标**
-
-- 性能可观测: 延迟与成本可度量
-- 自动化可回归: CI / nightly 让质量持续被监控
-- 部署配置可维护: dev/prod-like 分离避免互相污染
-
-**做了什么**
-
-- Profiling 脚本: 独立于业务代码 只调用现有模块采集耗时分布与 token 估算
-- GitHub Actions:
-  - push/PR 跑关键单测
-  - nightly 跑离线评测并上传报告 artifacts
-- Docker Compose dev/prod-like 分离
-
-**可解释性推进点**
-
-- 不是直接提升答案解释性
-  但它让“为什么退化了/为什么变慢了”变得可追踪 可复盘
-
-**可观测性推进点**
-
-- profiling 输出一份结构化报告: index_build / retrieve / generate / e2e 分位数
-
-**评估体系推进点**
-
-- nightly 让评测从“手动跑”变成“持续监控”
-
-**关键实现**
-
-- profiling 脚本: [profile_e2e.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/tools/profiling/profile_e2e.py)
-- profiling 文档: [PROFILING.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/docs/PROFILING.md)
-- CI: [.github/workflows/ci.yml](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.github/workflows/ci.yml)
-- nightly eval: [.github/workflows/nightly-eval.yml](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.github/workflows/nightly-eval.yml)
-- 部署说明: [DEPLOYMENT.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/docs/DEPLOYMENT.md)
-
----
-
 ## 一句话总结这条“可解释”路线
 
 - Week 1 让系统可复现
@@ -288,5 +249,3 @@
 - Week 5 让拒答可解释并可评测
 - Week 6 让引用质量从“有”变成“对”
 - Week 7 让数值与术语对齐领域事实
-- Week 8 让性能与评测进入流水线并与业务代码解耦
-

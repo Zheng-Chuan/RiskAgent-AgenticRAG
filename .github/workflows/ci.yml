@@ -10,20 +10,12 @@ jobs:
     runs-on: ubuntu-latest
     env:
       TOKENIZERS_PARALLELISM: "false"
-      HF_HOME: ${{ github.workspace }}/models/hf
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: pip
-      - name: cache hf models
-        uses: actions/cache@v4
-        with:
-          path: models/hf
-          key: hf-${{ runner.os }}-${{ hashFiles('pyproject.toml', 'requirements.txt') }}
-          restore-keys: |
-            hf-${{ runner.os }}-
       - name: install
         run: |
           python -m pip install --upgrade pip
@@ -32,5 +24,10 @@ jobs:
         run: |
           python -m unittest tests.test_week1_rag_baseline
           python -m unittest tests.test_week2_rag_citation_quality
+          python -m unittest tests.test_week2_pdf_and_chunking
+          python -m unittest tests.test_week3_contract_artifacts_validator
+          python -m unittest tests.test_week4_evaluation_dataset
           python -m unittest tests.test_week5_refusal_quality
           python -m unittest tests.test_week6_citation_precision_quality
+          python -m unittest tests.test_week7_domain_consistency_quality
+          python -m unittest tests.test_failure_taxonomy_coverage

@@ -1,0 +1,23 @@
+{
+  "created_at": "2026-01-12T03:40:03.182368+00:00",
+  "failures": [
+    {
+      "doc_id": "pdf/en/imf_wp08258.pdf",
+      "format": "pdf",
+      "url": "https://www.imf.org/external/pubs/ft/wp/2008/wp08258.pdf",
+      "error": "Remote end closed connection without response"
+    },
+    {
+      "doc_id": "pdf/en/hkma_cr_g_14_en.pdf",
+      "format": "pdf",
+      "url": "https://brdr.hkma.gov.hk/eng/doc-ldg/docId/getPdf/20161230-3-EN/20161230-3-EN.pdf",
+      "error": "<urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1007)>"
+    },
+    {
+      "doc_id": "md/zh/wikipedia_basel3.md",
+      "format": "markdown",
+      "url": "https://zh.wikipedia.org/zh-hans/%E5%B7%B4%E5%A1%9E%E5%B0%94%E5%8D%8F%E8%AE%AEIII",
+      "error": "<urlopen error _ssl.c:990: The handshake operation timed out>"
+    }
+  ]
+}

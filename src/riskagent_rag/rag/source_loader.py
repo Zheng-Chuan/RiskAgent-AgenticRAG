@@ -1,10 +1,10 @@
 """语料加载.
 
-当前 MVP 仅支持从 docs/sources 目录递归读取 markdown 文件.
+当前支持从 corpus 目录递归读取 markdown 与 pdf 文件.
 
 约定.
-- 只读取 *.md.
-- 跳过 docs/sources/README.md, 避免把说明文件当作语料.
+- 读取 *.md 与 *.pdf.
+- 跳过 README.md, 避免把说明文件当作语料.
 - 每个文件会被映射为一个 Document, source 路径写入 metadata.
 """
 
@@ -15,19 +15,54 @@ import pathlib
 from langchain_core.documents import Document
 
 
-def load_markdown_sources(sources_dir: pathlib.Path) -> list[Document]:
+def _load_pdf(path: pathlib.Path) -> list[Document]:
+    try:
+        from pypdf import PdfReader  # type: ignore[import-not-found]
+    except Exception as e:
+        raise RuntimeError("PDF parsing requires pypdf installed") from e
+
+    reader = PdfReader(str(path))
+    docs: list[Document] = []
+    for i, page in enumerate(reader.pages):
+        text = page.extract_text() or ""
+        docs.append(
+            Document(
+                page_content=text,
+                metadata={
+                    "source": str(path),
+                    "file_type": "pdf",
+                    "page": int(i + 1),
+                },
+            )
+        )
+    return docs
+
+
+def load_sources(sources_dir: pathlib.Path) -> list[Document]:
     # sources_dir 不存在时直接返回空列表, 方便 UI 场景下提示用户补充语料.
     if not sources_dir.exists():
         return []
 
     docs: list[Document] = []
-    for path in sorted(sources_dir.rglob("*.md")):
-        # README.md 通常是放置说明, 不参与向量化.
+    for path in sorted(sources_dir.rglob("*")):
+        if not path.is_file():
+            continue
         if path.name.lower() == "readme.md":
             continue
 
-        # 采用 utf-8, 失败时 ignore, 优先保证 ingest 不会因为个别编码问题中断.
-        text = path.read_text(encoding="utf-8", errors="ignore")
-        docs.append(Document(page_content=text, metadata={"source": str(path)}))
+        suffix = path.suffix.lower().strip()
+        if suffix == ".md":
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            docs.append(
+                Document(
+                    page_content=text,
+                    metadata={"source": str(path), "file_type": "md", "_source_text": text},
+                )
+            )
+            continue
+
+        if suffix == ".pdf":
+            docs.extend(_load_pdf(path))
+            continue
 
     return docs

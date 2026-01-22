@@ -24,6 +24,25 @@ from typing import Any, Iterable, Optional
 from langchain_core.documents import Document  # type: ignore[import-not-found]
 
 
+_ANSWER_TEMPLATE_INSTRUCTIONS = (
+    "Use the following markdown structure:\n"
+    "1) TLDR (2-4 bullets)\n"
+    "2) Concept (plain explanation)\n"
+    "3) Why it matters (for risk systems)\n"
+    "4) Data flow / fields (engineer facing)\n"
+    "5) Example (short)\n"
+    "6) Citations (list)\n"
+)
+
+_COMPLIANCE_INSTRUCTIONS = (
+    "Compliance:\n"
+    "- Do not output secrets, credentials, or personal data.\n"
+    "- Do not provide trading or investment advice.\n"
+    "- If the context is insufficient, say you do not know and propose next actions.\n"
+    "- Do not invent numbers.\n"
+)
+
+
 def _format_context(docs: Iterable[Document], limit: int = 1200) -> str:
     # 将检索到的 Document 列表格式化成上下文文本.
     # 这里用 limit 做一个粗粒度截断, 避免 prompt 太长.
@@ -117,8 +136,9 @@ def generate_answer(question: str, docs: list[Document]) -> str:
         context = _format_context(docs)
         prompt = (
             "You are a helpful assistant explaining financial derivatives and risk concepts to software engineers. "
-            "Answer using only the provided context. If context is insufficient, say you do not know. "
-            "Keep the answer concise and include next actions when refusing.\n\n"
+            "Answer using only the provided context.\n\n"
+            f"{_COMPLIANCE_INSTRUCTIONS}\n"
+            f"{_ANSWER_TEMPLATE_INSTRUCTIONS}\n"
             f"Question: {question}\n\n"
             f"Context:\n{context}\n"
         )
@@ -141,7 +161,9 @@ def generate_answer(question: str, docs: list[Document]) -> str:
         context = _format_context(docs)
         prompt = (
             "You are a helpful assistant explaining financial derivatives and risk concepts to software engineers. "
-            "Answer using only the provided context. If context is insufficient, say you do not know.\n\n"
+            "Answer using only the provided context.\n\n"
+            f"{_COMPLIANCE_INSTRUCTIONS}\n"
+            f"{_ANSWER_TEMPLATE_INSTRUCTIONS}\n"
             f"Question: {question}\n\n"
             f"Context:\n{context}\n"
         )
@@ -161,10 +183,34 @@ def generate_answer(question: str, docs: list[Document]) -> str:
             "Add more documents and rebuild the index."
         )
 
+    citations_md: list[str] = []
+    seen: set[str] = set()
+    for d in docs:
+        meta = getattr(d, "metadata", {}) or {}
+        source = str(meta.get("source", "")).strip()
+        chunk_id = str(meta.get("chunk_id", "")).strip()
+        key = f"{source}|{chunk_id}"
+        if key in seen:
+            continue
+        seen.add(key)
+        if source or chunk_id:
+            citations_md.append(f"- source={source} chunk_id={chunk_id}")
+
     return (
         "MVP mode: no API key found, using deterministic answer.\n\n"
+        f"## TLDR\n"
+        f"- I can only answer based on retrieved context.\n"
+        f"- Set OPENAI_API_KEY (or LLM_API_KEY) to enable model generated answers.\n\n"
+        f"## Concept\n"
         f"Question: {question}\n\n"
-        "Relevant excerpts:\n"
+        f"## Why it matters\n"
+        f"- This is a core concept in derivatives risk and appears in risk system data models.\n\n"
+        f"## Data flow / fields\n"
+        f"- Inspect the cited chunks to map terms to fields.\n\n"
+        f"## Example\n"
+        f"- See excerpts below.\n\n"
+        f"## Relevant excerpts\n"
         f"{context}\n\n"
-        "Next: set OPENAI_API_KEY (or LLM_API_KEY) to enable model generated answers."
+        f"## Citations\n"
+        + ("\n".join(citations_md) if citations_md else "- (none)")
     )

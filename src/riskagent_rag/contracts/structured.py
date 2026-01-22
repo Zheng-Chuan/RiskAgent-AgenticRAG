@@ -65,6 +65,10 @@ class Evidence(_StrictBaseModel):
     chunk_id: str
     start_index: int
     snippet: str
+    section_path: Optional[str] = None
+    start_line: Optional[int] = None
+    end_line: Optional[int] = None
+    page: Optional[int] = None
 
 
 class Claim(_StrictBaseModel):
@@ -120,6 +124,20 @@ def parse_structured_response(data: dict[str, Any]) -> StructuredResponse:
     if hasattr(StructuredResponse, "model_validate"):
         return StructuredResponse.model_validate(data)  # type: ignore[attr-defined]
     return StructuredResponse.parse_obj(data)
+
+
+def try_parse_structured_response(data: dict[str, Any]) -> tuple[Optional[StructuredResponse], Optional[FailureReason]]:
+    try:
+        return parse_structured_response(data), None
+    except Exception as e:  # pylint: disable=broad-exception-caught
+        return (
+            None,
+            FailureReason(
+                category="parse_error",
+                message="failed to parse structured response",
+                details={"error": str(e)},
+            ),
+        )
 
 
 def build_tool_trace(

@@ -22,10 +22,68 @@ from riskagent_rag.evaluation.ragas_integration import try_compute_ragas_metrics
 from riskagent_rag.evaluation.reporting import compare_reports, find_latest_report, load_report, write_report
 from riskagent_rag.graph.workflow import build_rag_graph
 from riskagent_rag.rag.pipeline import build_index, extract_citations, load_index
+from riskagent_rag.rag.retriever_factory import build_retriever
 
 
 def _utc_now_iso() -> str:
     return datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+
+
+def _stage_plan(stage: str) -> dict[str, Any]:
+    stage = str(stage or "").lower().strip()
+    plans: dict[str, dict[str, Any]] = {
+        "step1": {
+            "title": "step1 retrieval rerank and hybrid",
+            "done": [
+                "cross encoder reranking",
+                "hybrid search bm25 and vector",
+            ],
+            "todo": [
+                "query expansion and step back prompting",
+                "sub question decomposition and semantic router",
+                "advanced indexing parent child summary hyde",
+                "self rag grading and adaptive retrieval",
+            ],
+        },
+        "step2": {
+            "title": "step2 query intelligence and routing",
+            "done": [
+                "query expansion",
+                "step back prompting",
+                "sub question decomposition",
+                "semantic router",
+            ],
+            "todo": [
+                "advanced indexing parent child summary hyde",
+                "self rag grading and adaptive retrieval",
+            ],
+        },
+        "step3": {
+            "title": "step3 advanced indexing",
+            "done": [
+                "parent child indexing small to big",
+                "summary indexing",
+                "hyde indexing",
+            ],
+            "todo": [
+                "self rag grading and adaptive retrieval",
+            ],
+        },
+        "step4": {
+            "title": "step4 self rag",
+            "done": [
+                "adaptive retrieval",
+                "self reflection scoring isrel issup isuse",
+                "grade docs and grade generation loop",
+            ],
+            "todo": [],
+        },
+    }
+    if stage in plans:
+        return {"stage": stage, **plans[stage]}
+    if stage:
+        return {"stage": stage, "title": stage, "done": [], "todo": []}
+    return {}
 
 
 def run_evaluation(*, corpus_dir: Path, dataset_path: Path, enable_ragas: bool) -> dict[str, Any]:
@@ -39,7 +97,7 @@ def run_evaluation(*, corpus_dir: Path, dataset_path: Path, enable_ragas: bool) 
         persist_dir = Path(td) / "milvus"
         build_index(sources_dir=corpus_dir, persist_dir=persist_dir)
         vectorstore = load_index(persist_dir)
-        retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
+        retriever = build_retriever(vectorstore=vectorstore, persist_dir=persist_dir, final_k=4)
         graph = build_rag_graph(retriever)
 
         samples: list[dict[str, Any]] = []
@@ -121,6 +179,8 @@ def run_evaluation(*, corpus_dir: Path, dataset_path: Path, enable_ragas: bool) 
                 "k": 4,
                 "milvus_host": os.getenv("MILVUS_HOST"),
                 "milvus_port": os.getenv("MILVUS_PORT"),
+                "retriever_mode": os.getenv("RISKAGENT_RETRIEVER_MODE", "vector"),
+                "reranker_model": os.getenv("RISKAGENT_RERANKER_MODEL", ""),
             },
             "metrics": {
                 "citations_total": cov.total,
@@ -163,6 +223,9 @@ def main() -> None:
     parser.add_argument("--dataset", default="tests/data/questions.json")
     parser.add_argument("--artifacts-dir", default=".artifacts")
     parser.add_argument("--baseline", default="")
+    parser.add_argument("--label", default="")
+    parser.add_argument("--stage", default="")
+    parser.add_argument("--stage-notes", default="")
     parser.add_argument("--enable-ragas", action="store_true")
     parser.add_argument("--enable-citation-judge", action="store_true")
     parser.add_argument("--citation-judge-mode", default=os.getenv("EVAL_CITATION_JUDGE_MODE", "auto"))
@@ -184,12 +247,19 @@ def main() -> None:
         "1",
         "yes",
     }
+    if str(args.stage).lower().strip() == "step1" and not os.getenv("RISKAGENT_RETRIEVER_MODE"):
+        os.environ["RISKAGENT_RETRIEVER_MODE"] = "step1"
     if bool(args.enable_citation_judge):
         os.environ["EVAL_ENABLE_CITATION_JUDGE"] = "true"
         os.environ["EVAL_CITATION_JUDGE_MODE"] = str(args.citation_judge_mode).lower().strip() or "auto"
     os.environ["EVAL_NUMERIC_TOLERANCE"] = str(float(args.numeric_tolerance))
 
     report = run_evaluation(corpus_dir=corpus_dir, dataset_path=dataset_path, enable_ragas=enable_ragas)
+    if args.stage or args.stage_notes:
+        report["stage"] = {
+            **_stage_plan(str(args.stage)),
+            "notes": str(args.stage_notes).strip(),
+        }
 
     baseline_path = args.baseline or find_latest_report(artifacts_dir=args.artifacts_dir)
     if baseline_path:
@@ -206,7 +276,10 @@ def main() -> None:
             "diff": diff,
         }
 
-    out_path = write_report(report, artifacts_dir=args.artifacts_dir)
+    label = str(args.label).strip()
+    if not label and args.stage:
+        label = str(args.stage).strip()
+    out_path = write_report(report, artifacts_dir=args.artifacts_dir, label=label)
     print(out_path)
 
 

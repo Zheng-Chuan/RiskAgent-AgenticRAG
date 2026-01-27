@@ -1,5 +1,87 @@
 # 开发计划
 
+## Agentic RAG 技术亮点里程碑清单
+
+下面按项目实际完成时间顺序整理 每一条都说明它解决了什么问题 以及为什么它重要
+
+### Week 1 已完成 baseline 与工程骨架
+
+- [x] 一键启动 UI 与 CLI 让任何人拉代码就能跑起来
+- [x] 端到端闭环 ingest retrieve answer citations 把可回溯作为第一原则
+- [x] secrets 全走环境变量 避免仓库泄露与本地配置混乱
+- [x] 端到端 smoke test 固化最小回归入口 防止链路被改坏
+
+### Week 2 已完成 语料接入与引用质量
+
+- [x] 语料接入支持 markdown 与 pdf 把知识源扩展到常见格式
+- [x] 分层切分 chunk 固化 section path 与来源定位 让 citations 能精确回指原文位置
+- [x] embeddings provider 可切换并固化维度 让检索质量可控可对比
+- [x] 20 题引用覆盖率评测 用最简单指标压住幻觉并驱动检索迭代
+
+### Week 3 已完成 单 agent agentic loop 与可控性
+
+- [x] query rewrite critique revise re retrieve 闭环 检索差就自动改写并重试
+- [x] 工具调用与结构化 contract 输出 把可计算事实从 LLM 生成里剥离出去
+- [x] decision log 与 tool traces 落盘 让每一步决策可解释可追踪
+- [x] validator gates 证据一致性 数值一致性 拒答 fail fast 让错误早暴露
+- [x] LangGraph 编排可选启用 纯函数与图编排双跑 保持可测试与可演进
+
+### Week 4 已完成 评测体系与回归框架
+
+- [x] RAGAS 集成与离线可跑指标 默认不依赖外部服务也能跑评测
+- [x] 自定义指标补齐 citations coverage numeric consistency 等本项目关注点
+- [x] 报告落盘与回归对比 读取上一份报告标记退化 让优化有数据证据
+
+### Week 5 已完成 拒答机制与负样本评测
+
+- [x] 负样本数据集 覆盖库外知识 无意义输入 恶意输入
+- [x] refusal gate 强制在证据不足时拒答 并给 next actions 避免硬编
+- [x] refusal rate 指标 让系统在可信度上可量化可回归
+
+### Week 6 已完成 引用精准度与幻觉检测
+
+- [x] citation precision 句粒度评测 衡量 answer 的每句是否被 contexts 支持
+- [x] citation judge 支持 auto llm heuristic 三种模式 兼顾成本与可信度
+- [x] hallucination rate in citations 指标 直接量化引用相关的幻觉占比
+
+### Week 7 已完成 金融领域一致性
+
+- [x] numeric consistency 自动对齐 answer 数字与工具输出 解决金融场景的数值可信度
+- [x] glossary check 检测术语误用 约束领域表达一致性
+- [x] domain consistency score 汇总为可追踪的指标 让领域质量可回归
+
+### Week 8 已完成 混合检索与重排序 step1
+
+- [x] Cross encoder reranking 对粗排结果精排 剔除语义相关但事实无关的噪音
+- [x] Hybrid search BM25 稀疏 + 向量稠密 让专有名词绝对召回 同时保留语义理解
+- [x] 产出阶段评测报告 写入 .artifacts/reports 并记录已做与未做
+  - `python -m riskagent_rag.evaluation.run --stage step1 --stage-notes "rerank and hybrid"`
+
+### Week 9 计划 查询理解与智能路由 step2
+
+- [ ] Query expansion 多视角并行检索 覆盖不同表达与不同信息需求角度
+- [ ] Step back prompting 退一步抽象问题 先拿背景知识再回答细节
+- [ ] Sub question decomposition 把复杂问题拆成可检索可验证的子问题
+- [ ] Semantic router 依据意图选择索引与工具 让系统不再一招走天下
+- [ ] 产出阶段评测报告 写入 .artifacts/reports 并记录已做与未做
+  - `python -m riskagent_rag.evaluation.run --stage step2 --stage-notes "query intelligence and routing"`
+
+### Week 10 计划 高级索引策略 step3
+
+- [ ] Parent child indexing small to big 以小 chunk 检索 以大 chunk 生成 兼顾精准与上下文完整
+- [ ] Summary indexing 为 section 生成摘要并索引 专门服务宏观总结类问题
+- [ ] HyDE indexing 为 chunk 生成假设性问题并索引 缓解 query 与文档表述不一致
+- [ ] 产出阶段评测报告 写入 .artifacts/reports 并记录已做与未做
+  - `python -m riskagent_rag.evaluation.run --stage step3 --stage-notes "advanced indexing"`
+
+### Week 11 计划 Self RAG 与动态决策 step4
+
+- [ ] Adaptive retrieval 显式判断上下文是否足够 不够则继续检索或拒答
+- [ ] Self reflection scoring 引入 IsRel IsSup IsUse 等分级评分 输出可度量的反思信号
+- [ ] Grade docs and grade generation 在生成前后都做质量门控 把 agentic loop 变成可控的闭环
+- [ ] 产出阶段评测报告 写入 .artifacts/reports 并记录已做与未做
+  - `python -m riskagent_rag.evaluation.run --stage step4 --stage-notes "self rag"`
+
 我们先做一个能跑的最小 demo
 再一点点加功能
 目标很直接
@@ -318,6 +400,106 @@ LLM strategy
     - [x] 检测术语误用(基于禁用定义关键字)并计分
   - [x] 评测指标: `domain_consistency_score`
 
+#### Phase 4: SOTA RAG Optimization 极致优化
+
+> 基于 Advanced RAG 理论图谱 不计成本追求检索与生成极致性能
+
+### Week 8: 混合检索与重排序 step1
+
+目标 先把检索侧做强 让同样的评测集在 citations precision 与 domain consistency 上立刻可见提升
+
+- **交付**
+  - [x] **Cross encoder reranking**
+    - [x] 方案: 在 retriever 之后引入重排序模型 对粗排结果精排
+    - [x] 目的: 剔除语义相关但事实无关的噪音 提升 citations precision
+  - [x] **Hybrid search**
+    - [x] 方案: BM25 稀疏检索 + vector 稠密检索 融合采用 RRF 或加权求和
+    - [x] 目的: 确保专有名词绝对召回 同时保留语义理解
+  - [ ] **召回层增强**
+    - [x] 多路召回配额化 基于 source 与 section 做去重与占比约束 避免单篇文档霸榜
+    - [x] query aware hybrid 为 sparse 与 dense 构造不同形态查询 提升口语化提问的召回稳定性
+  - [ ] **粗排层增强**
+    - [x] coarse scoring 在融合后加入轻量打分与过滤 把候选压缩到可控规模 再进入 cross encoder
+    - [x] citation aware filter 过滤低信息密度 chunk 降低噪音提升 context precision
+  - [ ] **精排与重排增强**
+    - [x] diversity rerank 在最终 topk 引入覆盖与多样性约束 覆盖多 source 多 section
+    - [x] confidence signal 输出 rerank score 分布与 gap 作为后续自适应检索与拒答依据
+  - [x] **阶段评测报告**
+    - [x] 完成后运行并落盘到 .artifacts/reports
+      - [x] `python -m riskagent_rag.evaluation.run --stage step1 --stage-notes "rerank and hybrid"`
+- **验收**
+  - [x] 仅用真实语料与真实 embeddings 与真实 reranker 跑通测试
+    - [x] `python -m unittest tests.test_week8_hybrid_rerank_acceptance`
+  - [ ] 仅用真实语料与真实 embeddings 与真实 reranker 跑通新增验收测试
+    - [x] `python -m unittest tests.test_week8_retrieval_highlights_acceptance`
+  - [x] 产出 step1 评测报告并可与 baseline 对比
+    - [x] `python -m riskagent_rag.evaluation.run --stage step1 --label step1 --enable-citation-judge --citation-judge-mode heuristic`
+
+### Week 9: 查询理解与智能路由 step2
+
+目标 让系统不再只有一招 通过并行检索与路由覆盖更多表达与更复杂的问题结构
+
+- **交付**
+  - [ ] **Query expansion**
+    - [ ] 方案: 升级现有 rewrite 生成 3 到 5 个变体 并行检索再融合
+  - [ ] **Step back prompting**
+    - [ ] 方案: 生成更高层更抽象的问题 用于检索背景知识 再回到原问题
+  - [ ] **Sub question decomposition**
+    - [ ] 方案: 将复杂问题拆解为多个可检索可验证的子问题
+  - [ ] **Semantic router**
+    - [ ] 方案: 动态判断意图 将 query 路由到不同索引或工具
+  - [ ] **阶段评测报告**
+    - [ ] 完成后运行并落盘到 .artifacts/reports
+      - [ ] `python -m riskagent_rag.evaluation.run --stage step2 --stage-notes "query intelligence and routing"`
+- **验收**
+  - [ ] 仅用真实语料与真实 embeddings 跑通测试
+    - [ ] `python -m unittest tests.test_week9_query_routing_acceptance`
+  - [ ] 产出 step2 评测报告并可与 step1 报告对比
+    - [ ] `python -m riskagent_rag.evaluation.run --stage step2 --label step2 --enable-citation-judge --citation-judge-mode heuristic`
+
+### Week 10: 高级索引策略 step3
+
+目标 从索引结构层面解决长文档与宏观问题 切片太小丢上下文 切片太大语义模糊的矛盾
+
+- **交付**
+  - [ ] **Parent child indexing small to big**
+    - [ ] 方案: 对 child chunk 做索引 检索命中后回填 parent chunk 给 LLM
+    - [ ] 目的: 兼顾检索精准度与生成上下文完整性
+  - [ ] **Summary indexing**
+    - [ ] 方案: 对每个 section 生成摘要并索引
+    - [ ] 目的: 专门响应宏观总结类问题 避免被细节淹没
+  - [ ] **HyDE indexing**
+    - [ ] 方案: 为 chunk 生成假设性问题 并对问题做索引
+    - [ ] 目的: 缓解 query 与文档表述不一致 以 question to question 匹配
+  - [ ] **阶段评测报告**
+    - [ ] 完成后运行并落盘到 .artifacts/reports
+      - [ ] `python -m riskagent_rag.evaluation.run --stage step3 --stage-notes "advanced indexing"`
+- **验收**
+  - [ ] 仅用真实语料与真实 embeddings 跑通测试
+    - [ ] `python -m unittest tests.test_week10_advanced_indexing_acceptance`
+  - [ ] 产出 step3 评测报告并可与 step2 报告对比
+    - [ ] `python -m riskagent_rag.evaluation.run --stage step3 --label step3 --enable-citation-judge --citation-judge-mode heuristic`
+
+### Week 11: Self RAG 与动态决策 step4
+
+目标 在生成前后引入显式打分与门控 把现有的 agentic loop 升级成可度量可控的动态决策系统
+
+- **交付**
+  - [ ] **Adaptive retrieval**
+    - [ ] 方案: 基于检索评分信号决定是否继续检索 或拒答 或进入生成
+  - [ ] **Self reflection scoring**
+    - [ ] 方案: 引入 IsRel IsSup IsUse 等信号 输出可度量的反思结果
+  - [ ] **Grade docs and grade generation**
+    - [ ] 方案: retrieve grade docs generate grade generation loop if needed
+  - [ ] **阶段评测报告**
+    - [ ] 完成后运行并落盘到 .artifacts/reports
+      - [ ] `python -m riskagent_rag.evaluation.run --stage step4 --stage-notes "self rag"`
+- **验收**
+  - [ ] 仅用真实语料与真实 embeddings 跑通测试
+    - [ ] `python -m unittest tests.test_week11_self_rag_acceptance`
+  - [ ] 产出 step4 评测报告并可与 step3 报告对比
+    - [ ] `python -m riskagent_rag.evaluation.run --stage step4 --label step4 --enable-citation-judge --citation-judge-mode heuristic`
+
 ## 时间规划
 
 里程碑按本地 demo 倒排.
@@ -330,9 +512,13 @@ LLM strategy
 | Week 4 | 已完成 | 结构化输出落盘 + 评测升级 + 文档固化 |
 | Week 5 | 已完成 | 负样本集 + Refusal Gate 优化 |
 | Week 6 | 已完成 | Citation Precision 自动化评测 |
-| Week 7 | 已完成 | 领域一致性校验 (数值+术语) |
+| Week 7 | 已完成 | 领域一致性校验 数值与术语 |
+| Week 8 | 已完成 | 混合检索与重排序 step1 |
+| Week 9 | 计划中 | 查询理解与智能路由 step2 |
+| Week 10 | 计划中 | 高级索引策略 step3 |
+| Week 11 | 计划中 | Self RAG 与动态决策 |
 
-**总计**: 7 周 (含 Phase 3)
+**总计** 11 周 含 Phase 4
 
 ## 开发建议
 

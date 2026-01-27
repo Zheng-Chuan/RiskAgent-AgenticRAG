@@ -19,6 +19,7 @@ dependencies = [
     "pydantic",
     "python-dotenv",
     "pypdf",
+    "rank-bm25",
 ]
 
 [tool.setuptools.packages.find]

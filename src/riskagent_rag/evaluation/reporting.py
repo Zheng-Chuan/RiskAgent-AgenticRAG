@@ -18,6 +18,16 @@ def _utc_timestamp() -> str:
     return datetime.utcnow().strftime("%Y%m%d_%H%M%S")
 
 
+def _sanitize_label(label: str) -> str:
+    out: list[str] = []
+    for ch in label.strip():
+        if ch.isalnum() or ch in ("-", "_"):
+            out.append(ch.lower())
+        elif ch.isspace():
+            out.append("_")
+    return "".join(out).strip("_")
+
+
 def ensure_reports_dir(*, artifacts_dir: str = ".artifacts") -> Path:
     base = Path(artifacts_dir)
     base.mkdir(parents=True, exist_ok=True)
@@ -26,9 +36,10 @@ def ensure_reports_dir(*, artifacts_dir: str = ".artifacts") -> Path:
     return reports_dir
 
 
-def write_report(report: dict[str, Any], *, artifacts_dir: str = ".artifacts") -> str:
+def write_report(report: dict[str, Any], *, artifacts_dir: str = ".artifacts", label: str = "") -> str:
     reports_dir = ensure_reports_dir(artifacts_dir=artifacts_dir)
-    filename = f"rag_eval_{_utc_timestamp()}.json"
+    safe_label = _sanitize_label(label) if label else ""
+    filename = f"rag_eval_{safe_label + '_' if safe_label else ''}{_utc_timestamp()}.json"
     path = reports_dir / filename
     path.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     return str(path)

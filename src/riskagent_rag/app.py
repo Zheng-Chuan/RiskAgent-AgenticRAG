@@ -18,7 +18,9 @@ from riskagent_rag.orchestration.langgraph_runner import (
 from riskagent_rag.rag.agentic_loop import run_agentic_chat
 from riskagent_rag.rag.ingestion import split_documents
 from riskagent_rag.rag.pipeline import extract_citations
+from riskagent_rag.rag.retriever_factory import build_retriever
 from riskagent_rag.rag.source_loader import load_sources
+from riskagent_rag.rag.sparse_index import persist_sparse_corpus
 from riskagent_rag.rag.vectorstore import build_milvus_vectorstore, load_milvus_vectorstore
 
 
@@ -57,6 +59,7 @@ class RiskAgentSystem:
         sources = load_sources(sources_dir)
         chunks = split_documents(sources)
         build_milvus_vectorstore(chunks, persist_dir)
+        persist_sparse_corpus(chunks=chunks, persist_dir=persist_dir)
 
         # 索引重建后，重置缓存
         self._graph = None
@@ -75,8 +78,7 @@ class RiskAgentSystem:
 
         persist_dir = settings.paths.milvus_lite_dir
         vectorstore = load_milvus_vectorstore(persist_dir)
-        # 默认 k=4
-        self._retriever = vectorstore.as_retriever(search_kwargs={"k": 4})
+        self._retriever = build_retriever(vectorstore=vectorstore, persist_dir=persist_dir, final_k=4)
         self._graph = build_rag_graph(self._retriever)
         return self._graph, self._retriever
 

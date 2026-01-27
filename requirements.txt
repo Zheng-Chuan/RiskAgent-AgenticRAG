@@ -10,3 +10,4 @@ pymilvus[milvus_lite]
 pydantic
 python-dotenv
 pypdf
+rank-bm25

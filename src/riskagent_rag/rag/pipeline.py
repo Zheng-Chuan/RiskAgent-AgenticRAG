@@ -23,6 +23,7 @@ from riskagent_rag.rag.vectorstore import (
     build_milvus_vectorstore,
     load_milvus_vectorstore,
 )
+from riskagent_rag.rag.sparse_index import persist_sparse_corpus
 from riskagent_rag.rag.source_loader import load_sources
 
 
@@ -56,6 +57,7 @@ def build_index(
     sources = load_sources(sources_dir)
     chunks = split_documents(sources)
     build_milvus_vectorstore(chunks, persist_dir)
+    persist_sparse_corpus(chunks=chunks, persist_dir=persist_dir)
     return IndexBuildResult(
         source_count=len(sources),
         chunk_count=len(chunks),

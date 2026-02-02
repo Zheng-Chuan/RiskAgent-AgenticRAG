@@ -8,26 +8,28 @@
 
 ## 文档目录
 
-- `docs/QUICKSTART.md`
-  - 新手从这里开始. 装依赖, 准备语料, 启动 UI 和 CLI, 跑测试
-- `docs/ROADMAP.md`
-  - 我们打算怎么做, 每一阶段怎么验收
-- `docs/ARCHITECTURE.md`
-  - 代码怎么拆, 数据怎么流, LLM 怎么接
-- `docs/RENAME.md`
-  - 仓库目录改名与相关配置检查清单
-- `docs/TIMELINE_EXPLAINABILITY.md`
+- [QUICKSTART](docs/QUICKSTART.md)
+  - 新手从这里开始 装依赖 准备语料 启动 UI 和 CLI 跑测试
+- [ROADMAP](docs/ROADMAP.md)
+  - 我们打算怎么做 每一阶段怎么验收
+- [ARCHITECTURE](docs/ARCHITECTURE.md)
+  - 代码怎么拆 数据怎么流 LLM 怎么接
+- [DATA](docs/DATA.md)
+  - 数据字典 关键中间数据结构与用途 例如 chunk citations evidence claims
+- [EVALUATION](docs/EVALUATION.md)
+  - 评测指南 RAGAS 与自定义指标 以及如何对比报告
+- [TIMELINE_EXPLAINABILITY](docs/TIMELINE_EXPLAINABILITY.md)
   - 从 Week1 到 Week7 的可解释性与评估体系演进时间线
-- `docs/INTERVIEW.md`
-  - 50 道多智能体和 RAG 面试题, 做项目时顺手把答案补全
+- [INTERVIEW](docs/INTERVIEW.md)
+  - 50 道多智能体和 RAG 面试题 做项目时顺手把答案补全
 
 ## 快速入口
 
-推荐使用 conda 环境 `LangChain`。
+推荐使用 conda 环境 `LangChain`
 
 ### 1. 开发环境安装 (关键)
 
-为了避免 import 报错，请务必以 editable 模式安装本项目：
+为了避免 import 报错 请务必以 editable 模式安装本项目
 
 ```bash
 # 方式一：使用 Makefile (推荐)

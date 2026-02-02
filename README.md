@@ -60,16 +60,22 @@ Docker Desktop 分组名 riskagent-agenticrag
 conda run -n LangChain python gradio_app.py
 ```
 
-### 4. 启动 CLI
+### 4. 增量索引 (CLI)
 
 ```bash
-conda run -n LangChain python demo_cli.py --rebuild-index --question "what is FRTB"
+conda run -n LangChain python -m riskagent_rag.cli.index --corpus-dir corpus --persist-dir .milvus
 ```
 
-### 5. 运行评测
+### 5. 启动 CLI
 
 ```bash
-conda run -n LangChain python -m unittest tests.test_week2_rag_citation_quality
+conda run -n LangChain python demo_cli.py --question "what is FRTB"
+```
+
+### 6. 运行评测
+
+```bash
+conda run -n LangChain python -m riskagent_rag.evaluation.run --stage step4 --label step4
 ```
 
 ## 技术栈
@@ -84,7 +90,7 @@ conda run -n LangChain python -m unittest tests.test_week2_rag_citation_quality
 
 - 语料默认放在 `corpus/`
 - 索引默认落地到 `.milvus/` 这是 Milvus Lite 的单文件落盘
-- 语料变了建议重新 build index 不然引用可能会对不上
+- 索引构建为增量模式 会跳过未变化的文件 并对变更文件做重建
 
 如需使用 Docker Milvus 请设置环境变量 MILVUS_HOST=localhost MILVUS_PORT=19530
 
@@ -101,10 +107,6 @@ conda run -n LangChain python -m unittest tests.test_week2_rag_citation_quality
 
 配置方式走环境变量
 
-- `LLM_API_KEY` 可选 部分服务需要
+- `LLM_API_KEY` 或 `OPENAI_API_KEY` 必填
 - `LLM_BASE_URL` 你的推理服务 base url
 - `LLM_MODEL` 模型名
-
-为了保证本地可复现
-没有配置 key 时会走 deterministic fallback
-先把检索链路和引用跑通

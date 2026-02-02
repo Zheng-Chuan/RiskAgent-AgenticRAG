@@ -160,18 +160,6 @@ code, pre {
 """
 
 
-def on_build_index() -> str:
-    """UI 按钮回调: 重建索引"""
-    try:
-        result = system.build_index()
-        return (
-            "Index ready. "
-            f"sources={result.source_count}, chunks={result.chunk_count}, persist_dir={result.persist_dir}"
-        )
-    except Exception as e:  # pylint: disable=broad-exception-caught
-        return f"Error building index: {e}"
-
-
 def _env_badge_text() -> str:
     """UI 状态展示"""
     return system.get_status()
@@ -233,8 +221,12 @@ def main() -> None:
             with gr.Column(scale=1, min_width=320):
                 with gr.Group(elem_classes=["ra-panel"]):
                     gr.Markdown("### Control Panel")
-                    build_btn = gr.Button("Build index", variant="primary")
-                    status = gr.Textbox(label="Status", interactive=False)
+                    gr.Markdown(
+                        "索引构建请使用 CLI:\n\n"
+                        "```bash\n"
+                        "python -m riskagent_rag.cli.index --corpus-dir corpus --persist-dir .milvus\n"
+                        "```\n"
+                    )
 
                 with gr.Group(elem_classes=["ra-panel"]):
                     gr.Markdown("### Runtime")
@@ -302,9 +294,7 @@ def main() -> None:
         def _on_clear():
             return [], [], [], [], [], {}
 
-        # 事件绑定.
-        build_btn.click(fn=on_build_index, inputs=None, outputs=status)
-        build_btn.click(fn=_env_badge_text, inputs=None, outputs=env_badge)
+        env_badge.change(fn=_env_badge_text, inputs=None, outputs=env_badge)
 
         send_btn.click(
             fn=_on_send,

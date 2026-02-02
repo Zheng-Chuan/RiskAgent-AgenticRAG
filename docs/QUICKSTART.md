@@ -53,18 +53,13 @@ docker compose -f deploy/dev/docker-compose.yml down
 
 ## 4. 配置 LLM
 
-如果你暂时没有 LLM API key, 也可以先用 deterministic 模式把链路跑通
-
-可选环境变量:
+必需环境变量:
 
 - `OPENAI_API_KEY` 或 `LLM_API_KEY`
 - `LLM_BASE_URL`
 - `LLM_MODEL`
 
-说明
-
-- 未配置 key 时, 系统会返回 deterministic 输出, 用于验证检索与 citations.
-- 配置 key 后, 会使用 OpenAI compatible 接口生成回答.
+未配置或无法连接 LLM 时会直接报错
 
 ## 5. 配置 embeddings
 
@@ -86,27 +81,32 @@ conda run -n LangChain python gradio_app.py
 
 ## 7. Demo 流程
 
-- 在 UI 里点 build index
-- 提一个问题 比如 what is FRTB
-- 看看 answer 和 citations
+- 先用 CLI 做增量索引
+
+```bash
+conda run -n LangChain python -m riskagent_rag.cli.index --corpus-dir corpus --persist-dir .milvus
+```
+
+- 再启动 UI 并提问 比如 what is FRTB
+- 查看 answer citations decision_log
 
 ## 8. CLI demo 与 smoke test
 
 - CLI demo 输出会写到 logs/demo_result.json
 
 ```bash
-conda run -n LangChain python demo_cli.py --rebuild-index --question "what is FRTB"
+conda run -n LangChain python demo_cli.py --question "what is FRTB"
 ```
 
 - e2e smoke test
 
 ```bash
-conda run -n LangChain python -m unittest tests.test_week1_rag_baseline
+conda run -n LangChain python -m unittest tests.test_index_incremental_acceptance
 ```
 
 ## 9. 运行评测
 
-评测会跑 20 个问题, 然后输出 coverage
+评测会跑数据集并落盘报告到 .artifacts/reports
 
 ```bash
-conda run -n LangChain python -m unittest tests.test_week2_rag_citation_quality
+conda run -n LangChain python -m riskagent_rag.evaluation.run --stage step4 --label step4

@@ -4,7 +4,6 @@
 """
 from __future__ import annotations
 
-import hashlib
 import importlib
 import os
 import pathlib
@@ -40,8 +39,8 @@ def build_embeddings() -> Embeddings:
 
     provider = str(settings.embeddings.provider or "hf").lower().strip()
 
-    if provider in {"fake", "deterministic"}:
-        return DeterministicEmbeddings(dimension=384)
+    if provider != "hf":
+        raise RuntimeError(f"Unsupported embeddings provider: {provider}")
 
     local_dir = _local_embeddings_dir_for_model(model_name)
     resolved_model = str(local_dir) if local_dir.exists() else model_name
@@ -101,22 +100,3 @@ def export_embeddings_model_to_repo_dir() -> dict[str, str]:
         "export_dir": str(target_dir),
     }
 
-
-class DeterministicEmbeddings(Embeddings):
-    def __init__(self, *, dimension: int = 384) -> None:
-        self._dimension = int(dimension)
-
-    def embed_documents(self, texts: list[str]) -> list[list[float]]:
-        return [self._embed_text(t) for t in texts]
-
-    def embed_query(self, text: str) -> list[float]:
-        return self._embed_text(text)
-
-    def _embed_text(self, text: str) -> list[float]:
-        t = str(text or "").encode("utf-8", errors="ignore")
-        seed = hashlib.sha1(t).digest()
-        out = [0.0] * self._dimension
-        for i in range(self._dimension):
-            b = seed[i % len(seed)]
-            out[i] = (b / 255.0) * 2.0 - 1.0
-        return out

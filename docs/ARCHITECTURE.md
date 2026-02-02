@@ -15,18 +15,18 @@
 - 商业 API 配 `LLM_API_KEY` `LLM_BASE_URL` `LLM_MODEL`
 - 开源模型 用 vLLM TGI Ollama 起一个 OpenAI compatible server 再配 `LLM_BASE_URL`
 
-说明 没有 key 时会走 deterministic fallback 先把 RAG 链路和引用跑通
-有 key 后再切换到真实 LLM
+未配置或无法连接 LLM 时会直接报错
 
 ## 核心模块
 
+- `riskagent_rag.indexing`
+  - 增量索引 构建 manifest 写入 Milvus 与各类语料 JSONL
 - `riskagent_rag.rag`
-  - ingest, chunk, index
-  - retrieve
+  - ingest chunking
+  - retrieve rerank reroute
 - `riskagent_rag.llm`
   - LLM 接入封装
   - OpenAI compatible client
-  - fallback client
 - `riskagent_rag.agents`
   - retrieval agent
   - explanation agent

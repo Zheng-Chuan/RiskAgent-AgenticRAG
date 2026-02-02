@@ -79,6 +79,88 @@ def _markdown_sections(text: str) -> list[tuple[str, str, int, int, int]]:
     return sections
 
 
+def _stable_parent_id(*, source: str, section_path: str, start_char: int, page: int) -> str:
+    material = f"{source}:{section_path}:{int(start_char)}:{int(page)}".encode("utf-8")
+    return hashlib.sha1(material).hexdigest()[:12]
+
+
+def build_parent_documents(docs: list[Document]) -> list[Document]:
+    parents: list[Document] = []
+    for d in docs:
+        meta = dict(d.metadata or {})
+        source = str(meta.get("source", ""))
+        file_type = str(meta.get("file_type", "")).lower().strip()
+        page = int(meta.get("page") or 0)
+        content = d.page_content or ""
+
+        if source.lower().endswith(".md") or file_type == "md":
+            sections = _markdown_sections(content)
+            if sections:
+                for section_path, section_text, start_line0, end_line0, start_char in sections:
+                    text = str(section_text or "").strip()
+                    if not text:
+                        continue
+                    parent_id = _stable_parent_id(
+                        source=source,
+                        section_path=str(section_path or ""),
+                        start_char=int(start_char),
+                        page=0,
+                    )
+                    parents.append(
+                        Document(
+                            page_content=text,
+                            metadata={
+                                **meta,
+                                "parent_id": parent_id,
+                                "parent_type": "md_section",
+                                "section_path": str(section_path or ""),
+                                "start_index": int(start_char),
+                                "start_line": int(start_line0 + 1),
+                                "end_line": int(end_line0),
+                                "page": 0,
+                            },
+                        )
+                    )
+                continue
+
+            parent_id = _stable_parent_id(source=source, section_path="", start_char=0, page=0)
+            parents.append(
+                Document(
+                    page_content=content,
+                    metadata={
+                        **meta,
+                        "parent_id": parent_id,
+                        "parent_type": "md_file",
+                        "section_path": "",
+                        "start_index": 0,
+                        "start_line": 1,
+                        "end_line": max(1, (content or "").count("\n") + 1),
+                        "page": 0,
+                    },
+                )
+            )
+            continue
+
+        parent_id = _stable_parent_id(source=source, section_path="", start_char=0, page=page)
+        parents.append(
+            Document(
+                page_content=content,
+                metadata={
+                    **meta,
+                    "parent_id": parent_id,
+                    "parent_type": "pdf_page" if page else "doc",
+                    "section_path": "",
+                    "start_index": 0,
+                    "start_line": 0,
+                    "end_line": 0,
+                    "page": int(page),
+                },
+            )
+        )
+
+    return parents
+
+
 def split_documents(docs: list[Document]) -> list[Document]:
     """将原始文档切分为固定大小 chunks。
 
@@ -107,6 +189,12 @@ def split_documents(docs: list[Document]) -> list[Document]:
                 for section_path, section_text, start_line0, end_line0, start_char in sections:
                     if not section_text.strip():
                         continue
+                    parent_id = _stable_parent_id(
+                        source=source,
+                        section_path=str(section_path or ""),
+                        start_char=int(start_char),
+                        page=0,
+                    )
                     enriched_docs.append(
                         Document(
                             page_content=section_text,
@@ -116,6 +204,7 @@ def split_documents(docs: list[Document]) -> list[Document]:
                                 "section_start_line": int(start_line0 + 1),
                                 "section_end_line": int(end_line0),
                                 "section_start_char": int(start_char),
+                                "parent_id": parent_id,
                             },
                         )
                     )
@@ -131,6 +220,7 @@ def split_documents(docs: list[Document]) -> list[Document]:
 
         source = str(c.metadata.get("source", ""))
         c.metadata.setdefault("file_type", "")
+        c.metadata.setdefault("parent_id", "")
         start_index_raw = c.metadata.get("start_index", 0)
         try:
             start_index = int(start_index_raw)
@@ -144,6 +234,11 @@ def split_documents(docs: list[Document]) -> list[Document]:
                 c.metadata["start_index"] = int(start_index)
             except Exception:
                 pass
+        parent_id = str(c.metadata.get("parent_id") or "").strip()
+        if not parent_id and source:
+            page = int(c.metadata.get("page") or 0)
+            parent_id = _stable_parent_id(source=source, section_path=str(c.metadata.get("section_path") or ""), start_char=0, page=page)
+            c.metadata["parent_id"] = parent_id
         material = f"{source}:{start_index}:{c.page_content}".encode("utf-8")
         digest = hashlib.sha1(material).hexdigest()[:12]
 

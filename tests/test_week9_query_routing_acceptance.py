@@ -6,7 +6,7 @@ import shutil
 import tempfile
 import unittest
 
-from riskagent_rag.rag.pipeline import build_index, load_index
+from riskagent_rag.indexing.indexer import incremental_index
 from riskagent_rag.rag.retriever_factory import build_retriever
 
 
@@ -59,9 +59,8 @@ class TestWeek9QueryRoutingAcceptance(unittest.TestCase):
             shutil.copyfile(src, dst)
 
     def test_step2_query_intelligence_adds_variant_fusion_scores(self) -> None:
-        build_index(sources_dir=self.corpus_dir, persist_dir=self.persist_dir)
-        vectorstore = load_index(self.persist_dir)
-        retriever = build_retriever(vectorstore=vectorstore, persist_dir=self.persist_dir, final_k=4)
+        incremental_index(corpus_dir=self.corpus_dir, persist_dir=self.persist_dir, include_paths=None)
+        retriever = build_retriever(persist_dir=self.persist_dir, final_k=4)
 
         q = "Explain FRTB and Basel II.5 differences and how market risk capital is computed"
         docs = retriever.invoke(q)
@@ -89,4 +88,3 @@ class TestWeek9QueryRoutingAcceptance(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

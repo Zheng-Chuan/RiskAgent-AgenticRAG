@@ -6,7 +6,7 @@ import shutil
 import tempfile
 import unittest
 
-from riskagent_rag.rag.pipeline import build_index, load_index
+from riskagent_rag.indexing.indexer import incremental_index
 from riskagent_rag.rag.retriever_factory import build_retriever
 
 
@@ -50,9 +50,8 @@ class TestWeek8HybridRerankAcceptance(unittest.TestCase):
             shutil.copyfile(src, dst)
 
     def test_hybrid_rerank_uses_sparse_and_dense_and_scores(self) -> None:
-        build_index(sources_dir=self.corpus_dir, persist_dir=self.persist_dir)
-        vectorstore = load_index(self.persist_dir)
-        retriever = build_retriever(vectorstore=vectorstore, persist_dir=self.persist_dir, final_k=4)
+        incremental_index(corpus_dir=self.corpus_dir, persist_dir=self.persist_dir, include_paths=None)
+        retriever = build_retriever(persist_dir=self.persist_dir, final_k=4)
 
         docs = retriever.invoke("Basel II.5 framework market risk capital rules")
         self.assertTrue(docs)
@@ -73,4 +72,3 @@ class TestWeek8HybridRerankAcceptance(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

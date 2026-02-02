@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import json
+import os
 import uuid
 from typing import Any, Literal, Optional, TypedDict
 
@@ -12,6 +13,7 @@ from riskagent_rag.artifacts.storage import save_artifact
 from riskagent_rag.contracts.structured import StructuredRequest
 from riskagent_rag.rag import agentic_primitives
 from riskagent_rag.rag.pipeline import extract_citations
+from riskagent_rag.rag.self_rag import grade_docs, grade_generation, should_require_numeric_backing
 from riskagent_rag.validators.gates import validate_response
 
 
@@ -76,9 +78,50 @@ def node_retrieve_and_critique(state: AgenticState) -> AgenticState:
 
     docs = retriever.invoke(current_query)
 
+    self_rag_enabled = os.getenv("RISKAGENT_SELF_RAG", "").lower().strip() in {"true", "1", "yes"}
+    self_sufficient = False
+    if self_rag_enabled:
+        g = grade_docs(question=question, docs=docs)
+        self_sufficient = bool(g.sufficient)
+        debug = state.get("debug") or {}
+        self_rag = debug.get("self_rag")
+        if not isinstance(self_rag, dict):
+            self_rag = {"enabled": True, "rounds": []}
+        rounds = self_rag.get("rounds")
+        if not isinstance(rounds, list):
+            rounds = []
+        rounds.append(
+            {
+                "round": int(current_round + 1),
+                "query": str(current_query),
+                "grade": {
+                    "sufficient": bool(g.sufficient),
+                    "reason": str(g.reason),
+                    "top_isrel": float(g.top_isrel),
+                    "avg_isrel": float(g.avg_isrel),
+                    "docs": [gd.__dict__ for gd in g.grades],
+                },
+            }
+        )
+        self_rag["rounds"] = rounds
+        debug["self_rag"] = self_rag
+        state["debug"] = debug
+
+        decision_log = state.get("decision_log", [])
+        decision_log.append(
+            {
+                "step_id": f"self_rag_grade_docs_round_{int(current_round + 1)}",
+                "agent": "SelfRAG",
+                "rationale": str(g.reason),
+                "chosen": "sufficient" if g.sufficient else "insufficient",
+                "alternatives": [f"top_isrel={g.top_isrel:.3f}"],
+            }
+        )
+        state["decision_log"] = decision_log
+
     sufficient, improved_query, critique_reason = agentic_primitives.critique_retrieval(question, docs)
     next_round = current_round + 1
-    should_continue = (not sufficient) and (next_round < max_rounds)
+    should_continue = (not bool(sufficient or self_sufficient)) and (next_round < max_rounds)
 
     state["docs"] = docs
     state["critique_reason"] = critique_reason
@@ -228,6 +271,10 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
         evidence_set=evidence_set,
         tool_traces=tool_traces,
         docs=docs,
+        require_numeric_backing=should_require_numeric_backing(
+            question=state.get("question", ""),
+            should_call_tool=bool(state.get("should_call_tool", False)),
+        ),
     )
 
     status = "ok" if failure_reason is None else "failed"
@@ -242,6 +289,25 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
         "tool_args": state.get("tool_args", {}),
         "tool_should_call": state.get("should_call_tool", False),
     }
+    self_rag_enabled = os.getenv("RISKAGENT_SELF_RAG", "").lower().strip() in {"true", "1", "yes"}
+    if self_rag_enabled:
+        gen = grade_generation(failure_reason=failure_reason)
+        self_rag = (state.get("debug") or {}).get("self_rag")
+        if not isinstance(self_rag, dict):
+            self_rag = {"enabled": True, "rounds": []}
+        self_rag["generation"] = gen
+        debug_info["self_rag"] = self_rag
+        decision_log = state.get("decision_log", [])
+        decision_log.append(
+            {
+                "step_id": "self_rag_grade_generation",
+                "agent": "SelfRAG",
+                "rationale": str(gen.get("message") or ""),
+                "chosen": "ok" if bool(gen.get("ok")) else "fail",
+                "alternatives": [str(gen.get("category") or "")],
+            }
+        )
+        state["decision_log"] = decision_log
 
     request_id = str(uuid.uuid4())
     request_data = {

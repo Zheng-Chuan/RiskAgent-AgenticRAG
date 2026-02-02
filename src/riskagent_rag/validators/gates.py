@@ -253,6 +253,8 @@ def validate_response(
     evidence_set: list[dict[str, Any]],
     tool_traces: list[dict[str, Any]],
     docs: list[Any],
+    *,
+    require_numeric_backing: bool = True,
 ) -> Optional[dict[str, Any]]:
     """
     统一入口: 依次执行所有 gate, 返回第一个失败的 FailureReason.
@@ -275,8 +277,9 @@ def validate_response(
     if failure:
         return failure
 
-    failure = numeric_consistency_gate(report, claims, tool_traces)
-    if failure:
-        return failure
+    if bool(require_numeric_backing):
+        failure = numeric_consistency_gate(report, claims, tool_traces)
+        if failure:
+            return failure
 
     return None

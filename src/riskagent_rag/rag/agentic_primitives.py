@@ -10,13 +10,12 @@ from __future__ import annotations
 
 import datetime
 import json
-import os
 import re
 from typing import Any, Optional
 
 from langchain_core.documents import Document  # type: ignore[import-not-found]
 
-from riskagent_rag.llm.generate import generate_answer
+from riskagent_rag.llm.generate import call_llm_json, call_llm_text, generate_answer
 
 
 def _tokenize(text: str) -> list[str]:
@@ -116,31 +115,12 @@ def try_parse_json(text: str) -> Optional[dict[str, Any]]:
     return None
 
 
-def call_ollama_json(prompt: str) -> str:
-    # 中文注释: 复用 generate.py 内部的 Ollama 调用.
-    # 注意: 这是开发期快速接入, 后续可以抽象为公开的 LLM client.
-    from riskagent_rag.llm import generate as llm_generate
-
-    return llm_generate._call_ollama_generate(  # type: ignore[attr-defined]
-        prompt,
-        response_format="json",
-        options={
-            # 中文注释: 尽量降低随机性, 让 rewrite 和 critique 稳定输出.
-            "temperature": 0,
-        },
-    )
-
-
 def utc_today_date() -> str:
     # 中文注释: tool use 的默认 as_of
     return datetime.datetime.utcnow().date().isoformat()
 
 
 def rewrite_query(question: str) -> str:
-    provider = os.getenv("LLM_PROVIDER", "").lower().strip()
-    if provider != "ollama":
-        return question
-
     prompt = (
         "You are a retrieval query rewriting assistant for finance risk and derivatives. "
         "Rewrite the user question into a short, keyword-rich search query optimized for embedding search. "
@@ -152,23 +132,12 @@ def rewrite_query(question: str) -> str:
         "- Keep it under 20 tokens if possible.\n\n"
         f"User question: {question}\n"
     )
-    text = call_ollama_json(prompt)
-    data = try_parse_json(text)
-    if not data:
-        return question
-
+    data = call_llm_json(prompt, temperature=0.0)
     query = str(data.get("query", "")).strip()
     return query or question
 
 
 def critique_retrieval(question: str, docs: list[Document]) -> tuple[bool, str, str]:
-    provider = os.getenv("LLM_PROVIDER", "").lower().strip()
-    if provider != "ollama":
-        sufficient, score = heuristic_retrieval_sufficient(question, docs)
-        if sufficient:
-            return True, "", f"heuristic critique ok overlap={score:.3f}"
-        return False, question, f"heuristic critique insufficient overlap={score:.3f}"
-
     if not docs:
         return False, question, "retrieval returned empty docs"
 
@@ -182,8 +151,7 @@ def critique_retrieval(question: str, docs: list[Document]) -> tuple[bool, str, 
         f"Question: {question}\n\n"
         f"Context:\n{context}\n"
     )
-    text = call_ollama_json(prompt)
-    data = try_parse_json(text) or {}
+    data = call_llm_json(prompt, temperature=0.0)
 
     sufficient = bool(data.get("sufficient", False))
     improved_query = str(data.get("improved_query", "")).strip()
@@ -192,11 +160,6 @@ def critique_retrieval(question: str, docs: list[Document]) -> tuple[bool, str, 
 
 
 def decide_tool_use(question: str) -> tuple[bool, dict[str, Any], str]:
-    # 中文注释: 在 Ollama 模式下, 让 LLM 输出结构化 JSON 决策是否需要调用 tool.
-    provider = os.getenv("LLM_PROVIDER", "").lower().strip()
-    if provider != "ollama":
-        return False, {}, "tool decision skipped: non-ollama provider"
-
     prompt = (
         "You are a strict tool-use planner for a risk monitoring assistant. "
         "Decide whether to call the desk exposure monitoring tool. "
@@ -209,8 +172,7 @@ def decide_tool_use(question: str) -> tuple[bool, dict[str, Any], str]:
         "- abs_delta_limit defaults to 1000000 if missing\n\n"
         f"User question: {question}\n"
     )
-    text = call_ollama_json(prompt)
-    data = try_parse_json(text) or {}
+    data = call_llm_json(prompt, temperature=0.0)
 
     should_call = bool(data.get("should_call_tool", False))
     raw_args = data.get("args")
@@ -228,8 +190,14 @@ def synthesize_answer_with_tool(
     docs: list[Document],
     tool_output: dict[str, Any] | None,
 ) -> str:
-    provider = os.getenv("LLM_PROVIDER", "").lower().strip()
-    if provider != "ollama" or not tool_output:
+    if not docs:
+        return build_refusal_report(question)
+    if not any(
+        (str(getattr(d, "page_content", "") or "").strip() or str((getattr(d, "metadata", {}) or {}).get("expanded_text") or "").strip())
+        for d in docs
+    ):
+        return build_refusal_report(question)
+    if not tool_output:
         return generate_answer(question, docs)
 
     from riskagent_rag.llm import generate as llm_generate
@@ -261,13 +229,7 @@ def synthesize_answer_with_tool(
         f"Retrieval context:\n{context}\n\n"
         f"Tool output JSON:\n{tool_json}\n"
     )
-    return llm_generate._call_ollama_generate(  # type: ignore[attr-defined]
-        prompt,
-        options={
-            # 中文注释: 最终回答也尽量稳定, 便于回归.
-            "temperature": 0,
-        },
-    )
+    return call_llm_text(prompt, temperature=0.0)
 
 
 def attach_citations_to_each_paragraph(answer: str, citations: list[dict[str, str]]) -> str:

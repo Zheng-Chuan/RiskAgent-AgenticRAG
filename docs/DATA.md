@@ -17,7 +17,7 @@ Chunk 是 LangChain 的 Document 对象
 
 - 语料加载: [source_loader.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/rag/source_loader.py)
 - 切分与元数据增强: [ingestion.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/rag/ingestion.py)
-- 写入向量库: [vectorstore.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/rag/vectorstore.py)
+- 增量写入向量库: [indexer.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/indexing/indexer.py) 与 [milvus_store.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/indexing/milvus_store.py)
 
 ### 主要用途
 
@@ -34,7 +34,7 @@ chunk_id 用于稳定定位引用
 关键影响
 
 - 切分规则或语料内容变动会导致 chunk_id 变化
-- 因此 build_index 语义是 rebuild 会 drop_old 避免旧引用漂移
+- 索引采用文件粒度增量更新 未变化文件会跳过 变更文件会重建该文件的 chunk
 
 ### 核心字段
 
@@ -130,7 +130,7 @@ Claim 是对 answer 的段落级结构化切分
 
 Decision Log 用于解释 agentic 决策过程
 它是一个 dict 列表 贯穿 rewrite critique revise tool decision
-常见字段在 [agentic_loop.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/rag/agentic_loop.py#L81-L134)
+常见字段在 [langgraph_runner.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/orchestration/langgraph_runner.py)
 
 结构
 
@@ -144,7 +144,7 @@ Decision Log 用于解释 agentic 决策过程
 
 Tool Trace 用于记录工具调用输入输出
 它来自 data_agent 的输出 并被 numeric consistency gate 使用
-相关入口在 [agentic_loop.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/rag/agentic_loop.py#L222-L255)
+相关入口在 [langgraph_runner.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/orchestration/langgraph_runner.py)
 
 结构是 dict
 字段取决于具体 tool 实现
@@ -160,4 +160,3 @@ Tool Trace 用于记录工具调用输入输出
 - inputs: corpus_dir dataset_path retriever_mode reranker_model
 - metrics: citations_coverage citation_precision domain_consistency_score 等
 - samples: 每条样本的 question answer contexts citations passed
-

@@ -440,22 +440,22 @@ LLM strategy
 目标 让系统不再只有一招 通过并行检索与路由覆盖更多表达与更复杂的问题结构
 
 - **交付**
-  - [ ] **Query expansion**
-    - [ ] 方案: 升级现有 rewrite 生成 3 到 5 个变体 并行检索再融合
-  - [ ] **Step back prompting**
-    - [ ] 方案: 生成更高层更抽象的问题 用于检索背景知识 再回到原问题
-  - [ ] **Sub question decomposition**
-    - [ ] 方案: 将复杂问题拆解为多个可检索可验证的子问题
-  - [ ] **Semantic router**
-    - [ ] 方案: 动态判断意图 将 query 路由到不同索引或工具
-  - [ ] **阶段评测报告**
-    - [ ] 完成后运行并落盘到 .artifacts/reports
-      - [ ] `python -m riskagent_rag.evaluation.run --stage step2 --stage-notes "query intelligence and routing"`
+  - [x] **Query expansion**
+    - [x] 方案: 生成多个 query 变体 并行检索再融合
+  - [x] **Step back prompting**
+    - [x] 方案: 生成更抽象的背景 query 拉回基础定义与上下文
+  - [x] **Sub question decomposition**
+    - [x] 方案: 针对对比类问题拆解为多个子 query 再融合
+  - [x] **Semantic router**
+    - [x] 方案: 基于意图规则选择策略 例如 compare 背景 procedure
+  - [x] **阶段评测报告**
+    - [x] 完成后运行并落盘到 .artifacts/reports
+      - [x] `python -m riskagent_rag.evaluation.run --stage step2 --label step2 --enable-citation-judge --citation-judge-mode heuristic`
 - **验收**
-  - [ ] 仅用真实语料与真实 embeddings 跑通测试
-    - [ ] `python -m unittest tests.test_week9_query_routing_acceptance`
-  - [ ] 产出 step2 评测报告并可与 step1 报告对比
-    - [ ] `python -m riskagent_rag.evaluation.run --stage step2 --label step2 --enable-citation-judge --citation-judge-mode heuristic`
+  - [x] 仅用真实语料与真实 embeddings 跑通测试
+    - [x] `python -m unittest tests.test_week9_query_routing_acceptance`
+  - [x] 产出 step2 评测报告并可与 step1 报告对比
+    - [x] `python -m riskagent_rag.evaluation.run --stage step2 --label step2 --enable-citation-judge --citation-judge-mode heuristic`
 
 ### Week 10: 高级索引策略 step3
 

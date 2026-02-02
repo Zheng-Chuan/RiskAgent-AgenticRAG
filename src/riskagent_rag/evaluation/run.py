@@ -249,6 +249,10 @@ def main() -> None:
     }
     if str(args.stage).lower().strip() == "step1" and not os.getenv("RISKAGENT_RETRIEVER_MODE"):
         os.environ["RISKAGENT_RETRIEVER_MODE"] = "step1"
+    if str(args.stage).lower().strip() == "step2" and not os.getenv("RISKAGENT_RETRIEVER_MODE"):
+        os.environ["RISKAGENT_RETRIEVER_MODE"] = "step2"
+    if str(args.stage).lower().strip() in {"step1", "step2"} and not os.getenv("RISKAGENT_RERANKER_MODEL"):
+        os.environ["RISKAGENT_RERANKER_MODEL"] = "cross-encoder/ms-marco-MiniLM-L-6-v2"
     if bool(args.enable_citation_judge):
         os.environ["EVAL_ENABLE_CITATION_JUDGE"] = "true"
         os.environ["EVAL_CITATION_JUDGE_MODE"] = str(args.citation_judge_mode).lower().strip() or "auto"

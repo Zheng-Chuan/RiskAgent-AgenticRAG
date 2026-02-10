@@ -115,7 +115,7 @@ LLM strategy
 - 可控与可测: 至少 1 条 e2e smoke test, tests 一键运行并输出报告
 - 工程化底线: 不在仓库里写明文 secrets
 
-备注 这个 roadmap 只盯本地可运行 demo 暂时不做生产化
+备注 本项目优先保证本地可运行与可复现 但会补齐最小生产化闭环 包括接口契约 可观测性 成本控制 安全与质量门禁
 
 ## Week 计划
 
@@ -499,6 +499,93 @@ LLM strategy
     - [x] `python -m unittest tests.test_week11_self_rag_acceptance`
   - [x] 产出 step4 评测报告并可与 step3 报告对比
     - [x] `python -m riskagent_rag.evaluation.run --stage step4 --label step4 --enable-citation-judge --citation-judge-mode heuristic`
+
+---
+
+## Phase 5: Productionization 可信上线闭环 (Week 12 - Week 16)
+
+目标 把 demo 升级成可上线的 LLM 应用工程作品集 重点是契约 稳定性 安全 可观测 成本 与质量门禁
+
+### Week 12: 服务化接口与契约 v1
+
+- 交付
+  - [ ] HTTP API v1
+    - [ ] /v1/ask 单轮问答
+    - [ ] /v1/chat 多轮对话
+    - [ ] /healthz /readyz 健康检查
+    - [ ] /metrics 基础指标
+  - [ ] 请求与响应 schema 固化
+    - [ ] request_id 贯穿全链路
+    - [ ] 输出始终包含 evidence_set claims tool_traces decision_log
+    - [ ] 错误返回固定 error_code 与 retryable 标记
+  - [ ] 可选鉴权
+    - [ ] 支持 API key via HTTP header
+- 验收
+  - [ ] 50 次连续请求无崩溃
+  - [ ] 所有响应可被 schema 校验
+  - [ ] 对同一输入在相同参数下输出结构稳定
+
+### Week 13: 可观测性与调试体验
+
+- 交付
+  - [ ] 统一日志字段
+    - [ ] request_id run_id model_id prompt_version retriever_version
+    - [ ] latency_ms token_in token_out cost_estimate_usd
+  - [ ] Trace contract 固化
+    - [ ] 每次 run 落盘 trace.json 包含节点耗时与关键中间产物路径
+    - [ ] 可以从 trace 复现一次 run 的 retrieval 与 tool 调用序列
+  - [ ] 性能基线
+    - [ ] 固定 30 条请求集输出 p50 p95 TTFT TPS 的测量方式
+- 验收
+  - [ ] 一条命令可生成性能报告并落盘
+  - [ ] 任意一次失败都能从 trace 定位到 failure_reason 与责任节点
+
+### Week 14: 安全与防护最小闭环
+
+- 交付
+  - [ ] Prompt injection 测试集
+    - [ ] 越权索取 secrets
+    - [ ] 诱导忽略系统指令
+    - [ ] 诱导伪造 citations
+  - [ ] Tool 安全机制
+    - [ ] 工具 allowlist 与参数校验
+    - [ ] 工具输出强校验 只允许结构化数据进入生成
+  - [ ] 数据安全
+    - [ ] 日志脱敏策略
+    - [ ] 明确不回传 corpus 原文的策略与阈值
+- 验收
+  - [ ] 安全集通过率达到阈值
+  - [ ] 越权请求必须拒答并给出 next_actions
+
+### Week 15: 成本与缓存策略
+
+- 交付
+  - [ ] 缓存层
+    - [ ] embeddings cache
+    - [ ] retrieval cache
+    - [ ] chunk -> triples 或 chunk -> entities 的可复用缓存
+  - [ ] 成本控制策略
+    - [ ] model tiering 便宜模型先跑 失败再升级
+    - [ ] judge 预算 评测时按样本抽样与分层触发
+  - [ ] 退化与降级
+    - [ ] no_rerank no_graph baseline 一键切换
+    - [ ] 工具不可用时进入 deterministic fallback
+- 验收
+  - [ ] 在固定请求集上 cost_estimate 降低且质量指标不显著退化
+  - [ ] 外部依赖不可用时系统可用性满足目标
+
+### Week 16: CI 质量门禁与发布流程
+
+- 交付
+  - [ ] 一键回归
+    - [ ] 单测 集成测 评测 三段式流水线
+    - [ ] 评测报告与阈值门禁
+  - [ ] 版本化与可审计
+    - [ ] 每次发布生成 run_manifest 包含版本与依赖
+    - [ ] 输出 artifacts 路径与命名约定固化
+- 验收
+  - [ ] CI 能阻止结构退化与关键指标退化
+  - [ ] 任意版本可一键复现到同一份回归集输出
 
 ## 时间规划
 

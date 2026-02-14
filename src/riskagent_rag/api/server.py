@@ -228,11 +228,23 @@ def v1_ask(req: AskRequest, response: Response) -> AskResponse:
         _REQ_LAT_MS.labels(path=path, method=method).observe(float(dur))
         try:
             run_id = ""
+            model_id = ""
+            prompt_version = ""
+            retriever_version: dict[str, Any] = {}
             if "out" in locals() and isinstance(locals().get("out"), dict):
-                run_id = str((locals()["out"].get("debug") or {}).get("run_id") or "")
+                debug = locals()["out"].get("debug") or {}
+                run_id = str(debug.get("run_id") or "")
+                model_id = str(debug.get("model_id") or "")
+                prompt_version = str(debug.get("prompt_version") or "")
+                rv = debug.get("retriever_version") or {}
+                if isinstance(rv, dict):
+                    retriever_version = dict(rv)
             log = {
                 "request_id": str(request_id),
                 "run_id": run_id,
+                "model_id": model_id,
+                "prompt_version": prompt_version,
+                "retriever_version": retriever_version,
                 "path": path,
                 "method": method,
                 "status_code": int(code),
@@ -282,11 +294,23 @@ def v1_chat(req: ChatRequest, response: Response) -> AskResponse:
         _REQ_LAT_MS.labels(path=path, method=method).observe(float(dur))
         try:
             run_id = ""
+            model_id = ""
+            prompt_version = ""
+            retriever_version: dict[str, Any] = {}
             if "out" in locals() and isinstance(locals().get("out"), dict):
-                run_id = str((locals()["out"].get("debug") or {}).get("run_id") or "")
+                debug = locals()["out"].get("debug") or {}
+                run_id = str(debug.get("run_id") or "")
+                model_id = str(debug.get("model_id") or "")
+                prompt_version = str(debug.get("prompt_version") or "")
+                rv = debug.get("retriever_version") or {}
+                if isinstance(rv, dict):
+                    retriever_version = dict(rv)
             log = {
                 "request_id": str(request_id),
                 "run_id": run_id,
+                "model_id": model_id,
+                "prompt_version": prompt_version,
+                "retriever_version": retriever_version,
                 "path": path,
                 "method": method,
                 "status_code": int(code),

@@ -482,12 +482,7 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
     }
 
     try:
-        trace = _ensure_trace(state)
-        trace["request_id"] = str(request_id)
-        trace["run_id"] = str(state.get("run_id", ""))
-        trace["model_id"] = str(settings.llm.model or "")
-        trace["prompt_version"] = str(os.getenv("RISKAGENT_PROMPT_VERSION", "v1"))
-        trace["retriever_version"] = {
+        retriever_version = {
             "mode": os.getenv("RISKAGENT_RETRIEVER_MODE", ""),
             "reranker_model": os.getenv("RISKAGENT_RERANKER_MODEL", ""),
             "dense_k": os.getenv("RISKAGENT_DENSE_K", ""),
@@ -495,6 +490,12 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
             "rerank_k": os.getenv("RISKAGENT_RERANK_K", ""),
             "persist_dir": str(settings.paths.milvus_lite_dir),
         }
+        trace = _ensure_trace(state)
+        trace["request_id"] = str(request_id)
+        trace["run_id"] = str(state.get("run_id", ""))
+        trace["model_id"] = str(settings.llm.model or "")
+        trace["prompt_version"] = str(os.getenv("RISKAGENT_PROMPT_VERSION", "v1"))
+        trace["retriever_version"] = retriever_version
         trace["final"] = {"status": status, "failure_reason": failure_reason}
         artifact_path = save_artifact(
             request_id,
@@ -505,6 +506,7 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
         )
         debug_info["artifact_path"] = artifact_path
         debug_info["artifact_bundle_dir"] = str(Path(str(artifact_path)).with_suffix(""))
+        debug_info["retriever_version"] = retriever_version
     except Exception as e:
         debug_info["artifact_error"] = str(e)
 

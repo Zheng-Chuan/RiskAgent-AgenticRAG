@@ -529,13 +529,13 @@ LLM strategy
 
 - 交付
   - [ ] 统一日志字段
-    - [ ] request_id run_id model_id prompt_version retriever_version
+    - [x] request_id run_id model_id prompt_version retriever_version
     - [ ] latency_ms token_in token_out cost_estimate_usd
   - [ ] Trace contract 固化
-    - [ ] 每次 run 落盘 trace.json 包含节点耗时与关键中间产物路径
+    - [x] 每次 run 落盘 trace.json 包含节点耗时与关键中间产物路径
     - [ ] 可以从 trace 复现一次 run 的 retrieval 与 tool 调用序列
 - 验收
-  - [ ] 任意一次失败都能从 trace 定位到 failure_reason 与责任节点
+  - [x] 任意一次失败都能从 trace 定位到 failure_reason 与责任节点
 
 ## 时间规划
 

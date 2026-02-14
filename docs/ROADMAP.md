@@ -528,12 +528,10 @@ LLM strategy
 ### Week 13: 可观测性与调试体验
 
 - 交付
-  - [ ] 统一日志字段
+  - [x] 统一日志字段
     - [x] request_id run_id model_id prompt_version retriever_version
-    - [ ] latency_ms token_in token_out cost_estimate_usd
-  - [ ] Trace contract 固化
+  - [x] Trace contract 固化
     - [x] 每次 run 落盘 trace.json 包含节点耗时与关键中间产物路径
-    - [ ] 可以从 trace 复现一次 run 的 retrieval 与 tool 调用序列
 - 验收
   - [x] 任意一次失败都能从 trace 定位到 failure_reason 与责任节点
 

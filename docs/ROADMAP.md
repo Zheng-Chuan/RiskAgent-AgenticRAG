@@ -502,7 +502,7 @@ LLM strategy
 
 ---
 
-## Phase 5: Productionization 可信上线闭环 (Week 12 - Week 16)
+## Phase 5: Productionization 可信上线闭环 (Week 12 - Week 13)
 
 目标 把 demo 升级成可上线的 LLM 应用工程作品集 重点是契约 稳定性 安全 可观测 成本 与质量门禁
 
@@ -540,53 +540,6 @@ LLM strategy
   - [ ] 一条命令可生成性能报告并落盘
   - [ ] 任意一次失败都能从 trace 定位到 failure_reason 与责任节点
 
-### Week 14: 安全与防护最小闭环
-
-- 交付
-  - [ ] Prompt injection 测试集
-    - [ ] 越权索取 secrets
-    - [ ] 诱导忽略系统指令
-    - [ ] 诱导伪造 citations
-  - [ ] Tool 安全机制
-    - [ ] 工具 allowlist 与参数校验
-    - [ ] 工具输出强校验 只允许结构化数据进入生成
-  - [ ] 数据安全
-    - [ ] 日志脱敏策略
-    - [ ] 明确不回传 corpus 原文的策略与阈值
-- 验收
-  - [ ] 安全集通过率达到阈值
-  - [ ] 越权请求必须拒答并给出 next_actions
-
-### Week 15: 成本与缓存策略
-
-- 交付
-  - [ ] 缓存层
-    - [ ] embeddings cache
-    - [ ] retrieval cache
-    - [ ] chunk -> triples 或 chunk -> entities 的可复用缓存
-  - [ ] 成本控制策略
-    - [ ] model tiering 便宜模型先跑 失败再升级
-    - [ ] judge 预算 评测时按样本抽样与分层触发
-  - [ ] 退化与降级
-    - [ ] no_rerank no_graph baseline 一键切换
-    - [ ] 工具不可用时进入 deterministic fallback
-- 验收
-  - [ ] 在固定请求集上 cost_estimate 降低且质量指标不显著退化
-  - [ ] 外部依赖不可用时系统可用性满足目标
-
-### Week 16: CI 质量门禁与发布流程
-
-- 交付
-  - [ ] 一键回归
-    - [ ] 单测 集成测 评测 三段式流水线
-    - [ ] 评测报告与阈值门禁
-  - [ ] 版本化与可审计
-    - [ ] 每次发布生成 run_manifest 包含版本与依赖
-    - [ ] 输出 artifacts 路径与命名约定固化
-- 验收
-  - [ ] CI 能阻止结构退化与关键指标退化
-  - [ ] 任意版本可一键复现到同一份回归集输出
-
 ## 时间规划
 
 里程碑按本地 demo 倒排.
@@ -604,8 +557,9 @@ LLM strategy
 | Week 9 | 已完成 | 查询理解与智能路由 step2 |
 | Week 10 | 已完成 | 高级索引策略 step3 |
 | Week 11 | 已完成 | Self RAG 与动态决策 |
+| Week 12 | 已完成 | HTTP API v1 + 契约 |
 
-**总计** 11 周 含 Phase 4
+**总计** 12 周 含 Phase 4
 
 ## 开发建议
 

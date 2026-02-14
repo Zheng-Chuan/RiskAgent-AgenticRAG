@@ -1,5 +1,4 @@
-# 中文注释: artifacts 存储模块, 负责将运行结果持久化到本地文件系统
-# 用途: 支持回放, 调试, 回归测试, 问题归因
+from __future__ import annotations
 
 import json
 import os
@@ -85,7 +84,7 @@ def save_artifact(
             pass
     except Exception as e:  # pylint: disable=broad-exception-caught
         print(f"Error saving artifact: {e}")
-        return False
+        return str(filepath)
 
     return str(filepath)
 

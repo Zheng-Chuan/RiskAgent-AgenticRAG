@@ -493,7 +493,7 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
         trace = _ensure_trace(state)
         trace["request_id"] = str(request_id)
         trace["run_id"] = str(state.get("run_id", ""))
-        trace["model_id"] = str(settings.llm.model or "")
+        trace["model_id"] = str(os.getenv("LLM_MODEL") or settings.llm.model or "")
         trace["prompt_version"] = str(os.getenv("RISKAGENT_PROMPT_VERSION", "v1"))
         trace["retriever_version"] = retriever_version
         trace["final"] = {"status": status, "failure_reason": failure_reason}
@@ -512,7 +512,7 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
 
     debug_info["request_id"] = str(request_id)
     debug_info["run_id"] = str(state.get("run_id", ""))
-    debug_info["model_id"] = str(settings.llm.model or "")
+    debug_info["model_id"] = str(os.getenv("LLM_MODEL") or settings.llm.model or "")
     debug_info["prompt_version"] = str(os.getenv("RISKAGENT_PROMPT_VERSION", "v1"))
     state["debug"] = debug_info
 

@@ -13,6 +13,8 @@ conda run -n LangChain python -m riskagent_rag.api.server
 - RISKAGENT_API_KEY 可选 启用后必须传 X-API-Key 或 Authorization: Bearer
 - RISKAGENT_CORPUS_DIR 可选 覆盖语料目录
 - RISKAGENT_PERSIST_DIR 可选 覆盖索引目录
+- RISKAGENT_ARTIFACTS_DIR 可选 覆盖落盘目录
+- RISKAGENT_TRACE_SNIPPET_CHARS 可选 trace 原文片段长度 默认 240
 
 ## 健康检查
 
@@ -47,6 +49,9 @@ POST /v1/ask
 - failure_reason
 - debug
 - error
+
+每次请求会落盘到 artifacts bundle 目录
+bundle 目录里包含 request response structured_response trace
 
 ## v1 chat
 

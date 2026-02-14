@@ -3,6 +3,13 @@
 这份文档记录从 Week 1 到 Week 7 我们如何把一个“能回答”的 RAG demo
 逐步推进成一个“可解释 可观测 可评估 可回归”的工程系统
 
+注意
+当前代码已经收敛为形态A 以真实用户路径为唯一主路径
+编排只保留 LangGraph
+不再保留 deterministic fallback
+不再保留 agentic_loop 代码路径
+当前实现请以 ROADMAP 与 ARCHITECTURE 为准
+
 核心关注三件事
 
 1. 可解释性: 输出为什么是这个答案 证据在哪里
@@ -21,7 +28,7 @@
 **做了什么**
 
 - 固化最小可运行入口(UI/CLI)与回归测试入口
-- 在无 API key 情况下提供 deterministic fallback 先验证链路正确性
+- 先把检索链路与引用链路跑通并固化输出结构
 
 **可解释性推进点**
 
@@ -40,7 +47,7 @@
 - 门面: [app.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/app.py)
 - UI: [gradio_app.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/gradio_app.py)
 - CLI: [demo_cli.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/demo_cli.py)
-- 生成策略(含 deterministic fallback): [generate.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/llm/generate.py)
+- 生成策略: [generate.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/llm/generate.py)
 
 ---
 
@@ -109,8 +116,7 @@
 
 **关键实现**
 
-- agentic loop: [agentic_loop.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/rag/agentic_loop.py)
-- LangGraph 编排版(可选): [langgraph_runner.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/orchestration/langgraph_runner.py)
+- LangGraph 编排主流程: [langgraph_runner.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/orchestration/langgraph_runner.py)
 - 结构化 contract: [structured.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/contracts/structured.py)
 - validator gates: [gates.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/validators/gates.py)
 

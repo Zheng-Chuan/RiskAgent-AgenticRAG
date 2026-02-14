@@ -2,6 +2,7 @@
 # 用途: 支持回放, 调试, 回归测试, 问题归因
 
 import json
+import os
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -12,6 +13,7 @@ def save_artifact(
     request_data: dict[str, Any],
     response_data: dict[str, Any],
     structured_response_data: dict[str, Any] | None = None,
+    trace_data: dict[str, Any] | None = None,
     artifacts_dir: str = ".artifacts",
 ) -> str:
     """
@@ -31,7 +33,9 @@ def save_artifact(
         - 包含完整的输入输出, 便于后续回放和调试
         - 使用 ISO8601 时间戳, 便于排序和查找
     """
-    artifacts_path = Path(artifacts_dir)
+    env_dir = os.getenv("RISKAGENT_ARTIFACTS_DIR", "").strip()
+    base_dir = env_dir or artifacts_dir
+    artifacts_path = Path(base_dir)
     artifacts_path.mkdir(parents=True, exist_ok=True)
 
     timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
@@ -57,6 +61,13 @@ def save_artifact(
             json.dump(request_data, f, indent=2, ensure_ascii=False)
         with open(bundle_dir / "response.json", "w", encoding="utf-8") as f:
             json.dump(response_data, f, indent=2, ensure_ascii=False)
+        if trace_data:
+            trace_payload = dict(trace_data)
+            trace_payload["request_id"] = str(request_id)
+            trace_payload["artifact_path"] = str(filepath)
+            trace_payload["bundle_dir"] = str(bundle_dir)
+            with open(bundle_dir / "trace.json", "w", encoding="utf-8") as f:
+                json.dump(trace_payload, f, indent=2, ensure_ascii=False)
 
         # 中文注释: 如果 response_data 或 structured_response_data 能对齐结构化 contract, 则额外输出规范化文件.
         try:

@@ -5,11 +5,14 @@ from __future__ import annotations
 
 import json
 import os
+import time
 import uuid
+from pathlib import Path
 from typing import Any, Literal, Optional, TypedDict
 
 from riskagent_rag.agents.data_agent import run_data_agent
 from riskagent_rag.artifacts.storage import save_artifact
+from riskagent_rag.config.settings import settings
 from riskagent_rag.contracts.structured import StructuredRequest
 from riskagent_rag.rag import agentic_primitives
 from riskagent_rag.rag.pipeline import extract_citations
@@ -22,8 +25,10 @@ class AgenticState(TypedDict, total=False):
 
     question: str
     request_id: str
+    run_id: str
     max_rounds: int
     retriever: Any
+    trace: dict[str, Any]
 
     current_query: str
     improved_query: str
@@ -49,8 +54,78 @@ class AgenticState(TypedDict, total=False):
     debug: dict[str, Any]
 
 
+def _ms() -> float:
+    return time.time() * 1000.0
+
+
+def _ensure_trace(state: AgenticState) -> dict[str, Any]:
+    trace = state.get("trace")
+    if not isinstance(trace, dict):
+        trace = {"events": [], "nodes": []}
+        state["trace"] = trace
+    events = trace.get("events")
+    if not isinstance(events, list):
+        trace["events"] = []
+    nodes = trace.get("nodes")
+    if not isinstance(nodes, list):
+        trace["nodes"] = []
+    return trace
+
+
+def _trace_node_start(state: AgenticState, name: str, payload: dict[str, Any]) -> float:
+    trace = _ensure_trace(state)
+    nodes = trace.get("nodes") or []
+    entry = {"name": str(name), "start_ms": _ms(), "payload": dict(payload)}
+    nodes.append(entry)
+    trace["nodes"] = nodes
+    return float(entry["start_ms"])
+
+
+def _trace_node_end(state: AgenticState, name: str, start_ms: float, payload: dict[str, Any]) -> None:
+    trace = _ensure_trace(state)
+    nodes = trace.get("nodes") or []
+    end_ms = _ms()
+    for i in range(len(nodes) - 1, -1, -1):
+        n = nodes[i]
+        if isinstance(n, dict) and n.get("name") == name and "end_ms" not in n:
+            n["end_ms"] = end_ms
+            n["latency_ms"] = float(end_ms) - float(start_ms)
+            n["result"] = dict(payload)
+            break
+    trace["nodes"] = nodes
+
+
+def _normalize_snippet(text: str) -> str:
+    return " ".join(str(text or "").split()).strip()
+
+
+def _doc_trace_row(d: Any, *, snippet_chars: int) -> dict[str, Any]:
+    meta = getattr(d, "metadata", {}) or {}
+    if not isinstance(meta, dict):
+        meta = {}
+    expanded = str(meta.get("expanded_text") or "").strip()
+    raw = expanded or str(getattr(d, "page_content", "") or "")
+    snippet = _normalize_snippet(raw)[: max(0, int(snippet_chars))]
+    return {
+        "chunk_id": str(meta.get("chunk_id", "")),
+        "source": str(meta.get("source", "")),
+        "file_type": str(meta.get("file_type", "")),
+        "parent_id": str(meta.get("parent_id", "")),
+        "section_path": str(meta.get("section_path", "")),
+        "page": meta.get("page"),
+        "start_line": meta.get("start_line"),
+        "end_line": meta.get("end_line"),
+        "start_index": meta.get("start_index"),
+        "rrf_score": meta.get("rrf_score"),
+        "coarse_score": meta.get("coarse_score"),
+        "rerank_score": meta.get("rerank_score"),
+        "snippet": snippet,
+    }
+
+
 def node_rewrite(state: AgenticState) -> AgenticState:
     """Node: rewrite query for better retrieval."""
+    start_ms = _trace_node_start(state, "rewrite", {"question": state.get("question", "")})
     question = state["question"]
     rewritten = agentic_primitives.rewrite_query(question)
 
@@ -66,11 +141,20 @@ def node_rewrite(state: AgenticState) -> AgenticState:
         "alternatives": [question],
     })
 
+    _trace_node_end(state, "rewrite", start_ms, {"current_query": rewritten})
     return state
 
 
 def node_retrieve_and_critique(state: AgenticState) -> AgenticState:
     """Node: retrieve docs and critique quality."""
+    start_ms = _trace_node_start(
+        state,
+        "retrieve_and_critique",
+        {
+            "round": int(state.get("current_round", 0) + 1),
+            "current_query": state.get("current_query", ""),
+        },
+    )
     retriever = state["retriever"]
     current_query = state["current_query"]
     question = state["question"]
@@ -140,11 +224,32 @@ def node_retrieve_and_critique(state: AgenticState) -> AgenticState:
     })
     state["decision_log"] = decision_log
 
+    snippet_chars = int(os.getenv("RISKAGENT_TRACE_SNIPPET_CHARS", "240"))
+    doc_refs: list[dict[str, Any]] = []
+    for d in docs[:8]:
+        doc_refs.append(_doc_trace_row(d, snippet_chars=snippet_chars))
+    _trace_node_end(
+        state,
+        "retrieve_and_critique",
+        start_ms,
+        {
+            "docs_count": len(docs),
+            "should_continue": bool(should_continue),
+            "critique_reason": str(critique_reason),
+            "improved_query": str(improved_query),
+            "docs": doc_refs,
+        },
+    )
     return state
 
 
 def node_revise_query(state: AgenticState) -> AgenticState:
     """Node: revise query based on critique."""
+    start_ms = _trace_node_start(
+        state,
+        "revise_query",
+        {"current_query": state.get("current_query", ""), "improved_query": state.get("improved_query", "")},
+    )
     question = state["question"]
     current_query = state["current_query"]
     improved_query = str(state.get("improved_query", "")).strip()
@@ -161,11 +266,13 @@ def node_revise_query(state: AgenticState) -> AgenticState:
     })
     state["decision_log"] = decision_log
 
+    _trace_node_end(state, "revise_query", start_ms, {"next_query": next_query})
     return state
 
 
 def node_decide_tool_use(state: AgenticState) -> AgenticState:
     """Node: decide whether to call tool."""
+    start_ms = _trace_node_start(state, "decide_tool_use", {"question": state.get("question", "")})
     question = state["question"]
     should_call, tool_args, tool_reason = agentic_primitives.decide_tool_use(question)
 
@@ -184,11 +291,18 @@ def node_decide_tool_use(state: AgenticState) -> AgenticState:
     })
     state["decision_log"] = decision_log
 
+    _trace_node_end(
+        state,
+        "decide_tool_use",
+        start_ms,
+        {"should_call_tool": bool(should_call), "tool_args": tool_args, "tool_reason": str(tool_reason)},
+    )
     return state
 
 
 def node_call_tool(state: AgenticState) -> AgenticState:
     """Node: call tool and collect traces."""
+    start_ms = _trace_node_start(state, "call_tool", {"tool_args": state.get("tool_args", {})})
     question = state["question"]
     tool_args = state["tool_args"]
 
@@ -230,11 +344,23 @@ def node_call_tool(state: AgenticState) -> AgenticState:
     state["tool_output"] = tool_output
     state["tool_traces"] = tool_traces
 
+    breach_count = 0
+    if isinstance(tool_output, dict):
+        raw_breaches = tool_output.get("breaches")
+        if isinstance(raw_breaches, list):
+            breach_count = len(raw_breaches)
+    _trace_node_end(
+        state,
+        "call_tool",
+        start_ms,
+        {"has_output": bool(tool_output), "tool_traces_count": len(tool_traces), "breach_count": breach_count},
+    )
     return state
 
 
 def node_synthesize_answer(state: AgenticState) -> AgenticState:
     """Node: synthesize final answer with citations."""
+    start_ms = _trace_node_start(state, "synthesize_answer", {"docs_count": len(state.get("docs") or [])})
     question = state["question"]
     docs = state["docs"]
     tool_output = state.get("tool_output")
@@ -250,11 +376,18 @@ def node_synthesize_answer(state: AgenticState) -> AgenticState:
     state["answer"] = answer_with_citations
     state["citations"] = citations
 
+    _trace_node_end(
+        state,
+        "synthesize_answer",
+        start_ms,
+        {"answer_len": len(answer_with_citations), "citations_count": len(citations)},
+    )
     return state
 
 
 def node_validate_and_save(state: AgenticState) -> AgenticState:
     """Node: validate response and save artifact."""
+    start_ms = _trace_node_start(state, "validate_and_save", {"request_id": state.get("request_id", "")})
     answer = state["answer"]
     docs = state["docs"]
     tool_traces = state.get("tool_traces", [])
@@ -349,18 +482,44 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
     }
 
     try:
+        trace = _ensure_trace(state)
+        trace["request_id"] = str(request_id)
+        trace["run_id"] = str(state.get("run_id", ""))
+        trace["model_id"] = str(settings.llm.model or "")
+        trace["prompt_version"] = str(os.getenv("RISKAGENT_PROMPT_VERSION", "v1"))
+        trace["retriever_version"] = {
+            "mode": os.getenv("RISKAGENT_RETRIEVER_MODE", ""),
+            "reranker_model": os.getenv("RISKAGENT_RERANKER_MODEL", ""),
+            "dense_k": os.getenv("RISKAGENT_DENSE_K", ""),
+            "sparse_k": os.getenv("RISKAGENT_SPARSE_K", ""),
+            "rerank_k": os.getenv("RISKAGENT_RERANK_K", ""),
+            "persist_dir": str(settings.paths.milvus_lite_dir),
+        }
+        trace["final"] = {"status": status, "failure_reason": failure_reason}
         artifact_path = save_artifact(
             request_id,
             request_data,
             response_data,
             structured_response_data=structured_payload,
+            trace_data=trace,
         )
         debug_info["artifact_path"] = artifact_path
+        debug_info["artifact_bundle_dir"] = str(Path(str(artifact_path)).with_suffix(""))
     except Exception as e:
         debug_info["artifact_error"] = str(e)
 
+    debug_info["request_id"] = str(request_id)
+    debug_info["run_id"] = str(state.get("run_id", ""))
+    debug_info["model_id"] = str(settings.llm.model or "")
+    debug_info["prompt_version"] = str(os.getenv("RISKAGENT_PROMPT_VERSION", "v1"))
     state["debug"] = debug_info
 
+    _trace_node_end(
+        state,
+        "validate_and_save",
+        start_ms,
+        {"status": status, "failure_reason": failure_reason, "claims_count": len(claims), "evidence_count": len(evidence_set)},
+    )
     return state
 
 
@@ -474,6 +633,7 @@ def run_langgraph_agentic_chat(
     initial_state: AgenticState = {
         "question": question,
         "request_id": str(request_id or str(uuid.uuid4())),
+        "run_id": str(uuid.uuid4()),
         "max_rounds": max_rounds,
         "retriever": retriever,
         "current_query": "",
@@ -493,6 +653,7 @@ def run_langgraph_agentic_chat(
         "status": "ok",
         "failure_reason": None,
         "debug": {},
+        "trace": {"nodes": [], "events": []},
     }
 
     final_state = graph.invoke(initial_state)

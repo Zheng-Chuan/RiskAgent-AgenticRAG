@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import json
 import time
 import uuid
 from typing import Any, Optional
@@ -225,6 +226,21 @@ def v1_ask(req: AskRequest, response: Response) -> AskResponse:
         dur = _now_ms() - start
         _REQ_TOTAL.labels(path=path, method=method, status=str(code)).inc()
         _REQ_LAT_MS.labels(path=path, method=method).observe(float(dur))
+        try:
+            run_id = ""
+            if "out" in locals() and isinstance(locals().get("out"), dict):
+                run_id = str((locals()["out"].get("debug") or {}).get("run_id") or "")
+            log = {
+                "request_id": str(request_id),
+                "run_id": run_id,
+                "path": path,
+                "method": method,
+                "status_code": int(code),
+                "latency_ms": float(dur),
+            }
+            print(json.dumps(log, ensure_ascii=False))
+        except Exception:
+            pass
 
 
 @app.post("/v1/chat", response_model=AskResponse, dependencies=[Depends(auth_dep)])
@@ -264,6 +280,21 @@ def v1_chat(req: ChatRequest, response: Response) -> AskResponse:
         dur = _now_ms() - start
         _REQ_TOTAL.labels(path=path, method=method, status=str(code)).inc()
         _REQ_LAT_MS.labels(path=path, method=method).observe(float(dur))
+        try:
+            run_id = ""
+            if "out" in locals() and isinstance(locals().get("out"), dict):
+                run_id = str((locals()["out"].get("debug") or {}).get("run_id") or "")
+            log = {
+                "request_id": str(request_id),
+                "run_id": run_id,
+                "path": path,
+                "method": method,
+                "status_code": int(code),
+                "latency_ms": float(dur),
+            }
+            print(json.dumps(log, ensure_ascii=False))
+        except Exception:
+            pass
 
 
 def main() -> None:

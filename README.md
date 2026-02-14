@@ -8,6 +8,8 @@
 
 ## 文档目录
 
+- [OVERVIEW](docs/OVERVIEW.md)
+  - 一页读懂 当前架构和使用路径
 - [QUICKSTART](docs/QUICKSTART.md)
   - 新手从这里开始 装依赖 准备语料 启动 UI 和 CLI 跑测试
 - [ROADMAP](docs/ROADMAP.md)
@@ -16,6 +18,8 @@
   - 代码怎么拆 数据怎么流 LLM 怎么接
 - [API](docs/API.md)
   - HTTP API v1 用法 健康检查 指标与鉴权
+- [TRACE](docs/TRACE.md)
+  - trace.json 字段说明 如何用 trace 排障
 - [DATA](docs/DATA.md)
   - 数据字典 关键中间数据结构与用途 例如 chunk citations evidence claims
 - [EVALUATION](docs/EVALUATION.md)

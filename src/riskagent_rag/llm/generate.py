@@ -5,7 +5,7 @@
 目标.
 - MVP 阶段优先保证可运行, 可演示.
 - 如果用户配置了 API key, 则走真实模型生成.
-- 如果没有配置 API key, 则返回 deterministic 文本, 仍然携带检索到的上下文片段, 便于验证 RAG 链路.
+- 如果没有配置 API key, 则直接报错并提示配置方式.
 
 环境变量.
 - OPENAI_API_KEY 或 LLM_API_KEY: 启用模型生成.

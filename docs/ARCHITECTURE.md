@@ -8,6 +8,28 @@
 - 编排层用 LangGraph
 - LLM provider 可插拔
 
+## 快速架构图
+
+```mermaid
+flowchart TB
+  UI[Gradio UI] --> APP[RiskAgentSystem]
+  API[FastAPI] --> APP
+  CLI[CLI] --> APP
+  APP --> LG[LangGraph workflow]
+  LG --> RET[Retriever]
+  RET --> IDX[Index artifacts]
+  RET --> MIL[Milvus]
+  LG --> LLM[LLM]
+  LG --> GATE[Validator gates]
+  GATE --> ART[Artifacts bundle]
+  ART --> TR[trace.json]
+```
+
+读图要点
+1 UI API CLI 共享同一个业务门面 RiskAgentSystem
+2 LangGraph 是唯一主流程
+3 每次请求都会落盘 artifacts bundle 目录 里面有 trace request response
+
 ## 开源大模型接入
 
 原则 不绑定单一厂商 统一走 OpenAI compatible 接口

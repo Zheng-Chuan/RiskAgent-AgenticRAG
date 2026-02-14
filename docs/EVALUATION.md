@@ -1,133 +1,93 @@
-# RAGAS 评测指南
+# EVALUATION
 
-本文档介绍如何使用 RAGAS 框架对 RiskAgent-AgenticRAG 进行质量评测。
+这份文档讲清楚怎么跑评测
+目标是让你能回答三个问题
+1 现在系统质量怎么样
+2 这次改动有没有退化
+3 哪条样本失败了 失败原因是什么
 
-## 1. 概述
+## 评测跑的是什么
 
-我们使用 RAGAS (Retrieval Augmented Generation Assessment) 来量化评估 RAG 系统的性能。
-评测主要关注以下几个维度 (RAG Triad + Retrieval):
+评测会做两件事
+- 跑系统得到 answers citations claims evidence_set decision_log tool_traces
+- 计算指标并把报告写到 .artifacts/reports
 
-*   **Faithfulness (忠实度)**: 回答是否忠实于检索到的上下文 (幻觉检测)。
-*   **Answer Relevance (答案相关性)**: 回答是否直接切题。
-*   **Context Precision (检索精度)**: 检索到的 chunk 中有多少是有用的。
-*   **Context Recall (检索召回)**: 检索到的 chunk 是否覆盖了 Ground Truth 所需的信息。
-
-## 2. 准备工作
-
-### 2.1 依赖安装
-
-请确保使用 `LangChain` conda 环境:
-
-```bash
-conda activate LangChain
-pip install "ragas>=0.1.0" datasets
+```mermaid
+flowchart LR
+  Q[dataset questions] --> RUN[evaluation runner]
+  RUN --> SYS[LangGraph pipeline]
+  SYS --> OUT[answers artifacts]
+  RUN --> MET[metrics]
+  MET --> REP[report json]
 ```
 
-### 2.2 LLM 配置
+## 前置条件
 
-RAGAS 需要一个 "Judge LLM" 来进行打分。推荐使用 OpenAI GPT-4o 或 GPT-3.5-turbo。
+要跑评测你需要能生成答案
+也就是 LLM 必须可用
 
-**方式 A: 使用 OpenAI (推荐)**
+必需环境变量
+- OPENAI_API_KEY 或 LLM_API_KEY
+- LLM_BASE_URL
+- LLM_MODEL
 
-```bash
-export OPENAI_API_KEY="sk-..."
-export LLM_MODEL="gpt-4o"
-```
+可选环境变量
+- EMBEDDINGS_PROVIDER 默认 hf
+- EMBEDDINGS_MODEL 默认 sentence transformers all MiniLM L6 v2
 
-**方式 B: 使用 Ollama (本地)**
+注意
+如果你只想离线跑少量启发式指标 也可以先用测试替代
+例如 tests.test_week8_hybrid_rerank_acceptance
 
-如果您无法访问 OpenAI，可以使用本地 Ollama 模型 (如 qwen2.5:14b) 作为裁判。
-注意: 本地模型评分的一致性可能不如 GPT-4。
+## 一条命令跑评测
 
-```bash
-export LLM_PROVIDER="ollama"
-export OLLAMA_BASE_URL="http://localhost:11434"
-export LLM_MODEL="qwen2.5:14b"
-```
-
-## 3. 运行评测
-
-使用 `riskagent_rag.evaluation.run` 模块一键运行评测。
-
-### 3.1 基础命令
+最常用
 
 ```bash
-# 运行评测并开启 RAGAS 指标计算
-conda run -n LangChain python -m riskagent_rag.evaluation.run --enable-ragas
+conda run -n LangChain python -m riskagent_rag.evaluation.run --stage step4 --label step4
 ```
 
-```bash
-# 开启 citation precision judge
-conda run -n LangChain python -m riskagent_rag.evaluation.run --enable-citation-judge
-```
+输出位置
+- .artifacts/reports
 
-### 3.2 常用参数
+## 常用参数
 
-*   `--corpus-dir`: 语料目录 (默认 `corpus`)
-*   `--dataset`: 评测数据集路径 (默认 `tests/data/questions.json`)
-*   `--artifacts-dir`: 报告输出目录 (默认 `.artifacts`)
-*   `--baseline`: 指定基线报告路径用于对比 (默认自动查找最新)
-*   `--enable-citation-judge`: 开启 citation precision judge (需要可用的 judge LLM)
-*   `--citation-judge-mode`: judge 模式, 支持 auto/llm/heuristic (默认 auto)
-*   `--hallucination-maximum`: hallucination_rate_in_citations 的最大阈值(默认 1.0)
-*   `--numeric-tolerance`: 数值一致性比对容忍度(默认 0.01, 代表 1%)
+- --stage step1 step2 step3 step4
+- --label 用来区分不同配置的报告
+- --dataset 评测集路径 默认 tests/data/questions.json
+- --artifacts-dir 默认 .artifacts
+- --enable-citation-judge 开启引用精准度 judge
+- --citation-judge-mode auto llm heuristic
 
-### 3.3 Judge 模式说明
+judge 模式
+- auto 优先 llm 不可用时退到 heuristic
+- llm 强制 llm 不可用则失败
+- heuristic 纯规则离线打分
 
-*   `auto`: 优先使用 LLM judge, 不可用时 fallback 到 heuristic
-*   `llm`: 强制使用 LLM judge, 不可用则评测失败
-*   `heuristic`: 使用确定性启发式规则离线打分, 适合 CI 或无 Key 环境
+## 如何新增评测样本
 
-示例:
-
-```bash
-# 使用自定义数据集运行
-python -m riskagent_rag.evaluation.run \
-    --dataset tests/data/eval_set_v2.json \
-    --enable-ragas
-```
-
-## 4. 查看报告
-
-评测完成后，会在 `.artifacts/reports/` 目录下生成 JSON 格式的报告。
-文件名格式: `report_{timestamp}.json`。
-
-报告包含:
-1.  **Metrics**: 汇总指标 (如 `citations_coverage`, `ragas.faithfulness` 等)。
-2.  **Samples**: 每条样本的详细输入、输出、引用和单项评分。
-3.  **Baseline Diff**: 如果存在基线，会显示指标变化 (diff)。
-
-Week 7 的领域一致性指标默认会计算并进入 Metrics:
-
-*   `numeric_consistency_score`
-*   `glossary_consistency_score`
-*   `domain_consistency_score`
-
-## 5. 如何新增评测样本
-
-编辑 `tests/data/questions.json` (或新建 JSON 文件)。
-Schema 如下:
+编辑 tests/data/questions.json
 
 ```json
 [
   {
     "id": "q1",
-    "question": "What is FRTB?",
-    "reference_answer": "FRTB stands for Fundamental Review of the Trading Book...",
-    "ground_truth_contexts": [
-      "FRTB is a comprehensive suite of capital rules..."
-    ]
+    "question": "What is FRTB",
+    "reference_answer": "...",
+    "ground_truth_contexts": ["..."]
   }
 ]
 ```
 
-*   `reference_answer`: 参考答案 (用于 Answer Relevance / Context Recall)。
-*   `ground_truth_contexts`: 事实依据 (用于 Context Recall)。
+## 如何看报告
 
-## 6. 常见问题
+报告是一个 json
+核心部分
+- metrics 汇总指标
+- samples 每条样本的输入输出和单项结果
+- baseline_diff 如果指定了 baseline 会输出差异
 
-**Q: 运行报错 `The api_key client option must be set...`**
-A: RAGAS 默认尝试连接 OpenAI。请确保环境变量 `OPENAI_API_KEY` 已设置。如果使用 Ollama，请确保代码中正确配置了 `ChatOllama` 并传入 evaluate 函数 (已在 `ragas_integration.py` 中处理)。
-
-**Q: 评分很慢**
-A: RAGAS 需要对每个样本多次调用 LLM。如果使用 GPT-4，速度取决于 API 响应；如果使用本地 Ollama，取决于 GPU 性能。建议先用小数据集 (`tests/data/questions.json`) 调试。
+排障建议
+- 先看 samples 里的 status failure_reason
+- 再去 artifacts bundle 里看 trace.json
+详细见 docs/TRACE

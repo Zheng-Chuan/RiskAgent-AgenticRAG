@@ -150,6 +150,27 @@ Tool Trace 用于记录工具调用输入输出
 字段取决于具体 tool 实现
 至少应包含 tool_output 或 output 以便数字回指
 
+## Trace
+
+Trace 是每次请求的执行轨迹
+它和 request response 放在同一个 artifacts bundle 目录
+
+目录结构
+
+```text
+.artifacts/<timestamp>_<request_id>/
+  request.json
+  response.json
+  structured_response.json
+  trace.json
+```
+
+trace.json 包含
+- nodes 每个 LangGraph 节点的耗时 输入摘要 输出摘要
+- retrieve_and_critique 节点会记录 top8 docs 的引用信息和原文片段 snippet
+
+详细字段见 docs/TRACE
+
 ## Evaluation Report
 
 评测报告写入 .artifacts/reports

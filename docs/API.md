@@ -16,6 +16,19 @@ conda run -n LangChain python -m riskagent_rag.api.server
 - RISKAGENT_ARTIFACTS_DIR 可选 覆盖落盘目录
 - RISKAGENT_TRACE_SNIPPET_CHARS 可选 trace 原文片段长度 默认 240
 
+## 接口示意图
+
+```mermaid
+flowchart LR
+  C[Client] -->|POST /v1/ask| S[Service]
+  C -->|POST /v1/chat| S
+  C -->|GET /healthz| S
+  C -->|GET /readyz| S
+  C -->|GET /metrics| S
+  S --> A[Artifacts bundle]
+  A --> T[trace.json]
+```
+
 ## 健康检查
 
 - GET /healthz
@@ -52,6 +65,7 @@ POST /v1/ask
 
 每次请求会落盘到 artifacts bundle 目录
 bundle 目录里包含 request response structured_response trace
+你可以从 debug.artifact_bundle_dir 直接定位到 trace.json
 
 ## v1 chat
 

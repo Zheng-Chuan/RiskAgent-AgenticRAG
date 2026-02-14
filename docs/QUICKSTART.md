@@ -109,9 +109,23 @@ conda run -n LangChain python -m unittest tests.test_index_incremental_acceptanc
 评测会跑数据集并落盘报告到 .artifacts/reports
 
 ```bash
+conda run -n LangChain python -m riskagent_rag.evaluation.run --stage step4 --label step4
+```
 
 ## 10. 启动 HTTP API
 
 ```bash
 conda run -n LangChain python -m riskagent_rag.api.server
 ```
+
+## 11. 用 API 提问并看 trace
+
+```bash
+curl -s http://localhost:8000/v1/ask \
+  -H 'Content-Type: application/json' \
+  -d '{"question":"what is frtb"}'
+```
+
+返回里会带 debug.artifact_bundle_dir
+你可以在这个目录里找到 trace.json
+详细字段见 docs/TRACE

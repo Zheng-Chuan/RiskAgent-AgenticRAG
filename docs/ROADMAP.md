@@ -367,7 +367,7 @@ LLM strategy
 
 #### Phase 3: Advanced Evaluation & Reliability (2026-02)
 
-**目标**: 将 RAG 系统的"可信度"提升到金融生产级标准 重点解决拒答质量 引用精准度 领域一致性 以及性能优化
+**目标**: 将 RAG 系统的"可信度"提升到金融生产级标准 重点解决拒答质量 引用精准度 领域一致性
 
 - **交付**
   - [x] 构建负样本数据集 (Negative Dataset)
@@ -400,9 +400,9 @@ LLM strategy
     - [x] 检测术语误用(基于禁用定义关键字)并计分
   - [x] 评测指标: `domain_consistency_score`
 
-#### Phase 4: SOTA RAG Optimization 极致优化
+#### Phase 4: SOTA RAG Optimization
 
-> 基于 Advanced RAG 理论图谱 不计成本追求检索与生成极致性能
+> 基于 Advanced RAG 理论图谱 持续提升检索与生成质量
 
 ### Week 8: 混合检索与重排序 step1
 
@@ -534,10 +534,7 @@ LLM strategy
   - [ ] Trace contract 固化
     - [ ] 每次 run 落盘 trace.json 包含节点耗时与关键中间产物路径
     - [ ] 可以从 trace 复现一次 run 的 retrieval 与 tool 调用序列
-  - [ ] 性能基线
-    - [ ] 固定 30 条请求集输出 p50 p95 TTFT TPS 的测量方式
 - 验收
-  - [ ] 一条命令可生成性能报告并落盘
   - [ ] 任意一次失败都能从 trace 定位到 failure_reason 与责任节点
 
 ## 时间规划

@@ -86,10 +86,16 @@ class PathConfig:
     
     @property
     def corpus_dir(self) -> pathlib.Path:
+        v = os.getenv("RISKAGENT_CORPUS_DIR", "").strip()
+        if v:
+            return pathlib.Path(v).expanduser().resolve()
         return self.project_root / "corpus"
     
     @property
     def milvus_lite_dir(self) -> pathlib.Path:
+        v = os.getenv("RISKAGENT_PERSIST_DIR", "").strip()
+        if v:
+            return pathlib.Path(v).expanduser().resolve()
         return self.project_root / ".milvus"
     
     @property

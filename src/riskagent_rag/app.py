@@ -40,7 +40,14 @@ class RiskAgentSystem:
         self._retriever = build_retriever(persist_dir=persist_dir, final_k=4)
         return self._retriever
 
-    def chat(self, question: str, *, history: list[tuple[str, str]] | None = None) -> dict[str, Any]:
+    def chat(
+        self,
+        question: str,
+        *,
+        history: list[tuple[str, str]] | None = None,
+        max_rounds: int = 2,
+        request_id: str | None = None,
+    ) -> dict[str, Any]:
         """处理用户提问"""
         persist_dir = settings.paths.milvus_lite_dir
         if not (persist_dir.exists() and (persist_dir / MANIFEST_FILENAME).exists()):
@@ -52,7 +59,12 @@ class RiskAgentSystem:
         retriever = self._ensure_resources()
         question_with_history = self._merge_history(question=question, history=history)
 
-        out = run_langgraph_agentic_chat(question=question_with_history, retriever=retriever)
+        out = run_langgraph_agentic_chat(
+            question=question_with_history,
+            retriever=retriever,
+            max_rounds=int(max_rounds),
+            request_id=request_id,
+        )
         out["runner"] = "langgraph"
 
         # 统一补充 citations

@@ -27,6 +27,8 @@
 - `riskagent_rag.llm`
   - LLM 接入封装
   - OpenAI compatible client
+- `riskagent_rag.api`
+  - HTTP API v1 healthz readyz metrics ask chat
 - `riskagent_rag.agents`
   - retrieval agent
   - explanation agent

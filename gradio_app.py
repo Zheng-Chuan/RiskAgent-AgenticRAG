@@ -180,7 +180,7 @@ def chat_v2(
         if not isinstance(pair, list) or len(pair) != 2:
             continue
         history_pairs.append((str(pair[0] or ""), str(pair[1] or "")))
-    out = system.chat(question=user_text, history=history_pairs)
+    out = system.chat(question=user_text, history=history_pairs, max_rounds=int(_max_rounds))
 
     # 结果解析
     answer = str(out.get("answer", ""))

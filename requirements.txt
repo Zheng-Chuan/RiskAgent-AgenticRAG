@@ -2,7 +2,6 @@ gradio
 langgraph
 langchain
 langchain-community
-langchain-milvus
 langchain-openai
 langchain-huggingface
 sentence-transformers
@@ -11,3 +10,7 @@ pydantic
 python-dotenv
 pypdf
 rank-bm25
+fastapi
+uvicorn
+prometheus-client
+httpx

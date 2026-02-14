@@ -19,6 +19,10 @@ dependencies = [
     "python-dotenv",
     "pypdf",
     "rank-bm25",
+    "fastapi",
+    "uvicorn",
+    "prometheus-client",
+    "httpx",
 ]
 
 [tool.setuptools.packages.find]

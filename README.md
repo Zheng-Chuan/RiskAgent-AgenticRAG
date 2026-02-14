@@ -14,6 +14,8 @@
   - 我们打算怎么做 每一阶段怎么验收
 - [ARCHITECTURE](docs/ARCHITECTURE.md)
   - 代码怎么拆 数据怎么流 LLM 怎么接
+- [API](docs/API.md)
+  - HTTP API v1 用法 健康检查 指标与鉴权
 - [DATA](docs/DATA.md)
   - 数据字典 关键中间数据结构与用途 例如 chunk citations evidence claims
 - [EVALUATION](docs/EVALUATION.md)

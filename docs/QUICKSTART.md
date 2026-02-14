@@ -109,4 +109,9 @@ conda run -n LangChain python -m unittest tests.test_index_incremental_acceptanc
 评测会跑数据集并落盘报告到 .artifacts/reports
 
 ```bash
-conda run -n LangChain python -m riskagent_rag.evaluation.run --stage step4 --label step4
+
+## 10. 启动 HTTP API
+
+```bash
+conda run -n LangChain python -m riskagent_rag.api.server
+```

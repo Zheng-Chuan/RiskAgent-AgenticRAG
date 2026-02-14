@@ -21,6 +21,7 @@ class AgenticState(TypedDict, total=False):
     """LangGraph state schema for agentic RAG loop."""
 
     question: str
+    request_id: str
     max_rounds: int
     retriever: Any
 
@@ -309,7 +310,8 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
         )
         state["decision_log"] = decision_log
 
-    request_id = str(uuid.uuid4())
+    request_id = str(state.get("request_id") or str(uuid.uuid4()))
+    state["request_id"] = request_id
     request_data = {
         "question": state["question"],
         "max_rounds": state["max_rounds"],
@@ -454,6 +456,7 @@ def run_langgraph_agentic_chat(
     question: str,
     retriever: Any,
     max_rounds: int = 2,
+    request_id: str | None = None,
 ) -> dict[str, Any]:
     """
     Run agentic chat using LangGraph orchestration.
@@ -470,6 +473,7 @@ def run_langgraph_agentic_chat(
 
     initial_state: AgenticState = {
         "question": question,
+        "request_id": str(request_id or str(uuid.uuid4())),
         "max_rounds": max_rounds,
         "retriever": retriever,
         "current_query": "",
@@ -494,11 +498,12 @@ def run_langgraph_agentic_chat(
     final_state = graph.invoke(initial_state)
 
     return {
+        "request_id": final_state.get("request_id", ""),
         "answer": final_state["answer"],
         "docs": final_state["docs"],
         "citations": final_state["citations"],
         "claims": final_state.get("claims", []),
-        "evidence_set": agentic_primitives.build_evidence_set_from_docs(
+        "evidence_set": final_state.get("evidence_set", []) or agentic_primitives.build_evidence_set_from_docs(
             final_state.get("docs", []),
             include_text=False,
         ),

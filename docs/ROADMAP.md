@@ -509,21 +509,21 @@ LLM strategy
 ### Week 12: 服务化接口与契约 v1
 
 - 交付
-  - [ ] HTTP API v1
-    - [ ] /v1/ask 单轮问答
-    - [ ] /v1/chat 多轮对话
-    - [ ] /healthz /readyz 健康检查
-    - [ ] /metrics 基础指标
-  - [ ] 请求与响应 schema 固化
-    - [ ] request_id 贯穿全链路
-    - [ ] 输出始终包含 evidence_set claims tool_traces decision_log
-    - [ ] 错误返回固定 error_code 与 retryable 标记
-  - [ ] 可选鉴权
-    - [ ] 支持 API key via HTTP header
+  - [x] HTTP API v1
+    - [x] /v1/ask 单轮问答
+    - [x] /v1/chat 多轮对话
+    - [x] /healthz /readyz 健康检查
+    - [x] /metrics 基础指标
+  - [x] 请求与响应 schema 固化
+    - [x] request_id 贯穿全链路
+    - [x] 输出始终包含 evidence_set claims tool_traces decision_log
+    - [x] 错误返回固定 error_code 与 retryable 标记
+  - [x] 可选鉴权
+    - [x] 支持 API key via HTTP header
 - 验收
-  - [ ] 50 次连续请求无崩溃
-  - [ ] 所有响应可被 schema 校验
-  - [ ] 对同一输入在相同参数下输出结构稳定
+  - [x] 50 次连续请求无崩溃
+  - [x] 所有响应可被 schema 校验
+  - [x] 对同一输入在相同参数下输出结构稳定
 
 ### Week 13: 可观测性与调试体验
 

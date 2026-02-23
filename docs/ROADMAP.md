@@ -404,7 +404,7 @@ LLM strategy
 
 > 基于 Advanced RAG 理论图谱 持续提升检索与生成质量
 
-### Week 8: 混合检索与重排序 step1
+### Week 8: 混合检索与重排序
 
 目标 先把检索侧做强 让同样的评测集在 citations precision 与 domain consistency 上立刻可见提升
 
@@ -435,7 +435,7 @@ LLM strategy
   - [x] 产出 step1 评测报告并可与 baseline 对比
     - [x] `python -m riskagent_rag.evaluation.run --stage step1 --label step1 --enable-citation-judge --citation-judge-mode heuristic`
 
-### Week 9: 查询理解与智能路由 step2
+### Week 9: 查询理解与智能路由
 
 目标 让系统不再只有一招 通过并行检索与路由覆盖更多表达与更复杂的问题结构
 
@@ -457,7 +457,7 @@ LLM strategy
   - [x] 产出 step2 评测报告并可与 step1 报告对比
     - [x] `python -m riskagent_rag.evaluation.run --stage step2 --label step2 --enable-citation-judge --citation-judge-mode heuristic`
 
-### Week 10: 高级索引策略 step3
+### Week 10: 高级索引策略
 
 目标 从索引结构层面解决长文档与宏观问题 切片太小丢上下文 切片太大语义模糊的矛盾
 
@@ -480,7 +480,7 @@ LLM strategy
   - [x] 产出 step3 评测报告并可与 step2 报告对比
     - [x] `python -m riskagent_rag.evaluation.run --stage step3 --label step3 --enable-citation-judge --citation-judge-mode heuristic`
 
-### Week 11: Self RAG 与动态决策 step4
+### Week 11: Self RAG 与动态决策
 
 目标 在生成前后引入显式打分与门控 把现有的 agentic loop 升级成可度量可控的动态决策系统
 

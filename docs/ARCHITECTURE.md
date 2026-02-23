@@ -108,6 +108,47 @@ graph TD;
 - **合成答案 (synthesize_answer)**: 基于检索结果和工具输出生成最终答案
 - **验证与落盘 (validate_and_save)**: 运行 validator gates 并保存 artifacts
 
+### 详细流程图 (含 Week 8-11 高级特性)
+
+此图展示了系统内部的详细逻辑，特别是 Retrieve & Critique 节点内部的混合检索、查询理解、高级索引和 Self-RAG 评分流程。
+
+```mermaid
+graph TD
+    %% LangGraph Nodes
+    Start((Start)) --> Rewrite[Node: Rewrite Query<br/>查询改写]
+    Rewrite --> Retrieve[Node: Retrieve & Critique<br/>检索与评估]
+
+    %% Internal Logic of Retrieve Node
+    subgraph Retrieve_Internal [Retrieve & Critique 节点内部逻辑]
+        direction TB
+        QueryIntel[Query Intelligence<br/>(Week 9: 意图路由/变体生成)]
+        Hybrid[Hybrid Retriever<br/>(Week 8: Dense + Sparse + Rerank)]
+        AdvIndex[Advanced Indexing<br/>(Week 10: Parent/Summary/HyDE)]
+        SelfRAG_Grade[Self-RAG Grading<br/>(Week 11: 质量打分)]
+        
+        QueryIntel --> Hybrid
+        Hybrid --> AdvIndex
+        AdvIndex --> SelfRAG_Grade
+    end
+
+    %% Flow Control
+    Retrieve -- 质量不足/需要更多信息 --> Revise[Node: Revise Query<br/>查询修订]
+    Revise --> Retrieve
+
+    Retrieve -- 质量达标 --> ToolDecide[Node: Decide Tool Use<br/>工具决策]
+
+    ToolDecide -- 需要工具 --> CallTool[Node: Call Tool<br/>调用风险数据工具]
+    CallTool --> Synthesize
+    ToolDecide -- 不需要 --> Synthesize[Node: Synthesize Answer<br/>答案合成]
+
+    Synthesize --> Validate[Node: Validate & Save<br/>幻觉检查 & 落盘]
+    Validate --> End((End))
+
+    %% Styling
+    style Retrieve fill:#e1f5fe,stroke:#01579b,stroke-width:2px
+    style Retrieve_Internal fill:#ffffff,stroke:#0288d1,stroke-dasharray: 5 5
+```
+
 ### 查看方式
 
 1. 在 GitHub 上直接查看 (GitHub 原生支持 Mermaid)

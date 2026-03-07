@@ -68,9 +68,25 @@ def delete_by_source(*, client: MilvusClient, config: MilvusStoreConfig, source:
     src = str(source or "").replace("\\", "\\\\").replace('"', '\\"')
     expr = f'source == "{src}"'
     try:
+        client.load_collection(collection_name=str(config.collection_name))
+    except Exception:
+        pass
+    try:
         client.delete(collection_name=str(config.collection_name), filter=expr)
     except TypeError:
         client.delete(collection_name=str(config.collection_name), expr=expr)
+    except Exception as e:
+        msg = str(e).lower()
+        if "collection not loaded" not in msg:
+            raise
+        try:
+            client.load_collection(collection_name=str(config.collection_name))
+        except Exception:
+            pass
+        try:
+            client.delete(collection_name=str(config.collection_name), filter=expr)
+        except TypeError:
+            client.delete(collection_name=str(config.collection_name), expr=expr)
 
 
 def insert_chunks(*, client: MilvusClient, config: MilvusStoreConfig, rows: list[dict[str, Any]]) -> None:

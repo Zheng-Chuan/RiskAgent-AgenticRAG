@@ -8,8 +8,20 @@
       "minimum": 0.8,
       "direction": "higher_is_better"
     },
-    "citation_precision": {
-      "minimum": 0.35,
+    "faithfulness": {
+      "minimum": 0.7,
+      "direction": "higher_is_better"
+    },
+    "answer_relevancy": {
+      "minimum": 0.7,
+      "direction": "higher_is_better"
+    },
+    "context_precision": {
+      "minimum": 0.6,
+      "direction": "higher_is_better"
+    },
+    "context_recall": {
+      "minimum": 0.6,
       "direction": "higher_is_better"
     },
     "domain_consistency_score": {

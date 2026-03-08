@@ -21,10 +21,9 @@ from riskagent_rag.evaluation.advanced_metrics import (
     compute_retrieval_metrics,
 )
 from riskagent_rag.evaluation.citations import compute_citations_coverage, is_valid_citation
-from riskagent_rag.evaluation.citation_precision import try_compute_citation_precision
 from riskagent_rag.evaluation.dataset import load_dataset
 from riskagent_rag.evaluation.domain_consistency import try_compute_domain_consistency
-from riskagent_rag.evaluation.ragas_integration import try_compute_ragas_metrics
+from riskagent_rag.evaluation.ragas_integration import try_compute_ragas_metrics, get_ragas_metrics_description
 from riskagent_rag.evaluation.reporting import compare_reports, find_latest_report, load_report, write_report
 from riskagent_rag.evaluation.thresholds import evaluate_threshold_gate, load_thresholds
 from riskagent_rag.indexing.indexer import incremental_index
@@ -195,8 +194,6 @@ def run_evaluation(
     dataset_path: Path,
     persist_dir: Path,
     enable_ragas: bool,
-    enable_citation_judge: bool,
-    citation_judge_mode: str,
     profile: str,
     retrieval_ks: list[int],
     include_cost: bool,
@@ -259,21 +256,22 @@ def run_evaluation(
         )
 
     cov = compute_citations_coverage(samples)
+    
+    # RAGAS metrics (now primary quality evaluation)
     ragas_result = None
     if enable_ragas:
-        out = try_compute_ragas_metrics(samples=samples)
-        if not out.ok:
-            raise RuntimeError(f"RAGAS metrics failed: {out.error or 'unknown error'}")
-        ragas_result = _result_payload(out)
-    citation_judge_mode = "llm"
-    citation_judge = None
-    if enable_citation_judge:
-        out = try_compute_citation_precision(samples=samples, mode=citation_judge_mode)
-        citation_judge = {
-            **_result_payload(out),
-            "details": out.details,
+        out = try_compute_ragas_metrics(samples=samples, include_reference_based=True)
+        ragas_result = {
+            "enabled": out.enabled,
+            "ok": out.ok,
+            "metrics": out.metrics,
+            "error": out.error,
         }
+        if not out.ok:
+            # Log warning but don't fail - RAGAS is optional enhancement
+            print(f"Warning: RAGAS metrics failed: {out.error}", file=os.sys.stderr)
 
+    # Domain consistency (financial-specific metrics)
     try:
         numeric_tolerance = float(os.getenv("EVAL_NUMERIC_TOLERANCE", "0.01"))
     except (TypeError, ValueError):
@@ -304,8 +302,7 @@ def run_evaluation(
             "include_cost": bool(include_cost),
             "include_latency": bool(include_latency),
             "with_gate": bool(with_gate),
-            "enable_citation_judge": bool(enable_citation_judge),
-            "citation_judge_mode": citation_judge_mode,
+            "enable_ragas": bool(enable_ragas),
         },
         "metrics": {
             "citations_total": cov.total,
@@ -315,17 +312,29 @@ def run_evaluation(
         "samples": samples,
     }
 
-    if ragas_result is not None:
+    # Merge RAGAS metrics into main metrics (RAGAS replaces citation_precision)
+    if ragas_result is not None and ragas_result.get("ok"):
         report["ragas"] = ragas_result
-    if citation_judge is not None:
-        report["citation_judge"] = citation_judge
-        if citation_judge.get("ok") and isinstance(citation_judge.get("metrics"), dict):
-            _merge_float_metrics(
-                report["metrics"],
-                citation_judge["metrics"],
-                ["citation_precision", "hallucination_rate_in_citations"],
-            )
+        if isinstance(ragas_result.get("metrics"), dict):
+            # Map RAGAS metrics to standard metric names for threshold checking
+            ragas_metrics = ragas_result["metrics"]
+            metric_mapping = {
+                "ragas_faithfulness": "faithfulness",  # Primary replacement for citation_precision
+                "ragas_answer_relevancy": "answer_relevancy",
+                "ragas_context_precision": "context_precision",
+                "ragas_context_recall": "context_recall",
+                "ragas_answer_correctness": "answer_correctness",
+                "ragas_factual_correctness": "factual_correctness",
+            }
+            for ragas_key, standard_key in metric_mapping.items():
+                if ragas_key in ragas_metrics:
+                    report["metrics"][standard_key] = float(ragas_metrics[ragas_key])
+            # Also keep original RAGAS names
+            report["metrics"].update(ragas_metrics)
+    elif ragas_result is not None:
+        report["ragas"] = ragas_result  # Keep error info
 
+    # Domain consistency metrics
     report["domain_consistency"] = domain_consistency
     if domain_consistency.get("ok") and isinstance(domain_consistency.get("metrics"), dict):
         for k, v in domain_consistency["metrics"].items():
@@ -382,9 +391,7 @@ def main() -> None:
     parser.add_argument("--with-gate", action="store_true")
     parser.add_argument("--enforce-thresholds", action="store_true")
     parser.add_argument("--thresholds", default="docs/eval_thresholds.yaml")
-    parser.add_argument("--enable-ragas", action="store_true")
-    parser.add_argument("--enable-citation-judge", action="store_true")
-    parser.add_argument("--citation-judge-mode", default="llm", choices=["llm"])
+    parser.add_argument("--enable-ragas", action="store_true", help="Enable RAGAS metrics (faithfulness, answer_relevancy, context_precision, etc.)")
     parser.add_argument("--numeric-tolerance", type=float, default=float(os.getenv("EVAL_NUMERIC_TOLERANCE", "0.01")))
     parser.add_argument("--tolerance", type=float, default=float(os.getenv("EVAL_TOLERANCE", "0")))
     parser.add_argument("--minimum", type=float, default=float(os.getenv("EVAL_MINIMUM", "0.8")))

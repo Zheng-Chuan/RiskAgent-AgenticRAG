@@ -1,7 +1,9 @@
 """RAGAS integration.
 
-中文注释 可选集成 默认不开启
-目标 计算 triad 和 retrieval metrics 并写入评测报告
+中文注释 RAGAS 质量指标集成 (v0.4.3+)
+- 使用 ragas.metrics.collections 新导入路径
+- 提供 Triad + Retrieval 完整指标集
+- 替代自建的 citation_precision，提供更成熟的质量评估
 """
 
 from __future__ import annotations
@@ -24,25 +26,56 @@ class RagasResult:
 def try_compute_ragas_metrics(
     *,
     samples: list[dict[str, Any]],
+    include_reference_based: bool = True,
 ) -> RagasResult:
+    """Compute RAGAS metrics for evaluation samples.
+    
+    Args:
+        samples: Evaluation samples with question, answer, contexts
+        include_reference_based: Whether to include metrics requiring reference_answer
+    
+    Returns:
+        RagasResult with metrics dict containing:
+        - faithfulness: Answer groundedness in contexts (0-1)
+        - answer_relevancy: Answer relevance to question (0-1)  
+        - context_precision: Precision of retrieved contexts (0-1)
+        - context_recall: Recall based on reference answer (0-1)
+        - answer_correctness: Correctness vs reference (0-1)
+        - factual_correctness: Factual accuracy (0-1)
+    """
     try:
         from datasets import Dataset
     except ImportError as e:
-        return RagasResult(enabled=True, ok=False, metrics={}, error=f"datasets not available {e}")
+        return RagasResult(enabled=True, ok=False, metrics={}, error=f"datasets not available: {e}")
 
     try:
-        from ragas import evaluate
-        from ragas.metrics import (
+        # RAGAS 0.4.3+ 新导入路径
+        from ragas.metrics.collections import (
+            faithfulness,
             answer_relevancy,
             context_precision,
             context_recall,
-            faithfulness,
+            answer_correctness,
+            factual_correctness,
         )
     except ImportError as e:
-        return RagasResult(enabled=True, ok=False, metrics={}, error=f"ragas not available {e}")
+        # Fallback to old import path for compatibility
+        try:
+            from ragas.metrics import (
+                faithfulness,
+                answer_relevancy,
+                context_precision,
+                context_recall,
+                answer_correctness,
+            )
+            factual_correctness = None
+        except ImportError as e2:
+            return RagasResult(enabled=True, ok=False, metrics={}, error=f"ragas not available: {e2}")
 
     # 准备数据
     rows: list[dict[str, Any]] = []
+    has_reference = False
+    
     for s in samples:
         question = str(s.get("question", ""))
         answer = str(s.get("answer", ""))
@@ -57,23 +90,14 @@ def try_compute_ragas_metrics(
             "contexts": contexts,
         }
 
-        gt = s.get("ground_truth_contexts")
-        if isinstance(gt, list) and gt:
-            row["ground_truth"] = str(gt[0])  # RAGAS expect string or list? v0.1+ expects 'ground_truth' col
-            # 注意: context_recall 需要 ground_truth
-            # 这里简化处理, 如果有 gt contexts, 拼成 string 或者 list?
-            # RAGAS 0.1+ dataset schema: question, answer, contexts, ground_truth
-            # ground_truth should be string (the reference answer) or list of strings?
-            # 通常 ground_truth 是 reference answer.
-            # 但 context recall 需要的是 ground truth contexts 吗?
-            # RAGAS 文档: context_recall measures extent to which retrieved context aligns with ground truth answer.
-            # Wait, context_recall compares ground_truth (answer) vs contexts?
-            # actually context_recall: "Is the ground truth answer present in the contexts?"
-            # So we need reference_answer as ground_truth.
-
+        # 优先使用 reference_answer 作为 ground_truth
         ref = s.get("reference_answer")
-        if isinstance(ref, str) and ref:
+        if isinstance(ref, str) and ref.strip():
             row["ground_truth"] = ref
+            has_reference = True
+        elif isinstance(ref, list) and ref:
+            row["ground_truth"] = str(ref[0])
+            has_reference = True
 
         rows.append(row)
 
@@ -87,23 +111,30 @@ def try_compute_ragas_metrics(
         faithfulness,
         answer_relevancy,
         context_precision,
-        context_recall,
     ]
+    
+    # context_recall 和 answer_correctness 需要 reference_answer
+    if include_reference_based and has_reference:
+        metrics_list.append(context_recall)
+        metrics_list.append(answer_correctness)
+        if factual_correctness is not None:
+            metrics_list.append(factual_correctness)
 
     # 准备 LLM 和 Embeddings
     try:
         judge_llm = get_judge_llm()
     except Exception as e:
-        return RagasResult(enabled=True, ok=False, metrics={}, error=str(e))
-    embeddings = build_embeddings()
+        return RagasResult(enabled=True, ok=False, metrics={}, error=f"LLM setup failed: {e}")
+    
+    try:
+        embeddings = build_embeddings()
+    except Exception as e:
+        return RagasResult(enabled=True, ok=False, metrics={}, error=f"Embeddings setup failed: {e}")
 
     # 执行评测
     try:
-        # RAGAS v0.1+ evaluate signature:
-        # evaluate(dataset, metrics, llm=..., embeddings=...)
-        # 注意: 如果 judge_llm 为 None, RAGAS 会尝试默认 OpenAI.
-        # 如果 embeddings 为 None, RAGAS 会尝试默认 OpenAI.
-        # 我们显式传入 embeddings (HuggingFace), 以免 RAGAS 报错缺少 OpenAI Key (如果用户只用本地).
+        from ragas import evaluate
+        
         result = evaluate(
             dataset=ds,
             metrics=metrics_list,
@@ -111,20 +142,38 @@ def try_compute_ragas_metrics(
             embeddings=embeddings,
         )
     except Exception as e:
-        return RagasResult(enabled=True, ok=False, metrics={}, error=str(e))
+        return RagasResult(enabled=True, ok=False, metrics={}, error=f"RAGAS evaluation failed: {e}")
 
     # 提取结果
     metrics_out: dict[str, float] = {}
-    # RAGAS result object acts like a dict with averages
     try:
-        # result is a Result object, can be cast to dict for averages
-        # e.g. {'faithfulness': 0.8, ...}
+        # RAGAS result 是可迭代的字典类对象
         for k, v in result.items():
             try:
-                metrics_out[k] = float(v)
+                # 处理可能的嵌套结构
+                if isinstance(v, (int, float)):
+                    metrics_out[f"ragas_{k}"] = float(v)
+                elif hasattr(v, 'mean'):
+                    metrics_out[f"ragas_{k}"] = float(v.mean())
             except (TypeError, ValueError):
                 pass
     except Exception:
         pass
 
+    # 添加元数据
+    metrics_out["ragas_samples_evaluated"] = len(rows)
+    metrics_out["ragas_reference_based"] = 1.0 if (include_reference_based and has_reference) else 0.0
+
     return RagasResult(enabled=True, ok=True, metrics=metrics_out)
+
+
+def get_ragas_metrics_description() -> dict[str, str]:
+    """Get description of RAGAS metrics for documentation."""
+    return {
+        "ragas_faithfulness": "RAGAS Faithfulness - Measures if answer is grounded in retrieved contexts (0-1, higher is better)",
+        "ragas_answer_relevancy": "RAGAS Answer Relevancy - Measures how relevant the answer is to the question (0-1, higher is better)",
+        "ragas_context_precision": "RAGAS Context Precision - Measures precision of retrieved contexts (0-1, higher is better)",
+        "ragas_context_recall": "RAGAS Context Recall - Measures recall of relevant contexts vs reference answer (0-1, higher is better, requires reference)",
+        "ragas_answer_correctness": "RAGAS Answer Correctness - Measures correctness vs reference answer (0-1, higher is better, requires reference)",
+        "ragas_factual_correctness": "RAGAS Factual Correctness - Measures factual accuracy (0-1, higher is better, requires reference)",
+    }

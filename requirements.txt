@@ -13,3 +13,5 @@ fastapi
 uvicorn
 prometheus-client
 httpx
+ragas>=0.4.3
+datasets>=2.14.0

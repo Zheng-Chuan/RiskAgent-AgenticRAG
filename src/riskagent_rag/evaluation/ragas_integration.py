@@ -40,29 +40,60 @@ def _get_openai_client() -> Any:
 def _get_ragas_llm() -> Any:
     """Create RAGAS-compatible InstructorLLM.
     
-    Uses gpt-4o-mini for RAGAS evaluation to ensure compatibility.
+    Uses configured model (qwen3-8b on n1n.ai) for RAGAS evaluation.
+    For qwen3-8b, sets enable_thinking=false to avoid API errors.
     """
     from ragas.llms import llm_factory
+    from ragas.llms.base import BaseRagasLLM
     
     client = _get_openai_client()
-    model_name = "openai/gpt-4o-mini"
+    # Use the configured model from settings (qwen3-8b on n1n.ai)
+    model_name = settings.llm.model or "qwen3-8b"
     
-    return llm_factory(
+    # For qwen3-8b, we need to disable thinking mode for non-streaming calls
+    extra_kwargs = {}
+    if "qwen3" in model_name.lower():
+        extra_kwargs["extra_body"] = {"enable_thinking": False}
+    
+    llm = llm_factory(
         model=model_name,
         provider="openai",
         client=client,
+        max_tokens=4096,  # Increased for RAGAS metric computation
+        **extra_kwargs
     )
+    return llm
+
+
+class RagasEmbeddingsWrapper:
+    """Wrapper for HuggingFaceEmbeddings to provide embed_query method."""
+    
+    def __init__(self, model_name: str):
+        from sentence_transformers import SentenceTransformer
+        self.model = SentenceTransformer(model_name)
+        self.model_name = model_name
+    
+    def embed_query(self, text: str) -> list[float]:
+        """Embed a single query text."""
+        import numpy as np
+        result = self.model.encode(text)
+        return result.tolist() if hasattr(result, 'tolist') else list(result)
+    
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        """Embed multiple documents."""
+        import numpy as np
+        results = self.model.encode(texts)
+        return [r.tolist() if hasattr(r, 'tolist') else list(r) for r in results]
+    
+    def __repr__(self):
+        return f"RagasEmbeddingsWrapper(model={self.model_name})"
 
 
 def _get_ragas_embeddings() -> Any:
-    """Create RAGAS-compatible OpenAI embeddings."""
-    from ragas.embeddings import OpenAIEmbeddings
-    
-    client = _get_openai_client()
-    return OpenAIEmbeddings(
-        client=client,
-        model="openai/text-embedding-3-small",
-    )
+    """Create RAGAS-compatible embeddings using local HuggingFace model."""
+    # Use the same model as the main application
+    model_name = settings.embeddings.model_name or "sentence-transformers/all-MiniLM-L6-v2"
+    return RagasEmbeddingsWrapper(model_name)
 
 
 def try_compute_ragas_metrics(
@@ -193,19 +224,33 @@ def try_compute_ragas_metrics(
     except Exception as e:
         return RagasResult(enabled=True, ok=False, metrics={}, error=f"RAGAS evaluation failed: {e}")
 
-    # 提取结果
+    # 提取结果 - EvaluationResult has _scores_dict with metric names and list of values
     metrics_out: dict[str, float] = {}
     try:
-        for k, v in result.items():
-            try:
-                if isinstance(v, (int, float)):
-                    metrics_out[f"ragas_{k}"] = float(v)
-                elif hasattr(v, 'mean'):
-                    metrics_out[f"ragas_{k}"] = float(v.mean())
-            except (TypeError, ValueError):
-                pass
-    except Exception:
-        pass
+        # EvaluationResult._scores_dict contains metric -> list of scores mapping
+        if hasattr(result, '_scores_dict'):
+            scores_dict = result._scores_dict
+            for metric_name, values in scores_dict.items():
+                # values is a list of scores (one per sample)
+                valid_values = [float(v) for v in values if v is not None]
+                if valid_values:
+                    metrics_out[f"ragas_{metric_name}"] = sum(valid_values) / len(valid_values)
+        elif hasattr(result, 'scores') and result.scores:
+            # Alternative: use scores list (per-sample dicts)
+            # Aggregate across samples
+            all_metrics = {}
+            for sample_scores in result.scores:
+                for metric_name, value in sample_scores.items():
+                    if metric_name not in all_metrics:
+                        all_metrics[metric_name] = []
+                    if value is not None:
+                        all_metrics[metric_name].append(float(value))
+            for metric_name, values in all_metrics.items():
+                if values:
+                    metrics_out[f"ragas_{metric_name}"] = sum(values) / len(values)
+    except Exception as e:
+        # Log error but don't fail
+        metrics_out["ragas_extraction_error"] = str(e)[:100]
 
     # 添加元数据
     metrics_out["ragas_samples_evaluated"] = len(rows)

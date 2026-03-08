@@ -71,6 +71,10 @@ class RiskAgentSystem:
         if "citations" not in out and "docs" in out:
             out["citations"] = extract_citations(out["docs"])
 
+        # 移除不可序列化的 Document 对象
+        if "docs" in out:
+            del out["docs"]
+
         return out
 
     def _merge_history(self, *, question: str, history: list[tuple[str, str]] | None) -> str:

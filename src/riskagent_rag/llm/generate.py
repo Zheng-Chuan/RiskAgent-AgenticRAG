@@ -65,11 +65,19 @@ def _format_context(docs: Iterable[Document], limit: int = 1200) -> str:
 def call_llm_text(prompt: str, *, temperature: float = 0.0) -> str:
     api_key = settings.llm.api_key
     if not api_key:
-        raise RuntimeError("Missing OpenRouter API key. Set OPENAI_API_KEY (or LLM_API_KEY).")
+        raise RuntimeError("Missing API key. Set OPENAI_API_KEY (or LLM_API_KEY).")
 
     from langchain_openai import ChatOpenAI  # type: ignore[import-not-found]
 
     headers: dict[str, str] = {}
+    extra_body: dict[str, Any] | None = None
+
+    # n1n.ai specific: qwen3 models require enable_thinking=false for non-streaming
+    base_url = settings.llm.base_url or ""
+    if "n1n.ai" in base_url and "qwen3" in settings.llm.model:
+        extra_body = {"enable_thinking": False}
+
+    # OpenRouter specific headers (kept for backward compatibility)
     referer = os.getenv("OPENROUTER_SITE_URL", "").strip()
     title = os.getenv("OPENROUTER_APP_NAME", "").strip()
     if referer:
@@ -83,6 +91,7 @@ def call_llm_text(prompt: str, *, temperature: float = 0.0) -> str:
         api_key=api_key,
         temperature=float(temperature),
         default_headers=headers or None,
+        extra_body=extra_body,
     )
     msg = llm.invoke(prompt)
     return getattr(msg, "content", str(msg))

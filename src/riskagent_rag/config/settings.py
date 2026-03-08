@@ -4,6 +4,13 @@ import os
 import pathlib
 from dataclasses import dataclass, field
 
+# Load environment variables from .env file (override existing values)
+try:
+    from dotenv import load_dotenv
+    load_dotenv(dotenv_path=pathlib.Path(__file__).resolve().parents[3] / ".env", override=True)
+except Exception:
+    pass
+
 
 @dataclass
 class MilvusConfig:
@@ -65,19 +72,16 @@ class EmbeddingsConfig:
 class LLMConfig:
     """LLM 服务配置"""
     api_key: str | None = None
-    base_url: str = "https://openrouter.ai/api/v1"
-    model: str = "deepseek/deepseek-r1:free"
+    base_url: str = "https://api.n1n.ai/v1"
+    model: str = "qwen3-8b"
     provider: str = "openai_compatible"
 
     @classmethod
     def from_env(cls) -> LLMConfig:
-        model = os.getenv("LLM_MODEL", "").strip() or "deepseek/deepseek-r1:free"
-        if model != "deepseek/deepseek-r1:free":
-            raise RuntimeError("LLM_MODEL is fixed to deepseek/deepseek-r1:free in this project")
         return cls(
             api_key=os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY"),
-            base_url="https://openrouter.ai/api/v1",
-            model=model,
+            base_url=os.getenv("LLM_BASE_URL", "https://api.n1n.ai/v1"),
+            model=os.getenv("LLM_MODEL", "qwen3-8b"),
             provider="openai_compatible",
         )
 

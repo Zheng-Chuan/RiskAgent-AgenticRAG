@@ -56,8 +56,7 @@ docker compose -f deploy/dev/docker-compose.yml down
 必需环境变量:
 
 - `OPENAI_API_KEY` 或 `LLM_API_KEY`
-- `LLM_BASE_URL`
-- `LLM_MODEL`
+- 可选: `OPENROUTER_SITE_URL` `OPENROUTER_APP_NAME`
 
 未配置或无法连接 LLM 时会直接报错
 
@@ -73,29 +72,23 @@ docker compose -f deploy/dev/docker-compose.yml down
 - `MILVUS_HOST`: 例如 localhost
 - `MILVUS_PORT`: 例如 19530
 
-## 6. 启动 UI
-
-```bash
-conda run -n LangChain python gradio_app.py
-```
-
-## 7. Demo 流程
+## 6. Demo 流程
 
 - 先用 CLI 做增量索引
 
 ```bash
-conda run -n LangChain python -m riskagent_rag.cli.index --corpus-dir corpus --persist-dir .milvus
+conda run -n LangChain python -m riskagent_rag.cli index --corpus-dir corpus --persist-dir .milvus
 ```
 
-- 再启动 UI 并提问 比如 what is FRTB
+- 再提问 比如 what is FRTB
 - 查看 answer citations decision_log
 
-## 8. CLI demo 与 smoke test
+## 7. CLI demo 与 smoke test
 
 - CLI demo 输出会写到 logs/demo_result.json
 
 ```bash
-conda run -n LangChain python demo_cli.py --question "what is FRTB"
+conda run -n LangChain python -m riskagent_rag.cli ask --question "what is FRTB" --out logs/demo_result.json
 ```
 
 - e2e smoke test
@@ -104,7 +97,7 @@ conda run -n LangChain python demo_cli.py --question "what is FRTB"
 conda run -n LangChain python -m unittest tests.test_index_incremental_acceptance
 ```
 
-## 9. 运行评测
+## 8. 运行评测
 
 评测会跑数据集并落盘报告到 .artifacts/reports
 
@@ -112,13 +105,13 @@ conda run -n LangChain python -m unittest tests.test_index_incremental_acceptanc
 conda run -n LangChain python -m riskagent_rag.evaluation.run --stage step4 --label step4
 ```
 
-## 10. 启动 HTTP API
+## 9. 启动 HTTP API
 
 ```bash
 conda run -n LangChain python -m riskagent_rag.api.server
 ```
 
-## 11. 用 API 提问并看 trace
+## 10. 用 API 提问并看 trace
 
 ```bash
 curl -s http://localhost:8000/v1/ask \
@@ -128,4 +121,4 @@ curl -s http://localhost:8000/v1/ask \
 
 返回里会带 debug.artifact_bundle_dir
 你可以在这个目录里找到 trace.json
-详细字段见 docs/TRACE
+详细字段见 [TRACE.md](./TRACE.md)

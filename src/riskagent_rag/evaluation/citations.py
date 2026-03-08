@@ -45,6 +45,13 @@ def compute_citations_coverage(
     total = len(samples)
     passed = 0
     for s in samples:
+        explicit_valid_count = s.get("valid_citation_count")
+        try:
+            if int(explicit_valid_count) > 0:
+                passed += 1
+                continue
+        except (TypeError, ValueError):
+            pass
         citations = s.get("citations")
         if not isinstance(citations, list):
             citations = []

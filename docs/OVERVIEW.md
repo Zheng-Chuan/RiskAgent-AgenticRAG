@@ -39,24 +39,11 @@ flowchart TD
 2 每次请求都会落盘 artifacts bundle 便于回放和排障
 3 trace 里保留 top8 检索原文片段和引用信息
 
-## 你最常用的三个入口
+## 常用入口
 
-1 增量索引
-```bash
-python -m riskagent_rag.cli.index --corpus-dir corpus --persist-dir .milvus
-```
-
-2 启动 API
-```bash
-python -m riskagent_rag.api.server
-```
-
-3 提问
-```bash
-curl -s http://localhost:8000/v1/ask \\
-  -H 'Content-Type: application/json' \\
-  -d '{"question":"what is frtb"}'
-```
+- 命令入口统一看 [QUICKSTART.md](./QUICKSTART.md)
+- 评测入口统一看 [EVALUATION.md](./EVALUATION.md)
+- trace 排障统一看 [TRACE.md](./TRACE.md)
 
 ## artifacts bundle 目录结构
 
@@ -78,4 +65,3 @@ curl -s http://localhost:8000/v1/ask \\
 - DATA 了解 citations evidence_set claims trace 的字段含义
 - API 了解接口 contract 和鉴权
 - TRACE 了解 trace.json 如何用来定位问题
-

@@ -25,11 +25,8 @@ class Week6CitationPrecisionQualityTest(unittest.TestCase):
             }
         ]
 
-        out = try_compute_citation_precision(samples=samples, mode="heuristic")
-        self.assertTrue(out.enabled)
-        self.assertTrue(out.ok)
-        self.assertGreaterEqual(float(out.metrics.get("citation_precision", 0.0)), 0.99)
-        self.assertLessEqual(float(out.metrics.get("hallucination_rate_in_citations", 1.0)), 0.01)
+        with self.assertRaises(ValueError):
+            _ = try_compute_citation_precision(samples=samples, mode="heuristic")
 
     def test_heuristic_hallucination_rate(self) -> None:
         from riskagent_rag.evaluation.citation_precision import try_compute_citation_precision
@@ -51,7 +48,5 @@ class Week6CitationPrecisionQualityTest(unittest.TestCase):
             },
         ]
 
-        out = try_compute_citation_precision(samples=samples, mode="heuristic")
-        self.assertTrue(out.ok)
-        self.assertAlmostEqual(float(out.metrics.get("hallucination_rate_in_citations", 0.0)), 0.5, delta=1e-6)
-
+        with self.assertRaises(ValueError):
+            _ = try_compute_citation_precision(samples=samples, mode="heuristic")

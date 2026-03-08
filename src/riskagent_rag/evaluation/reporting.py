@@ -70,32 +70,23 @@ class RegressionCheck:
     baseline: float
 
 
-def compare_metric_higher_is_better(
+def _compare_metric(
     *,
     current: float,
     baseline: float,
     tolerance: float,
-    minimum: float,
+    minimum: float | None = None,
+    maximum: float | None = None,
+    lower_is_better: bool = False,
 ) -> RegressionCheck:
     delta = current - baseline
-    regression = current < minimum or delta < -abs(tolerance)
-    return RegressionCheck(
-        regression=regression,
-        delta=delta,
-        current=current,
-        baseline=baseline,
-    )
-
-
-def compare_metric_lower_is_better(
-    *,
-    current: float,
-    baseline: float,
-    tolerance: float,
-    maximum: float,
-) -> RegressionCheck:
-    delta = current - baseline
-    regression = current > maximum or delta > abs(tolerance)
+    if lower_is_better:
+        threshold = current > maximum if maximum is not None else False
+        drift = delta > abs(tolerance)
+    else:
+        threshold = current < minimum if minimum is not None else False
+        drift = delta < -abs(tolerance)
+    regression = threshold or drift
     return RegressionCheck(
         regression=regression,
         delta=delta,
@@ -119,62 +110,80 @@ def compare_reports(
     if not isinstance(baseline_metrics, dict):
         baseline_metrics = {}
 
-    current_cov = float(current_metrics.get("citations_coverage", 0.0))
-    baseline_cov = float(baseline_metrics.get("citations_coverage", 0.0))
+    higher_better_explicit = {
+        "citations_coverage",
+        "citation_precision",
+        "numeric_consistency_score",
+        "glossary_consistency_score",
+        "domain_consistency_score",
+        "retrieval_mrr",
+        "retrieval_dense_hit_rate",
+        "retrieval_sparse_hit_rate",
+        "retrieval_hybrid_gain_rate",
+        "retrieval_rerank_uplift",
+        "gate_block_benefit_rate",
+        "reliability_success_rate",
+    }
+    lower_better_explicit = {
+        "hallucination_rate_in_citations",
+        "gate_false_kill_rate",
+        "reliability_error_rate",
+        "reliability_timeout_rate",
+        "latency_p50_ms",
+        "latency_p95_ms",
+        "latency_p99_ms",
+        "cost_estimated_usd",
+    }
+    out: dict[str, Any] = {}
 
-    check = compare_metric_higher_is_better(
-        current=current_cov,
-        baseline=baseline_cov,
-        tolerance=tolerance,
-        minimum=minimum,
-    )
+    common_metrics = sorted(set(current_metrics.keys()).intersection(set(baseline_metrics.keys())))
+    for metric in common_metrics:
+        try:
+            curr = float(current_metrics.get(metric, 0.0))
+            base = float(baseline_metrics.get(metric, 0.0))
+        except (TypeError, ValueError):
+            continue
 
-    out: dict[str, Any] = {
-        "citations_coverage": {
+        is_lower_better = metric in lower_better_explicit or metric.endswith("_rate")
+        if metric in higher_better_explicit:
+            is_lower_better = False
+        if metric.startswith("retrieval_recall_at_") or metric.startswith("retrieval_ndcg_at_"):
+            is_lower_better = False
+
+        if is_lower_better:
+            maximum = hallucination_maximum if metric == "hallucination_rate_in_citations" else float("inf")
+            check = _compare_metric(
+                current=curr,
+                baseline=base,
+                tolerance=tolerance,
+                maximum=maximum,
+                lower_is_better=True,
+            )
+            payload: dict[str, Any] = {
+                "current": check.current,
+                "baseline": check.baseline,
+                "delta": check.delta,
+                "regression": check.regression,
+                "tolerance": tolerance,
+            }
+            if metric == "hallucination_rate_in_citations":
+                payload["maximum"] = hallucination_maximum
+            out[metric] = payload
+            continue
+
+        check = _compare_metric(
+            current=curr,
+            baseline=base,
+            tolerance=tolerance,
+            minimum=minimum,
+        )
+        out[metric] = {
             "current": check.current,
             "baseline": check.baseline,
             "delta": check.delta,
             "regression": check.regression,
             "tolerance": tolerance,
             "minimum": minimum,
-        },
-    }
-
-    for metric in ["citation_precision", "numeric_consistency_score", "glossary_consistency_score", "domain_consistency_score"]:
-        if metric in current_metrics and metric in baseline_metrics:
-            curr = float(current_metrics.get(metric, 0.0))
-            base = float(baseline_metrics.get(metric, 0.0))
-            metric_check = compare_metric_higher_is_better(
-                current=curr,
-                baseline=base,
-                tolerance=tolerance,
-                minimum=minimum,
-            )
-            out[metric] = {
-                "current": metric_check.current,
-                "baseline": metric_check.baseline,
-                "delta": metric_check.delta,
-                "regression": metric_check.regression,
-                "tolerance": tolerance,
-                "minimum": minimum,
-            }
-
-    if "hallucination_rate_in_citations" in current_metrics and "hallucination_rate_in_citations" in baseline_metrics:
-        current_rate = float(current_metrics.get("hallucination_rate_in_citations", 0.0))
-        baseline_rate = float(baseline_metrics.get("hallucination_rate_in_citations", 0.0))
-        rate_check = compare_metric_lower_is_better(
-            current=current_rate,
-            baseline=baseline_rate,
-            tolerance=tolerance,
-            maximum=hallucination_maximum,
-        )
-        out["hallucination_rate_in_citations"] = {
-            "current": rate_check.current,
-            "baseline": rate_check.baseline,
-            "delta": rate_check.delta,
-            "regression": rate_check.regression,
-            "tolerance": tolerance,
-            "maximum": hallucination_maximum,
         }
 
     return out

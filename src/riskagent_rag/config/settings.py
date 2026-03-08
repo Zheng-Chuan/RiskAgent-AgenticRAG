@@ -65,17 +65,20 @@ class EmbeddingsConfig:
 class LLMConfig:
     """LLM 服务配置"""
     api_key: str | None = None
-    base_url: str | None = None
-    model: str | None = None
-    provider: str = "openai_compatible"  # openai, ollama, vllm, etc.
+    base_url: str = "https://openrouter.ai/api/v1"
+    model: str = "deepseek/deepseek-r1:free"
+    provider: str = "openai_compatible"
 
     @classmethod
     def from_env(cls) -> LLMConfig:
+        model = os.getenv("LLM_MODEL", "").strip() or "deepseek/deepseek-r1:free"
+        if model != "deepseek/deepseek-r1:free":
+            raise RuntimeError("LLM_MODEL is fixed to deepseek/deepseek-r1:free in this project")
         return cls(
             api_key=os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY"),
-            base_url=os.getenv("LLM_BASE_URL"),
-            model=os.getenv("LLM_MODEL"),
-            provider=os.getenv("LLM_PROVIDER", "openai_compatible"),
+            base_url="https://openrouter.ai/api/v1",
+            model=model,
+            provider="openai_compatible",
         )
 
 

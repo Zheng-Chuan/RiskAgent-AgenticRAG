@@ -84,14 +84,19 @@ def heuristic_retrieval_sufficient(question: str, docs: list[Document]) -> tuple
 
 def build_refusal_report(question: str) -> str:
     q = (question or "").strip()
-    return (
-        "Could not find evidence in corpus.\n\n"
+    from riskagent_rag.llm import generate as llm_generate
+
+    prompt = (
+        "You are a strict RAG assistant. There is no usable retrieval context. "
+        "You must refuse to answer and propose next actions. "
+        "Return plain markdown only.\n\n"
         f"Question: {q}\n\n"
-        "Next actions:\n"
-        "- Add relevant documents into corpus and rebuild index\n"
-        "- Rephrase the question with finance risk and derivatives keywords\n"
-        "- If you can share the exact source or document, I can cite and explain it\n"
+        "Constraints:\n"
+        "- Do not answer the question.\n"
+        "- Mention that no evidence was found in the indexed corpus.\n"
+        "- Provide 3-5 concrete next actions.\n"
     )
+    return llm_generate.call_llm_text(prompt, temperature=0.0)
 
 
 def try_parse_json(text: str) -> Optional[dict[str, Any]]:

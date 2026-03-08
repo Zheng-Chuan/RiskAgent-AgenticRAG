@@ -129,22 +129,11 @@ def try_compute_citation_precision(
     samples: list[dict[str, Any]],
     mode: str = "auto",
 ) -> CitationPrecisionResult:
-    env_mode = os.getenv("EVAL_CITATION_JUDGE_MODE", "").lower().strip()
-    effective_mode = (env_mode or mode or "auto").lower().strip()
-    if effective_mode not in {"auto", "llm", "heuristic"}:
-        effective_mode = "auto"
+    effective_mode = (mode or "llm").lower().strip()
+    if effective_mode != "llm":
+        raise ValueError("citation judge mode must be llm")
 
-    judge_llm = get_judge_llm() if effective_mode in {"auto", "llm"} else None
-    if effective_mode == "llm" and judge_llm is None:
-        return CitationPrecisionResult(
-            enabled=True,
-            ok=False,
-            metrics={},
-            details=[],
-            error="judge llm not available",
-        )
-
-    heuristic_threshold = float(os.getenv("EVAL_CITATION_HEURISTIC_THRESHOLD", "0.25"))
+    judge_llm = get_judge_llm()
 
     judged = 0
     skipped = 0
@@ -167,51 +156,38 @@ def try_compute_citation_precision(
             continue
 
         try:
-            if judge_llm is None:
-                sentences = _split_sentences(answer)
-                total_sentences = max(1, len(sentences))
-                unsupported_sentences: list[str] = []
-                supported_sentences = 0
-                for sent in sentences:
-                    if _heuristic_supported(sentence=sent, contexts=contexts, threshold=heuristic_threshold):
-                        supported_sentences += 1
-                    else:
-                        unsupported_sentences.append(sent)
-                precision = supported_sentences / max(1, total_sentences)
-                unsupported = unsupported_sentences[:5]
-            else:
-                prompt = json.dumps(
-                    {
-                        "task": "citation_precision_judge",
-                        "instruction": (
-                            "You are a strict evaluator for grounded QA. "
-                            "Decide how much of the answer is supported by the provided contexts. "
-                            "Return JSON only and no markdown."
-                        ),
-                        "schema": {
-                            "total_sentences": "int >= 1",
-                            "supported_sentences": "int between 0 and total_sentences",
-                            "citation_precision": "float between 0 and 1",
-                            "unsupported_sentences": "list of strings max 5",
-                        },
-                        "input": {
-                            "question": question,
-                            "answer": answer,
-                            "contexts": contexts,
-                        },
+            prompt = json.dumps(
+                {
+                    "task": "citation_precision_judge",
+                    "instruction": (
+                        "You are a strict evaluator for grounded QA. "
+                        "Decide how much of the answer is supported by the provided contexts. "
+                        "Return JSON only and no markdown."
+                    ),
+                    "schema": {
+                        "total_sentences": "int >= 1",
+                        "supported_sentences": "int between 0 and total_sentences",
+                        "citation_precision": "float between 0 and 1",
+                        "unsupported_sentences": "list of strings max 5",
                     },
-                    ensure_ascii=False,
-                )
-                raw = judge_llm.invoke(prompt)
-                content = _read_content(raw).strip()
-                parsed = json.loads(content)
-                total_sentences = int(parsed.get("total_sentences", 0))
-                supported_sentences = int(parsed.get("supported_sentences", 0))
-                precision = float(parsed.get("citation_precision", 0.0))
-                unsupported = parsed.get("unsupported_sentences", [])
-                if not isinstance(unsupported, list):
-                    unsupported = []
-                unsupported = [_to_text(u) for u in unsupported][:5]
+                    "input": {
+                        "question": question,
+                        "answer": answer,
+                        "contexts": contexts,
+                    },
+                },
+                ensure_ascii=False,
+            )
+            raw = judge_llm.invoke(prompt)
+            content = _read_content(raw).strip()
+            parsed = json.loads(content)
+            total_sentences = int(parsed.get("total_sentences", 0))
+            supported_sentences = int(parsed.get("supported_sentences", 0))
+            precision = float(parsed.get("citation_precision", 0.0))
+            unsupported = parsed.get("unsupported_sentences", [])
+            if not isinstance(unsupported, list):
+                unsupported = []
+            unsupported = [_to_text(u) for u in unsupported][:5]
 
             if total_sentences <= 0:
                 raise ValueError("invalid total_sentences")
@@ -231,12 +207,12 @@ def try_compute_citation_precision(
                     "total_sentences": total_sentences,
                     "supported_sentences": supported_sentences,
                     "unsupported_sentences": unsupported,
-                    "mode": "llm" if judge_llm is not None else "heuristic",
+                    "mode": "llm",
                 }
             )
         except Exception as e:
             errors += 1
-            details.append({"id": sid, "error": _to_text(e), "mode": "llm" if judge_llm is not None else "heuristic"})
+            details.append({"id": sid, "error": _to_text(e), "mode": "llm"})
 
     if judged <= 0:
         return CitationPrecisionResult(

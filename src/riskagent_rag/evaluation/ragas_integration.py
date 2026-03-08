@@ -91,7 +91,10 @@ def try_compute_ragas_metrics(
     ]
 
     # 准备 LLM 和 Embeddings
-    judge_llm = get_judge_llm()
+    try:
+        judge_llm = get_judge_llm()
+    except Exception as e:
+        return RagasResult(enabled=True, ok=False, metrics={}, error=str(e))
     embeddings = build_embeddings()
 
     # 执行评测

@@ -82,6 +82,17 @@
 - [x] 产出阶段评测报告 写入 .artifacts/reports 并记录已做与未做
   - `python -m riskagent_rag.evaluation.run --stage step4 --stage-notes "self rag"`
 
+### Week 12 已完成 服务化接口与契约 v1
+
+- [x] HTTP API v1 与 schema 固化 支持 ask chat health ready metrics
+- [x] request_id evidence_set claims tool_traces decision_log 全链路稳定输出
+- [x] API key 可选鉴权 支持最小生产接入
+
+### Week 13 已完成 可观测性与调试体验
+
+- [x] request_id run_id model_id prompt_version retriever_version 统一日志字段
+- [x] trace contract 固化 每次 run 可落盘节点耗时与关键中间产物
+
 我们先做一个能跑的最小 demo
 再一点点加功能
 目标很直接
@@ -92,7 +103,7 @@
 
 ## 当前技术栈
 
-- UI: Gradio
+- UI: 无 (CLI 优先)
 - Multi-agent orchestration: LangGraph
 - RAG framework: LangChain
 - Vector store: Milvus
@@ -100,10 +111,8 @@
 
 LLM strategy
 
-- Week 1 允许无 key 的 deterministic fallback 先验证 RAG 链路和 citations
-- Week 2 开始引入真实 LLM 优先用 OpenAI compatible server
-  - 商业 API 或开源模型推理服务都可以用
-  - 开源模型建议通过 vLLM 或 TGI 对外提供 OpenAI compatible endpoint
+- 强制依赖 LLM: 任一节点无法调用 LLM 直接报错
+- 固定使用 OpenRouter 的 OpenAI compatible 接口与模型
 
 ## 2026-01 1 个月交付目标
 
@@ -124,13 +133,13 @@ LLM strategy
 - 交付
   - [x] requirements.txt 与 Python 版本固化
   - [x] secrets 全部走环境变量
-  - [x] 最小 CLI 或 Gradio UI 启动
+  - [x] 最小 CLI 启动
   - [x] 最小 ingest -> retrieve -> answer 流程
   - [x] docs/INTERVIEW.md: 50 道硬核面试题清单, 用于边做项目边答题
 - 验收
   - [x] 1 条命令启动 demo
-    - [x] UI: `conda run -n LangChain python gradio_app.py`
-    - [x] CLI: `conda run -n LangChain python demo_cli.py --rebuild-index --question "what is FRTB"`
+    - [x] CLI: `conda run -n LangChain python -m riskagent_rag.cli index`
+    - [x] CLI: `conda run -n LangChain python -m riskagent_rag.cli ask --question "what is FRTB"`
   - [x] 返回 citations, 且可定位来源
   - [x] 至少 1 条 e2e smoke test 可通过
     - [x] `conda run -n LangChain python -m unittest tests.test_week1_rag_baseline`
@@ -217,9 +226,8 @@ LLM strategy
 
 - [x] CLI
   - [x] ingest(build_index)
-  - [x] ask(demo_cli.py)
+  - [x] ask(CLI)
   - [x] chat(多轮对话)
-- [x] 简单 Web UI 例如 Gradio
 
 **验收标准**:
 
@@ -240,12 +248,7 @@ LLM strategy
 我们更在意 contract evaluator regression 这些能让系统可控可回归的东西
 
 - 交付
-  - [x] 头等大事: 接入本地 LLM(Ollama)
-    - 默认开发路径走 Ollama, 实时看到效果
-    - 环境变量
-      - LLM_PROVIDER=ollama
-      - `OLLAMA_BASE_URL=http://localhost:11434`
-      - OLLAMA_MODEL=qwen3:8b
+  - [x] 头等大事: 接入 OpenAI compatible LLM (OpenRouter)
   - [x] 统一输入输出 contract(可执行 schema, v1)
     - 输入
       - request_id: string, uuid
@@ -377,6 +380,12 @@ LLM strategy
   - [x] 评测指标: `refusal_rate`
     - [x] 正样本拒答率应趋近 0%
     - [x] 负样本拒答率应趋近 100%
+- **验收**
+  - [x] 负样本集可稳定触发拒答且输出标准拒答文案
+  - [x] 正样本拒答率保持低位 负样本拒答率保持高位
+  - [ ] 增补 gate 阻断收益率与 gate 误杀率 指标并进入统一报告
+  - [ ] 增补 gate 对照评测 CLI
+    - [ ] `python -m riskagent_rag.evaluation.run --profile gate --with-gate --baseline-report <path>`
 
 ### Week 6: 引用精准度与幻觉检测 (Citation Precision)
 
@@ -389,6 +398,13 @@ LLM strategy
     - [x] 定义: supported_sentences / total_sentences (按句子粒度)
   - [x] 评测指标: `hallucination_rate_in_citations`
     - [x] 定义: 出现 unsupported_sentences 的回答占比
+- **验收**
+  - [x] citation judge 的 auto llm heuristic 三模式可切换
+  - [x] citation_precision 与 hallucination_rate_in_citations 可落盘可回归
+  - [ ] 增补 retrieval 本体指标 Recall@K MRR nDCG@K
+  - [ ] 增补检索诊断指标 Dense 命中率 Sparse 命中率 Hybrid 增益率 Rerank uplift
+  - [ ] 增补检索指标 CLI
+    - [ ] `python -m riskagent_rag.evaluation.run --profile retrieval --retrieval-k 5,10,20 --label retrieval_v1`
 
 ### Week 7: 金融领域一致性 (Domain Consistency)
 
@@ -399,6 +415,12 @@ LLM strategy
   - [x] 术语表一致性 (Glossary Check)
     - [x] 检测术语误用(基于禁用定义关键字)并计分
   - [x] 评测指标: `domain_consistency_score`
+- **验收**
+  - [x] numeric consistency 与 glossary consistency 可稳定产出并落盘
+  - [ ] 增补成本与时延指标 并与领域一致性联合观察
+  - [ ] 增补稳定性指标 success error timeout 与 failure_reason 分布
+  - [ ] 增补稳定性与成本评测 CLI
+    - [ ] `python -m riskagent_rag.evaluation.run --profile reliability --include-cost --include-latency --label reliability_v1`
 
 #### Phase 4: SOTA RAG Optimization
 
@@ -433,7 +455,7 @@ LLM strategy
   - [x] 仅用真实语料与真实 embeddings 与真实 reranker 跑通新增验收测试
     - [x] `python -m unittest tests.test_week8_retrieval_highlights_acceptance`
   - [x] 产出 step1 评测报告并可与 baseline 对比
-    - [x] `python -m riskagent_rag.evaluation.run --stage step1 --label step1 --enable-citation-judge --citation-judge-mode heuristic`
+    - [x] `python -m riskagent_rag.evaluation.run --stage step1 --label step1 --enable-citation-judge --citation-judge-mode llm`
 
 ### Week 9: 查询理解与智能路由
 
@@ -450,12 +472,12 @@ LLM strategy
     - [x] 方案: 基于意图规则选择策略 例如 compare 背景 procedure
   - [x] **阶段评测报告**
     - [x] 完成后运行并落盘到 .artifacts/reports
-      - [x] `python -m riskagent_rag.evaluation.run --stage step2 --label step2 --enable-citation-judge --citation-judge-mode heuristic`
+      - [x] `python -m riskagent_rag.evaluation.run --stage step2 --label step2 --enable-citation-judge --citation-judge-mode llm`
 - **验收**
   - [x] 仅用真实语料与真实 embeddings 跑通测试
     - [x] `python -m unittest tests.test_week9_query_routing_acceptance`
   - [x] 产出 step2 评测报告并可与 step1 报告对比
-    - [x] `python -m riskagent_rag.evaluation.run --stage step2 --label step2 --enable-citation-judge --citation-judge-mode heuristic`
+    - [x] `python -m riskagent_rag.evaluation.run --stage step2 --label step2 --enable-citation-judge --citation-judge-mode llm`
 
 ### Week 10: 高级索引策略
 
@@ -473,12 +495,12 @@ LLM strategy
     - [x] 目的: 缓解 query 与文档表述不一致 以 question to question 匹配
   - [x] **阶段评测报告**
     - [x] 完成后运行并落盘到 .artifacts/reports
-      - [x] `python -m riskagent_rag.evaluation.run --stage step3 --label step3 --enable-citation-judge --citation-judge-mode heuristic`
+      - [x] `python -m riskagent_rag.evaluation.run --stage step3 --label step3 --enable-citation-judge --citation-judge-mode llm`
 - **验收**
   - [x] 仅用真实语料与真实 embeddings 跑通测试
     - [x] `python -m unittest tests.test_week10_advanced_indexing_acceptance`
   - [x] 产出 step3 评测报告并可与 step2 报告对比
-    - [x] `python -m riskagent_rag.evaluation.run --stage step3 --label step3 --enable-citation-judge --citation-judge-mode heuristic`
+    - [x] `python -m riskagent_rag.evaluation.run --stage step3 --label step3 --enable-citation-judge --citation-judge-mode llm`
 
 ### Week 11: Self RAG 与动态决策
 
@@ -493,12 +515,12 @@ LLM strategy
     - [x] 方案: retrieve grade docs generate grade generation loop if needed
   - [x] **阶段评测报告**
     - [x] 完成后运行并落盘到 .artifacts/reports
-      - [x] `python -m riskagent_rag.evaluation.run --stage step4 --label step4 --enable-citation-judge --citation-judge-mode heuristic`
+      - [x] `python -m riskagent_rag.evaluation.run --stage step4 --label step4 --enable-citation-judge --citation-judge-mode llm`
 - **验收**
   - [x] 仅用真实语料与真实 embeddings 跑通测试
     - [x] `python -m unittest tests.test_week11_self_rag_acceptance`
   - [x] 产出 step4 评测报告并可与 step3 报告对比
-    - [x] `python -m riskagent_rag.evaluation.run --stage step4 --label step4 --enable-citation-judge --citation-judge-mode heuristic`
+    - [x] `python -m riskagent_rag.evaluation.run --stage step4 --label step4 --enable-citation-judge --citation-judge-mode llm`
 
 ---
 
@@ -527,6 +549,8 @@ LLM strategy
 
 ### Week 13: 可观测性与调试体验
 
+- 目标
+  - [x] 统一 trace 与日志契约 让失败定位和回放成本可控
 - 交付
   - [x] 统一日志字段
     - [x] request_id run_id model_id prompt_version retriever_version
@@ -534,6 +558,72 @@ LLM strategy
     - [x] 每次 run 落盘 trace.json 包含节点耗时与关键中间产物路径
 - 验收
   - [x] 任意一次失败都能从 trace 定位到 failure_reason 与责任节点
+
+### Week 14: 评测体系 2.0 指标补全与 CLI
+
+目标 把评测从回答质量扩展到检索质量 门禁收益 成本时延 稳定性 形成可量化可回归闭环
+
+- 交付
+  - [x] 新增 retrieval 本体指标
+    - [x] Recall@K MRR nDCG@K
+    - [x] Dense 命中率 Sparse 命中率 Hybrid 增益率 Rerank uplift
+  - [x] 新增 gate 价值指标
+    - [x] gate 阻断收益率
+    - [x] gate 误杀率
+    - [x] failure_reason 分布与漂移
+  - [x] 新增 reliability 与 cost 指标
+    - [x] e2e latency p50 p95 p99
+    - [x] node latency p95
+    - [x] token in out cache hit estimated usd
+    - [x] success_rate error_rate timeout_rate
+  - [x] 评测 CLI 扩展
+    - [x] `python -m riskagent_rag.evaluation.run --profile retrieval --label retrieval_v1`
+    - [x] `python -m riskagent_rag.evaluation.run --profile gate --with-gate --label gate_v1`
+    - [x] `python -m riskagent_rag.evaluation.run --profile reliability --include-cost --include-latency --label reliability_v1`
+    - [x] `python -m riskagent_rag.evaluation.run --compare-report <new> --baseline-report <old>`
+- 验收
+  - [x] 同一评测集可输出 retrieval gate reliability cost 四类指标
+  - [x] 报告中自动给出相对 baseline 的 diff 与 regression 标记
+  - [x] 三个 profile 命令可在本地一键跑通并落盘到 .artifacts/reports
+
+### Week 15: 回归门禁与阈值策略
+
+目标 把指标变成工程门禁 让每次变更都可自动判定是否可发布
+
+- 交付
+  - [x] 指标阈值配置
+    - [x] retrieval 最低阈值
+    - [x] gate 误杀上限与收益下限
+    - [x] latency 与成本预算上限
+  - [x] 回归决策
+    - [x] pass warning fail 三级判定
+    - [x] 退化项自动列表化并带建议动作
+  - [x] CLI 门禁命令
+    - [x] `python -m riskagent_rag.evaluation.run --profile all --enforce-thresholds --thresholds docs/eval_thresholds.yaml`
+- 验收
+  - [x] 任一关键指标退化时命令返回非零退出码
+  - [x] 报告自动生成 regression summary 便于 PR 评审
+
+### Week 16: 指标叙事与简历证据化
+
+目标 把技术实现转成面试可验证叙事 每条亮点都能回指指标与报告
+
+- 简历目标文件路径
+  - [ ] `/Users/zhengchuan/Documents/TECH/Repo/RESUME.md`
+- 交付
+  - [x] 输出指标字典
+    - [x] 指标定义 公式 数据来源 阈值 解释方式
+    - [x] 文档: docs/EVALUATION.md 指标含义
+  - [x] 输出实验矩阵
+    - [x] baseline ablation 最终版 三组对比
+    - [x] 文档: docs/EVALUATION.md 对比与提升实验方案
+  - [x] 形成简历素材
+    - [ ] 将关键指标增益写入 `/Users/zhengchuan/Documents/TECH/Repo/RESUME.md`
+    - [x] 每条简历描述绑定至少一个可追问证据点
+    - [x] 文档: docs/EVALUATION.md 历史实验数据小结
+- 验收
+  - [x] 简历素材可被报告与命令复现支撑
+  - [x] 面试追问到任意指标时可在 1 分钟内给出定义与证据路径
 
 ## 时间规划
 
@@ -553,8 +643,12 @@ LLM strategy
 | Week 10 | 已完成 | 高级索引策略 step3 |
 | Week 11 | 已完成 | Self RAG 与动态决策 |
 | Week 12 | 已完成 | HTTP API v1 + 契约 |
+| Week 13 | 已完成 | 可观测性与调试体验 |
+| Week 14 | 已完成 | 评测体系 2.0 指标补全 + CLI |
+| Week 15 | 已完成 | 回归门禁与阈值策略 |
+| Week 16 | 进行中 | 指标叙事与简历证据化 待写回 RESUME |
 
-**总计** 12 周 含 Phase 4
+**总计** 16 周 含 Phase 4 到 Phase 6
 
 ## 开发建议
 

@@ -1,0 +1,36 @@
+{
+  "fail_on_regression": true,
+  "default": {
+    "tolerance": 0.0
+  },
+  "metrics": {
+    "citations_coverage": {
+      "minimum": 0.8,
+      "direction": "higher_is_better"
+    },
+    "citation_precision": {
+      "minimum": 0.35,
+      "direction": "higher_is_better"
+    },
+    "domain_consistency_score": {
+      "minimum": 0.6,
+      "direction": "higher_is_better"
+    },
+    "retrieval_recall_at_5": {
+      "minimum": 0.6,
+      "direction": "higher_is_better"
+    },
+    "gate_false_kill_rate": {
+      "maximum": 0.2,
+      "direction": "lower_is_better"
+    },
+    "reliability_error_rate": {
+      "maximum": 0.2,
+      "direction": "lower_is_better"
+    },
+    "latency_p95_ms": {
+      "maximum": 3000.0,
+      "direction": "lower_is_better"
+    }
+  }
+}

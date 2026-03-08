@@ -8,17 +8,25 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
+import time
 from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+from riskagent_rag.evaluation.advanced_metrics import (
+    compute_gate_metrics,
+    compute_reliability_cost_metrics,
+    compute_retrieval_metrics,
+)
 from riskagent_rag.evaluation.citations import compute_citations_coverage, is_valid_citation
 from riskagent_rag.evaluation.citation_precision import try_compute_citation_precision
 from riskagent_rag.evaluation.dataset import load_dataset
 from riskagent_rag.evaluation.domain_consistency import try_compute_domain_consistency
 from riskagent_rag.evaluation.ragas_integration import try_compute_ragas_metrics
 from riskagent_rag.evaluation.reporting import compare_reports, find_latest_report, load_report, write_report
+from riskagent_rag.evaluation.thresholds import evaluate_threshold_gate, load_thresholds
 from riskagent_rag.indexing.indexer import incremental_index
 from riskagent_rag.orchestration.langgraph_runner import run_langgraph_agentic_chat
 from riskagent_rag.rag.pipeline import extract_citations
@@ -86,7 +94,115 @@ def _stage_plan(stage: str) -> dict[str, Any]:
     return {}
 
 
-def run_evaluation(*, corpus_dir: Path, dataset_path: Path, persist_dir: Path, enable_ragas: bool) -> dict[str, Any]:
+def _doc_eval_row(doc: Any) -> dict[str, Any]:
+    meta = getattr(doc, "metadata", {}) or {}
+    if not isinstance(meta, dict):
+        meta = {}
+    return {
+        "chunk_id": str(meta.get("chunk_id") or ""),
+        "source": str(meta.get("source") or ""),
+        "section_path": str(meta.get("section_path") or ""),
+        "dense_rank": meta.get("dense_rank"),
+        "sparse_rank": meta.get("sparse_rank"),
+        "rrf_score": meta.get("rrf_score"),
+        "coarse_score": meta.get("coarse_score"),
+        "rerank_score": meta.get("rerank_score"),
+    }
+
+
+def _load_node_latencies(debug: dict[str, Any]) -> dict[str, float]:
+    bundle_dir = str(debug.get("artifact_bundle_dir") or "").strip()
+    if not bundle_dir:
+        return {}
+    path = Path(bundle_dir) / "trace.json"
+    if not path.exists():
+        return {}
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    nodes = payload.get("nodes")
+    if not isinstance(nodes, list):
+        return {}
+    out: dict[str, float] = {}
+    for node in nodes:
+        if not isinstance(node, dict):
+            continue
+        name = str(node.get("name") or "").strip()
+        if not name:
+            continue
+        try:
+            latency_ms = float(node.get("latency_ms"))
+        except (TypeError, ValueError):
+            continue
+        prev = out.get(name)
+        out[name] = max(float(prev), latency_ms) if prev is not None else latency_ms
+    return out
+
+
+def _parse_retrieval_ks(text: str) -> list[int]:
+    values: list[int] = []
+    for part in str(text or "").split(","):
+        raw = part.strip()
+        if not raw:
+            continue
+        try:
+            v = int(raw)
+        except ValueError:
+            continue
+        if v > 0:
+            values.append(v)
+    if not values:
+        return [1, 3, 5]
+    return sorted(set(values))
+
+
+def _profile_flags(profile: str) -> dict[str, bool]:
+    p = str(profile or "all").lower().strip()
+    if p == "retrieval":
+        return {"retrieval": True, "gate": False, "reliability": False}
+    if p == "gate":
+        return {"retrieval": False, "gate": True, "reliability": False}
+    if p == "reliability":
+        return {"retrieval": False, "gate": False, "reliability": True}
+    return {"retrieval": True, "gate": True, "reliability": True}
+
+
+def _env_bool(name: str) -> bool:
+    return os.getenv(name, "").lower().strip() in {"true", "1", "yes"}
+
+
+def _result_payload(out: Any) -> dict[str, Any]:
+    return {
+        "enabled": out.enabled,
+        "ok": out.ok,
+        "metrics": out.metrics,
+        "error": out.error,
+    }
+
+
+def _merge_float_metrics(target: dict[str, Any], source: dict[str, Any], keys: list[str]) -> None:
+    for key in keys:
+        try:
+            target[key] = float(source.get(key, 0.0))
+        except (TypeError, ValueError):
+            pass
+
+
+def run_evaluation(
+    *,
+    corpus_dir: Path,
+    dataset_path: Path,
+    persist_dir: Path,
+    enable_ragas: bool,
+    enable_citation_judge: bool,
+    citation_judge_mode: str,
+    profile: str,
+    retrieval_ks: list[int],
+    include_cost: bool,
+    include_latency: bool,
+    with_gate: bool,
+) -> dict[str, Any]:
     os.environ.setdefault("EMBEDDINGS_PROVIDER", "hf")
 
     items = load_dataset(dataset_path)
@@ -98,7 +214,9 @@ def run_evaluation(*, corpus_dir: Path, dataset_path: Path, persist_dir: Path, e
     for item in items:
         qid = str(item.item_id)
         question = str(item.question)
+        t0 = time.perf_counter()
         out = run_langgraph_agentic_chat(question=question, retriever=retriever)
+        latency_ms = (time.perf_counter() - t0) * 1000.0
         answer = str(out.get("answer", ""))
         docs = out.get("docs", [])
         citations = out.get("citations")
@@ -109,6 +227,12 @@ def run_evaluation(*, corpus_dir: Path, dataset_path: Path, persist_dir: Path, e
         for d in docs[:4]:
             text = getattr(d, "page_content", "")
             contexts.append(str(text)[:500])
+        retrieved_docs = [_doc_eval_row(d) for d in docs]
+
+        debug = out.get("debug")
+        if not isinstance(debug, dict):
+            debug = {}
+        node_latencies = _load_node_latencies(debug)
 
         valid = [c for c in citations if isinstance(c, dict) and is_valid_citation(c)]
         samples.append(
@@ -124,6 +248,13 @@ def run_evaluation(*, corpus_dir: Path, dataset_path: Path, persist_dir: Path, e
                 "passed": bool(answer.strip()) and bool(valid),
                 "citations": citations,
                 "contexts": contexts,
+                "retrieved_docs": retrieved_docs,
+                "status": str(out.get("status") or ""),
+                "failure_reason": out.get("failure_reason"),
+                "latency_ms": latency_ms,
+                "node_latencies": node_latencies,
+                "decision_log": out.get("decision_log"),
+                "tool_traces": out.get("tool_traces"),
             }
         )
 
@@ -131,26 +262,15 @@ def run_evaluation(*, corpus_dir: Path, dataset_path: Path, persist_dir: Path, e
     ragas_result = None
     if enable_ragas:
         out = try_compute_ragas_metrics(samples=samples)
-        ragas_result = {
-            "enabled": out.enabled,
-            "ok": out.ok,
-            "metrics": out.metrics,
-            "error": out.error,
-        }
-    enable_citation_judge = os.getenv("EVAL_ENABLE_CITATION_JUDGE", "").lower().strip() in {
-        "true",
-        "1",
-        "yes",
-    }
-    citation_judge_mode = os.getenv("EVAL_CITATION_JUDGE_MODE", "auto").lower().strip() or "auto"
+        if not out.ok:
+            raise RuntimeError(f"RAGAS metrics failed: {out.error or 'unknown error'}")
+        ragas_result = _result_payload(out)
+    citation_judge_mode = "llm"
     citation_judge = None
     if enable_citation_judge:
         out = try_compute_citation_precision(samples=samples, mode=citation_judge_mode)
         citation_judge = {
-            "enabled": out.enabled,
-            "ok": out.ok,
-            "metrics": out.metrics,
-            "error": out.error,
+            **_result_payload(out),
             "details": out.details,
         }
 
@@ -179,6 +299,13 @@ def run_evaluation(*, corpus_dir: Path, dataset_path: Path, persist_dir: Path, e
             "milvus_port": os.getenv("MILVUS_PORT"),
             "retriever_mode": os.getenv("RISKAGENT_RETRIEVER_MODE", "step4"),
             "reranker_model": os.getenv("RISKAGENT_RERANKER_MODEL", ""),
+            "profile": str(profile or "all"),
+            "retrieval_ks": retrieval_ks,
+            "include_cost": bool(include_cost),
+            "include_latency": bool(include_latency),
+            "with_gate": bool(with_gate),
+            "enable_citation_judge": bool(enable_citation_judge),
+            "citation_judge_mode": citation_judge_mode,
         },
         "metrics": {
             "citations_total": cov.total,
@@ -193,16 +320,11 @@ def run_evaluation(*, corpus_dir: Path, dataset_path: Path, persist_dir: Path, e
     if citation_judge is not None:
         report["citation_judge"] = citation_judge
         if citation_judge.get("ok") and isinstance(citation_judge.get("metrics"), dict):
-            try:
-                report["metrics"]["citation_precision"] = float(citation_judge["metrics"].get("citation_precision", 0.0))
-            except (TypeError, ValueError):
-                pass
-            try:
-                report["metrics"]["hallucination_rate_in_citations"] = float(
-                    citation_judge["metrics"].get("hallucination_rate_in_citations", 0.0)
-                )
-            except (TypeError, ValueError):
-                pass
+            _merge_float_metrics(
+                report["metrics"],
+                citation_judge["metrics"],
+                ["citation_precision", "hallucination_rate_in_citations"],
+            )
 
     report["domain_consistency"] = domain_consistency
     if domain_consistency.get("ok") and isinstance(domain_consistency.get("metrics"), dict):
@@ -211,6 +333,32 @@ def run_evaluation(*, corpus_dir: Path, dataset_path: Path, persist_dir: Path, e
                 report["metrics"][k] = float(v)
             except (TypeError, ValueError):
                 pass
+
+    flags = _profile_flags(profile)
+    if bool(with_gate):
+        flags["gate"] = True
+    if flags["retrieval"]:
+        retrieval = compute_retrieval_metrics(samples=samples, ks=retrieval_ks)
+        report["retrieval_metrics"] = retrieval.metrics
+        report["metrics"].update(retrieval.metrics)
+    if flags["gate"]:
+        gate = compute_gate_metrics(samples=samples)
+        report["gate_metrics"] = {
+            "metrics": gate.metrics,
+            "distributions": gate.distributions,
+        }
+        report["metrics"].update(gate.metrics)
+    if flags["reliability"]:
+        rc = compute_reliability_cost_metrics(
+            samples=samples,
+            include_latency=bool(include_latency),
+            include_cost=bool(include_cost),
+        )
+        report["reliability_metrics"] = {
+            "metrics": rc.metrics,
+            "node_latency_p95": rc.node_latency_p95,
+        }
+        report["metrics"].update(rc.metrics)
 
     return report
 
@@ -222,12 +370,21 @@ def main() -> None:
     parser.add_argument("--persist-dir", default=".milvus")
     parser.add_argument("--artifacts-dir", default=".artifacts")
     parser.add_argument("--baseline", default="")
+    parser.add_argument("--baseline-report", default="")
+    parser.add_argument("--compare-report", default="")
     parser.add_argument("--label", default="")
     parser.add_argument("--stage", default="")
     parser.add_argument("--stage-notes", default="")
+    parser.add_argument("--profile", default="all", choices=["all", "retrieval", "gate", "reliability"])
+    parser.add_argument("--retrieval-k", default="1,3,5")
+    parser.add_argument("--include-cost", action="store_true")
+    parser.add_argument("--include-latency", action="store_true")
+    parser.add_argument("--with-gate", action="store_true")
+    parser.add_argument("--enforce-thresholds", action="store_true")
+    parser.add_argument("--thresholds", default="docs/eval_thresholds.yaml")
     parser.add_argument("--enable-ragas", action="store_true")
     parser.add_argument("--enable-citation-judge", action="store_true")
-    parser.add_argument("--citation-judge-mode", default=os.getenv("EVAL_CITATION_JUDGE_MODE", "auto"))
+    parser.add_argument("--citation-judge-mode", default="llm", choices=["llm"])
     parser.add_argument("--numeric-tolerance", type=float, default=float(os.getenv("EVAL_NUMERIC_TOLERANCE", "0.01")))
     parser.add_argument("--tolerance", type=float, default=float(os.getenv("EVAL_TOLERANCE", "0")))
     parser.add_argument("--minimum", type=float, default=float(os.getenv("EVAL_MINIMUM", "0.8")))
@@ -242,31 +399,35 @@ def main() -> None:
     dataset_path = Path(args.dataset)
     persist_dir = Path(args.persist_dir)
 
-    enable_ragas = bool(args.enable_ragas) or os.getenv("EVAL_ENABLE_RAGAS", "").lower().strip() in {
-        "true",
-        "1",
-        "yes",
-    }
-    if str(args.stage).lower().strip() == "step1" and not os.getenv("RISKAGENT_RETRIEVER_MODE"):
-        os.environ["RISKAGENT_RETRIEVER_MODE"] = "step1"
-    if str(args.stage).lower().strip() == "step2" and not os.getenv("RISKAGENT_RETRIEVER_MODE"):
-        os.environ["RISKAGENT_RETRIEVER_MODE"] = "step2"
-    if str(args.stage).lower().strip() == "step3" and not os.getenv("RISKAGENT_RETRIEVER_MODE"):
-        os.environ["RISKAGENT_RETRIEVER_MODE"] = "step3"
-    if str(args.stage).lower().strip() == "step4" and not os.getenv("RISKAGENT_RETRIEVER_MODE"):
-        os.environ["RISKAGENT_RETRIEVER_MODE"] = "step4"
-    if str(args.stage).lower().strip() in {"step1", "step2", "step3", "step4"} and not os.getenv("RISKAGENT_RERANKER_MODEL"):
+    enable_ragas = bool(args.enable_ragas) or _env_bool("EVAL_ENABLE_RAGAS")
+    stage = str(args.stage).lower().strip()
+    allowed_stages = {"step1", "step2", "step3", "step4"}
+    if stage in allowed_stages and not os.getenv("RISKAGENT_RETRIEVER_MODE"):
+        os.environ["RISKAGENT_RETRIEVER_MODE"] = stage
+    if stage in allowed_stages and not os.getenv("RISKAGENT_RERANKER_MODEL"):
         os.environ["RISKAGENT_RERANKER_MODEL"] = "cross-encoder/ms-marco-MiniLM-L-6-v2"
     if bool(args.enable_citation_judge):
         os.environ["EVAL_ENABLE_CITATION_JUDGE"] = "true"
-        os.environ["EVAL_CITATION_JUDGE_MODE"] = str(args.citation_judge_mode).lower().strip() or "auto"
+        os.environ["EVAL_CITATION_JUDGE_MODE"] = "llm"
     os.environ["EVAL_NUMERIC_TOLERANCE"] = str(float(args.numeric_tolerance))
+    enable_citation_judge = bool(args.enable_citation_judge) or _env_bool("EVAL_ENABLE_CITATION_JUDGE")
+    citation_judge_mode = "llm"
+    retrieval_ks = _parse_retrieval_ks(str(args.retrieval_k))
+    include_latency = bool(args.include_latency) or str(args.profile).strip().lower() == "reliability"
+    include_cost = bool(args.include_cost) or str(args.profile).strip().lower() == "reliability"
 
     report = run_evaluation(
         corpus_dir=corpus_dir,
         dataset_path=dataset_path,
         persist_dir=persist_dir,
         enable_ragas=enable_ragas,
+        enable_citation_judge=enable_citation_judge,
+        citation_judge_mode=citation_judge_mode,
+        profile=str(args.profile),
+        retrieval_ks=retrieval_ks,
+        include_cost=include_cost,
+        include_latency=include_latency,
+        with_gate=bool(args.with_gate),
     )
     if args.stage or args.stage_notes:
         report["stage"] = {
@@ -274,7 +435,10 @@ def main() -> None:
             "notes": str(args.stage_notes).strip(),
         }
 
-    baseline_path = args.baseline or find_latest_report(artifacts_dir=args.artifacts_dir)
+    baseline_path = args.compare_report or args.baseline_report or args.baseline or find_latest_report(
+        artifacts_dir=args.artifacts_dir
+    )
+    diff: dict[str, Any] | None = None
     if baseline_path:
         baseline_report = load_report(baseline_path)
         diff = compare_reports(
@@ -289,11 +453,24 @@ def main() -> None:
             "diff": diff,
         }
 
+    if bool(args.enforce_thresholds):
+        cfg = load_thresholds(str(args.thresholds))
+        gate = evaluate_threshold_gate(
+            report=report,
+            baseline_diff=diff,
+            config=cfg,
+        )
+        report["threshold_gate"] = gate
+
     label = str(args.label).strip()
     if not label and args.stage:
         label = str(args.stage).strip()
     out_path = write_report(report, artifacts_dir=args.artifacts_dir, label=label)
     print(out_path)
+    if bool(args.enforce_thresholds):
+        verdict = ((report.get("threshold_gate") or {}).get("verdict") or "pass").strip().lower()
+        if verdict == "fail":
+            raise SystemExit(2)
 
 
 if __name__ == "__main__":

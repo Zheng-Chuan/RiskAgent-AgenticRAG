@@ -169,7 +169,7 @@ trace.json 包含
 - nodes 每个 LangGraph 节点的耗时 输入摘要 输出摘要
 - retrieve_and_critique 节点会记录 top8 docs 的引用信息和原文片段 snippet
 
-详细字段见 docs/TRACE
+详细字段见 [TRACE.md](./TRACE.md)
 
 ## Evaluation Report
 

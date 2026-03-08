@@ -53,7 +53,7 @@ class RiskAgentSystem:
         if not (persist_dir.exists() and (persist_dir / MANIFEST_FILENAME).exists()):
             return {
                 "status": "error",
-                "message": "Index not found. Run: python -m riskagent_rag.cli.index --corpus-dir corpus --persist-dir .milvus",
+                "message": "Index not found. Run: python -m riskagent_rag.cli index",
             }
 
         retriever = self._ensure_resources()

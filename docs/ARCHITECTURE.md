@@ -6,14 +6,13 @@
 - 用 RAG 基于语料回答
 - answer 必须带 citations 方便回溯到原文
 - 编排层用 LangGraph
-- LLM provider 可插拔
+- LLM 统一走 OpenAI compatible (OpenRouter)
 
 ## 快速架构图
 
 ```mermaid
 flowchart TB
-  UI[Gradio UI] --> APP[RiskAgentSystem]
-  API[FastAPI] --> APP
+  API[FastAPI] --> APP[RiskAgentSystem]
   CLI[CLI] --> APP
   APP --> LG[LangGraph workflow]
   LG --> RET[Retriever]
@@ -26,16 +25,16 @@ flowchart TB
 ```
 
 读图要点
-1 UI API CLI 共享同一个业务门面 RiskAgentSystem
+1 API CLI 共享同一个业务门面 RiskAgentSystem
 2 LangGraph 是唯一主流程
 3 每次请求都会落盘 artifacts bundle 目录 里面有 trace request response
 
-## 开源大模型接入
+## 大模型接入
 
-原则 不绑定单一厂商 统一走 OpenAI compatible 接口
+统一使用 OpenRouter 的 OpenAI compatible 接口
 
-- 商业 API 配 `LLM_API_KEY` `LLM_BASE_URL` `LLM_MODEL`
-- 开源模型 用 vLLM TGI Ollama 起一个 OpenAI compatible server 再配 `LLM_BASE_URL`
+- 只需配置 `OPENAI_API_KEY` 或 `LLM_API_KEY`
+- 可选配置 `OPENROUTER_SITE_URL` `OPENROUTER_APP_NAME`
 
 未配置或无法连接 LLM 时会直接报错
 
@@ -154,7 +153,6 @@ graph TD
 1. 在 GitHub 上直接查看 (GitHub 原生支持 Mermaid)
 2. 使用 Mermaid 在线编辑器: https://mermaid.live/
 3. 在支持 Mermaid 的 Markdown 编辑器中查看 (如 Typora, VS Code with Mermaid extension)
-4. 在 Gradio UI 的 Inspector → Graph Tab 中查看
 
 ## 质量保障与开发方法论 (Quality Assurance & Methodology)
 

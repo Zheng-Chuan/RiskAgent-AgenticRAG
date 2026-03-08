@@ -115,8 +115,7 @@ def _ready_details() -> tuple[bool, dict[str, Any]]:
     manifest_ok = bool(persist_dir.exists() and (persist_dir / MANIFEST_FILENAME).exists())
     details["index_manifest"] = {"ok": manifest_ok, "persist_dir": str(persist_dir)}
 
-    llm_key = os.getenv("OPENAI_API_KEY") or os.getenv("LLM_API_KEY")
-    details["llm_key"] = {"ok": bool(llm_key)}
+    details["llm_key"] = {"ok": bool(settings.llm.api_key)}
 
     emb_ok = False
     try:

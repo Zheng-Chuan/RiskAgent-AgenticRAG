@@ -1,20 +1,7 @@
-import os
-import sys
 import unittest
-import importlib
-from pathlib import Path
-from unittest.mock import MagicMock
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
-# 中文注释: 确保 src 在 sys.path 中, 便于导入项目模块
-project_root = Path(__file__).parent.parent
-src_path = project_root / "src"
-if str(src_path) not in sys.path:
-    sys.path.insert(0, str(src_path))
-
-run_langgraph_agentic_chat = importlib.import_module(
-    "riskagent_agenticrag.orchestration.langgraph_runner"
-).run_langgraph_agentic_chat
+from riskagent_agenticrag.orchestration.langgraph_runner import run_langgraph_agentic_chat
 
 
 class ContractLangGraphTest(unittest.TestCase):

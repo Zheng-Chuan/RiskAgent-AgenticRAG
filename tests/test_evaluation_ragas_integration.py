@@ -3,13 +3,11 @@ from __future__ import annotations
 import importlib
 import unittest
 
-from tests.conftest import ensure_src_on_path
 
-ensure_src_on_path()
 
 try:
     try_compute_ragas_metrics = importlib.import_module(
-        "riskagent_agenticrag.evaluation.ragas_integration"
+        "riskagent_agenticrag.evaluation.ragas_metrics"
     ).try_compute_ragas_metrics
     _IMPORT_OK = True
 except (ImportError, TypeError) as _exc:

@@ -1,2 +1,2 @@
-from __future__ import annotations
+"""索引管理 -- 增量索引 / Milvus 存储."""
 

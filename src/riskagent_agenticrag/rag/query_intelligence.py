@@ -5,35 +5,9 @@ import re
 from dataclasses import dataclass
 from typing import Any
 
-from langchain_core.documents import Document  # type: ignore[import-not-found]
+from langchain_core.documents import Document
 
-
-_TOKEN_RE = re.compile(r"[A-Za-z0-9]+|[\u4e00-\u9fff]+")
-
-
-def _tokens(text: str) -> list[str]:
-    return [m.group(0).lower() for m in _TOKEN_RE.finditer(str(text or ""))]
-
-
-def _doc_key(d: Document) -> str:
-    meta = d.metadata or {}
-    chunk_id = str(meta.get("chunk_id", "")).strip()
-    source = str(meta.get("source", "")).strip()
-    if chunk_id and source:
-        return f"{source}::{chunk_id}"
-    if chunk_id:
-        return f"chunk::{chunk_id}"
-    if source:
-        return f"source::{source}::{hash(d.page_content or '')}"
-    return f"raw::{hash(d.page_content or '')}"
-
-
-def _rrf_scores(*, ranked_lists: list[list[str]], k: int) -> dict[str, float]:
-    scores: dict[str, float] = {}
-    for ranked in ranked_lists:
-        for rank, key in enumerate(ranked):
-            scores[key] = scores.get(key, 0.0) + 1.0 / float(k + rank + 1)
-    return scores
+from riskagent_agenticrag.rag.utils import doc_key, rrf_scores, tokenize
 
 
 def _merge_lists_unique(xs: list[str]) -> list[str]:
@@ -89,7 +63,7 @@ class QueryIntelConfig:
 
 
 def _keywordize(q: str) -> str:
-    toks = _tokens(q)
+    toks = tokenize(q)
     kept: list[str] = []
     for t in toks:
         if t in _STOPWORDS:
@@ -100,7 +74,7 @@ def _keywordize(q: str) -> str:
 
 
 def _expand_abbrev(q: str) -> list[str]:
-    toks = _tokens(q)
+    toks = tokenize(q)
     found: list[str] = []
     for t in toks:
         if t in _ABBREV_EXPANSIONS:
@@ -194,15 +168,15 @@ class QueryIntelligentRetriever:
         for v in variants:
             docs = list(self._base.invoke(v))[: max(1, int(self._config.per_query_k))]
             per_variant_docs.append(docs)
-            ranked_lists.append([_doc_key(d) for d in docs])
+            ranked_lists.append([doc_key(d) for d in docs])
 
-        fused = _rrf_scores(ranked_lists=ranked_lists, k=max(1, int(self._config.rrf_k)))
+        fused = rrf_scores(ranked_lists=ranked_lists, k=max(1, int(self._config.rrf_k)))
         merged: dict[str, Document] = {}
         variant_hits: dict[str, list[str]] = {}
 
         for v, docs in zip(variants, per_variant_docs):
             for d in docs:
-                key = _doc_key(d)
+                key = doc_key(d)
                 if key not in merged:
                     merged[key] = d
                 variant_hits.setdefault(key, [])

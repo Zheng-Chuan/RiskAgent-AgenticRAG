@@ -3,9 +3,7 @@ from __future__ import annotations
 import importlib
 import unittest
 
-from tests.conftest import ensure_src_on_path
 
-ensure_src_on_path()
 
 metrics_mod = importlib.import_module("riskagent_agenticrag.evaluation.advanced_metrics")
 compute_retrieval_metrics = metrics_mod.compute_retrieval_metrics

@@ -6,9 +6,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tests.conftest import ensure_src_on_path
 
-ensure_src_on_path()
 
 mod = importlib.import_module("riskagent_agenticrag.evaluation.thresholds")
 evaluate_threshold_gate = mod.evaluate_threshold_gate

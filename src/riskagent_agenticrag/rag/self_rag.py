@@ -1,17 +1,13 @@
+"""Self-RAG -- 文档与生成质量评分."""
+
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from typing import Any
 
-from langchain_core.documents import Document  # type: ignore[import-not-found]
+from langchain_core.documents import Document
 
-
-_TOKEN_RE = re.compile(r"[A-Za-z0-9]+|[\u4e00-\u9fff]+")
-
-
-def _tokens(text: str) -> set[str]:
-    return {m.group(0).lower() for m in _TOKEN_RE.finditer(str(text or ""))}
+from riskagent_agenticrag.rag.utils import token_set
 
 
 def should_require_numeric_backing(*, question: str, should_call_tool: bool) -> bool:
@@ -43,7 +39,7 @@ class SelfRagRetrievalGrade:
 
 
 def grade_docs(*, question: str, docs: list[Document]) -> SelfRagRetrievalGrade:
-    q_toks = _tokens(question)
+    q_toks = token_set(question)
     if not docs:
         return SelfRagRetrievalGrade(
             sufficient=False,
@@ -58,7 +54,7 @@ def grade_docs(*, question: str, docs: list[Document]) -> SelfRagRetrievalGrade:
     for i, d in enumerate(docs):
         meta = d.metadata or {}
         text = str(meta.get("expanded_text") or d.page_content or "")
-        dt = _tokens(text)
+        dt = token_set(text)
         overlap = len(q_toks & dt) if q_toks else 0
         denom = max(8, len(q_toks)) if q_toks else 8
         isrel = float(overlap) / float(denom)

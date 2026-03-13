@@ -6,8 +6,6 @@ from pathlib import Path
 
 from langchain_core.documents import Document
 
-from tests.conftest import ensure_src_on_path
-
 
 def _build_simple_pdf_bytes(text: str) -> bytes:
     def obj(n: int, body: str) -> bytes:
@@ -50,10 +48,6 @@ def _build_simple_pdf_bytes(text: str) -> bytes:
 
 
 class Week2PdfAndChunkingTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        ensure_src_on_path()
-
     def test_pdf_parsing_supported(self) -> None:
         from riskagent_agenticrag.rag.source_loader import load_sources
 

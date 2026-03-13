@@ -1,5 +1,4 @@
-# 中文注释: validator gates 实现, 确定性规则校验
-# 用途: 在 LLM 输出后进行结构化校验, fail fast, 避免下游错误
+"""验证门禁 -- evidence / numeric / refusal 确定性规则校验, fail fast."""
 
 import re
 from typing import Any, Optional

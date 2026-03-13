@@ -1,11 +1,1 @@
-"""Evaluation package.
-
-中文注释 这里放评测相关的确定性逻辑
-"""
-
-from __future__ import annotations
-
-__all__ = [
-    "citations",
-    "reporting",
-]
+"""评测子系统 -- RAGAS / citation / domain consistency / threshold gate."""

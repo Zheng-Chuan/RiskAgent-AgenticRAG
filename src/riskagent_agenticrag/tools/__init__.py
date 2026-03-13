@@ -1,10 +1,1 @@
-"""Tools package.
-
-中文注释: 这里放本地工具实现, 用于 DataAgent.
-"""
-
-from __future__ import annotations
-
-__all__ = [
-    "mock_risk_tool",
-]
+"""工具集 -- DataAgent 可调用的本地工具."""

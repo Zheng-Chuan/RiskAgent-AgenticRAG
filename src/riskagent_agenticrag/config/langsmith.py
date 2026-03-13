@@ -1,44 +1,22 @@
-# 中文注释: LangSmith 配置模块
-# 用途: 配置 LangSmith 追踪功能, 实时可视化 LangGraph 执行过程
+"""LangSmith 追踪配置 -- 可视化 LangGraph 执行过程."""
+
+from __future__ import annotations
 
 import os
-from typing import Optional
 
 
 def setup_langsmith(
     project_name: str = "RiskAgent-RAG",
-    enabled: Optional[bool] = None,
+    enabled: bool | None = None,
 ) -> bool:
-    """
-    配置 LangSmith 追踪.
-    
-    参数:
-        project_name: LangSmith 项目名称
-        enabled: 是否启用, None 则根据环境变量决定
-    
-    返回:
-        是否成功启用 LangSmith
-    
-    环境变量:
-        - LANGCHAIN_TRACING_V2=true: 启用追踪
-        - LANGCHAIN_API_KEY: LangSmith API key
-        - LANGCHAIN_PROJECT: 项目名称 (可选)
-        - LANGCHAIN_ENDPOINT: API endpoint (可选, 默认 https://api.smith.langchain.com)
-    
-    使用方式:
-        1. 在 https://smith.langchain.com/ 注册账号
-        2. 获取 API key
-        3. 设置环境变量:
-           export LANGCHAIN_TRACING_V2=true
-           export LANGCHAIN_API_KEY=your-api-key
-        4. 运行程序, 在 LangSmith 平台查看追踪
-    
-    功能:
-        - 实时追踪每个 node 的执行
-        - 查看 state 变化
-        - 分析性能瓶颈
-        - 调试 conditional edges
-        - 查看完整的执行历史
+    """配置并启用 LangSmith 追踪.
+
+    Args:
+        project_name: LangSmith 项目名称.
+        enabled: 是否启用; None 时根据 LANGCHAIN_TRACING_V2 环境变量决定.
+
+    Returns:
+        是否成功启用.
     """
     if enabled is None:
         enabled = os.getenv("LANGCHAIN_TRACING_V2", "").lower() in ("true", "1", "yes")
@@ -69,12 +47,7 @@ def setup_langsmith(
 
 
 def get_langsmith_status() -> dict[str, str]:
-    """
-    获取 LangSmith 配置状态.
-    
-    返回:
-        配置状态字典
-    """
+    """返回当前 LangSmith 配置状态字典."""
     enabled = os.getenv("LANGCHAIN_TRACING_V2", "").lower() in ("true", "1", "yes")
     api_key = os.getenv("LANGCHAIN_API_KEY", "")
     project = os.getenv("LANGCHAIN_PROJECT", "")

@@ -3,14 +3,8 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from tests.conftest import ensure_src_on_path
-
 
 class FailureTaxonomyCoverageTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        ensure_src_on_path()
-
     def test_failure_categories_have_use_cases(self) -> None:
         from riskagent_agenticrag.agents.data_agent import run_data_agent
         from riskagent_agenticrag.contracts.structured import StructuredRequest, try_parse_structured_response

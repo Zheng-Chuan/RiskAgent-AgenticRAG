@@ -332,6 +332,38 @@ def compute_all_ragas_metrics(
     )
 
 
+# ---------------------------------------------------------------------------
+# 兼容旧版 ragas_integration 接口 (已合并)
+# ---------------------------------------------------------------------------
+
+@dataclass(frozen=True)
+class RagasResult:
+    """旧版 RAGAS 结果容器, 兼容 ragas_integration.try_compute_ragas_metrics."""
+    enabled: bool
+    ok: bool
+    metrics: dict[str, float]
+    error: Optional[str] = None
+
+
+def try_compute_ragas_metrics(
+    *,
+    samples: list[dict[str, Any]],
+    include_reference_based: bool = True,
+) -> RagasResult:
+    """旧版兼容入口, 内部委托给 compute_all_ragas_metrics."""
+    result = compute_all_ragas_metrics(
+        samples=samples,
+        include_reference_based=include_reference_based,
+        include_context_precision=include_reference_based,
+    )
+    return RagasResult(
+        enabled=result.enabled,
+        ok=result.ok,
+        metrics=result.metrics,
+        error=result.error,
+    )
+
+
 def get_all_metrics_description() -> dict[str, dict[str, str]]:
     """获取所有指标的详细说明."""
     return {

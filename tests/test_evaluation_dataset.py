@@ -6,9 +6,7 @@ import unittest
 import importlib
 from pathlib import Path
 
-from tests.conftest import ensure_src_on_path
 
-ensure_src_on_path()
 
 load_dataset = importlib.import_module("riskagent_agenticrag.evaluation.dataset").load_dataset
 

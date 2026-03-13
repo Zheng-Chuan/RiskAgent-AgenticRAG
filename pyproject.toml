@@ -35,5 +35,21 @@ dependencies = [
 [tool.setuptools.packages.find]
 where = ["src"]
 
+[tool.pytest.ini_options]
+filterwarnings = [
+    "error",
+    # LangChain 弃用 (pydantic_v1 / class-validator / HuggingFaceEmbeddings)
+    "ignore::langchain_core._api.deprecation.LangChainDeprecationWarning",
+    "ignore:.*pydantic_v1.*",
+    "ignore:.*class-validator.*",
+    # pkg_resources 弃用 (milvus_lite / pymilvus)
+    "ignore:.*pkg_resources is deprecated.*:UserWarning",
+    "ignore:.*pkg_resources.*:DeprecationWarning",
+    # sentence_transformers 版本不匹配
+    "ignore:.*created with version.*:UserWarning",
+    # cryptography ARC4 弃用 (pypdf 内部)
+    "ignore:.*ARC4 has been moved.*:cryptography.utils.CryptographyDeprecationWarning",
+]
+
 [tool.pyright]
 extraPaths = ["src"]

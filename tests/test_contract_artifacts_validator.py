@@ -1,20 +1,11 @@
-# 中文注释: artifacts 和 validator 验收测试
-# 用途: 验证 artifacts 落盘和 validator gate 功能
+"""artifacts 和 validator 验收测试 -- 验证落盘与 gate 功能."""
 
 import os
-import sys
 import tempfile
 import unittest
-from pathlib import Path
 
-# 中文注释: 确保 src 在 sys.path 中, 便于导入项目模块
-project_root = Path(__file__).parent.parent
-src_path = project_root / "src"
-if str(src_path) not in sys.path:
-    sys.path.insert(0, str(src_path))
-
-from riskagent_agenticrag.artifacts.storage import save_artifact, load_artifact, list_artifacts  # type: ignore[import-not-found]
-from riskagent_agenticrag.validators.gates import (  # type: ignore[import-not-found]
+from riskagent_agenticrag.artifacts.storage import save_artifact, load_artifact, list_artifacts
+from riskagent_agenticrag.validators.gates import (
     validate_response,
     evidence_gate,
     numeric_consistency_gate,

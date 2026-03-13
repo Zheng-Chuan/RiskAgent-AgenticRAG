@@ -3,9 +3,7 @@ from __future__ import annotations
 import importlib
 import unittest
 
-from tests.conftest import ensure_src_on_path
 
-ensure_src_on_path()
 
 citations_mod = importlib.import_module("riskagent_agenticrag.evaluation.citations")
 compute_citations_coverage = citations_mod.compute_citations_coverage

@@ -1,20 +1,15 @@
+"""高级索引检索器 -- Summary/HyDE BM25 加权 + Parent 展开."""
+
 from __future__ import annotations
 
-import re
 from dataclasses import dataclass
 from typing import Any
 
-from langchain_core.documents import Document  # type: ignore[import-not-found]
-from rank_bm25 import BM25Okapi  # type: ignore[import-not-found]
+from langchain_core.documents import Document
+from rank_bm25 import BM25Okapi
 
 from riskagent_agenticrag.rag.advanced_index import load_hyde_corpus, load_summary_corpus, parent_corpus_by_id
-
-
-_TOKEN_RE = re.compile(r"[A-Za-z0-9]+|[\u4e00-\u9fff]+")
-
-
-def _tokenize(text: str) -> list[str]:
-    return [m.group(0).lower() for m in _TOKEN_RE.finditer(str(text or ""))]
+from riskagent_agenticrag.rag.utils import tokenize
 
 
 def _normalize(scores: list[float], idxs: list[int]) -> dict[int, float]:
@@ -66,18 +61,18 @@ class AdvancedIndexRetriever:
         self._summary_docs = summary_docs
         self._summary_bm25 = None
         if summary_docs:
-            self._summary_bm25 = BM25Okapi([_tokenize(d.page_content or "") for d in summary_docs])
+            self._summary_bm25 = BM25Okapi([tokenize(d.page_content or "") for d in summary_docs])
 
         hyde_docs = load_hyde_corpus(persist_dir=persist_dir)
         self._hyde_docs = hyde_docs
         self._hyde_bm25 = None
         if hyde_docs:
-            self._hyde_bm25 = BM25Okapi([_tokenize(d.page_content or "") for d in hyde_docs])
+            self._hyde_bm25 = BM25Okapi([tokenize(d.page_content or "") for d in hyde_docs])
 
     def _parent_score_map(self, *, bm25: BM25Okapi | None, docs: list[Document], query: str, k: int) -> dict[str, float]:
         if bm25 is None or not docs:
             return {}
-        toks = _tokenize(query)
+        toks = tokenize(query)
         if not toks:
             return {}
         scores = bm25.get_scores(toks)

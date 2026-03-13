@@ -1,2 +1,2 @@
-from __future__ import annotations
+"""CLI 入口 -- python -m riskagent_agenticrag.cli."""
 

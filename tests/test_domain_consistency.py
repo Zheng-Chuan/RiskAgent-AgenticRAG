@@ -2,13 +2,8 @@ from __future__ import annotations
 
 import unittest
 
-from tests.conftest import ensure_src_on_path
-
 
 class Week7DomainConsistencyQualityTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        ensure_src_on_path()
 
     def test_numeric_consistency_supported(self) -> None:
         from riskagent_agenticrag.evaluation.domain_consistency import try_compute_domain_consistency

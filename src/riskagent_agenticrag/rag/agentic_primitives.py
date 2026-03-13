@@ -13,53 +13,21 @@ import json
 import re
 from typing import Any, Optional
 
-from langchain_core.documents import Document  # type: ignore[import-not-found]
+from langchain_core.documents import Document
 
 from riskagent_agenticrag.llm.generate import call_llm_json, call_llm_text, generate_answer
+from riskagent_agenticrag.rag.utils import tokenize as _raw_tokenize
+
+_STOP_WORDS = frozenset({
+    "the", "a", "an", "and", "or", "to", "of", "in", "on", "for", "with",
+    "is", "are", "was", "were", "what", "why", "how", "when", "where", "who",
+    "explain", "define", "give", "list",
+})
 
 
 def _tokenize(text: str) -> list[str]:
-    tokens: list[str] = []
-    current: list[str] = []
-    for ch in (text or "").lower():
-        if ch.isalnum():
-            current.append(ch)
-        else:
-            if current:
-                tokens.append("".join(current))
-                current = []
-    if current:
-        tokens.append("".join(current))
-
-    stop = {
-        "the",
-        "a",
-        "an",
-        "and",
-        "or",
-        "to",
-        "of",
-        "in",
-        "on",
-        "for",
-        "with",
-        "is",
-        "are",
-        "was",
-        "were",
-        "what",
-        "why",
-        "how",
-        "when",
-        "where",
-        "who",
-        "explain",
-        "define",
-        "give",
-        "list",
-    }
-    filtered = [t for t in tokens if len(t) >= 3 and t not in stop]
-    return filtered
+    """分词并过滤停用词, 用于 query-doc token 重叠计算."""
+    return [t for t in _raw_tokenize(text) if len(t) >= 3 and t not in _STOP_WORDS]
 
 
 def heuristic_retrieval_sufficient(question: str, docs: list[Document]) -> tuple[bool, float]:

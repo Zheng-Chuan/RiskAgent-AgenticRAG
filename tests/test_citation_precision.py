@@ -3,14 +3,8 @@ from __future__ import annotations
 import os
 import unittest
 
-from tests.conftest import ensure_src_on_path
-
 
 class Week6CitationPrecisionQualityTest(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls) -> None:
-        ensure_src_on_path()
-
     def test_heuristic_citation_precision(self) -> None:
         from riskagent_agenticrag.evaluation.citation_precision import try_compute_citation_precision
 

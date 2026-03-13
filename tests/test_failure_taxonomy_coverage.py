@@ -12,9 +12,9 @@ class FailureTaxonomyCoverageTest(unittest.TestCase):
         ensure_src_on_path()
 
     def test_failure_categories_have_use_cases(self) -> None:
-        from riskagent_rag.agents.data_agent import run_data_agent
-        from riskagent_rag.contracts.structured import StructuredRequest, try_parse_structured_response
-        from riskagent_rag.validators.gates import evidence_gate, numeric_consistency_gate, refusal_gate
+        from riskagent_agenticrag.agents.data_agent import run_data_agent
+        from riskagent_agenticrag.contracts.structured import StructuredRequest, try_parse_structured_response
+        from riskagent_agenticrag.validators.gates import evidence_gate, numeric_consistency_gate, refusal_gate
 
         # evidence_missing
         f = evidence_gate(claims=[{"claim_id": "c1", "statement": "x", "evidence_ids": []}], evidence_set=[{"evidence_id": "ev_0", "chunk_id": "c"}])
@@ -41,13 +41,23 @@ class FailureTaxonomyCoverageTest(unittest.TestCase):
         )
         self.assertEqual(f["category"], "evidence_not_supporting")
 
-        # numeric_inconsistent
+        # numeric_calculated_mismatch (计算型数字与工具输出不匹配)
+        f = numeric_consistency_gate(
+            report="Delta equals 900 calculated from tool.",
+            claims=[{"statement": "Delta equals 900"}],
+            tool_traces=[{"tool_name": "t", "tool_output": {"delta": 500}}],
+            evidence_set=[],
+        )
+        self.assertEqual(f["category"], "numeric_calculated_mismatch")
+
+        # numeric_stated_without_evidence (纯检索链路无 evidence)
         f = numeric_consistency_gate(
             report="Delta is 1000.",
             claims=[{"statement": "Delta is 1000"}],
-            tool_traces=[{"tool_name": "t", "tool_output": {"delta": 900}}],
+            tool_traces=[],
+            evidence_set=[],
         )
-        self.assertEqual(f["category"], "numeric_inconsistent")
+        self.assertEqual(f["category"], "numeric_stated_without_evidence")
 
         # refusal_incomplete
         f = refusal_gate(docs=[], evidence_set=[], report="too short")
@@ -67,7 +77,7 @@ class FailureTaxonomyCoverageTest(unittest.TestCase):
 
         # tool_error
         req = StructuredRequest(request_id="r1", query="q", as_of="2026-01-01", desk="D1", abs_delta_limit=1.0)
-        with patch("riskagent_rag.agents.data_agent.monitor_desk_exposure", side_effect=RuntimeError("boom")):
+        with patch("riskagent_agenticrag.agents.data_agent.monitor_desk_exposure", side_effect=RuntimeError("boom")):
             _out, _trace, failure = run_data_agent(req)
         self.assertIsNotNone(failure)
         self.assertEqual(failure.category, "tool_error")

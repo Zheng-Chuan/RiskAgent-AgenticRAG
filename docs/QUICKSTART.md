@@ -77,7 +77,7 @@ docker compose -f deploy/dev/docker-compose.yml down
 - 先用 CLI 做增量索引
 
 ```bash
-conda run -n LangChain python -m riskagent_rag.cli index --corpus-dir corpus --persist-dir .milvus
+conda run -n LangChain python -m riskagent_agenticrag.cli index --corpus-dir corpus --persist-dir .milvus
 ```
 
 - 再提问 比如 what is FRTB
@@ -88,7 +88,7 @@ conda run -n LangChain python -m riskagent_rag.cli index --corpus-dir corpus --p
 - CLI demo 输出会写到 logs/demo_result.json
 
 ```bash
-conda run -n LangChain python -m riskagent_rag.cli ask --question "what is FRTB" --out logs/demo_result.json
+conda run -n LangChain python -m riskagent_agenticrag.cli ask --question "what is FRTB" --out logs/demo_result.json
 ```
 
 - e2e smoke test
@@ -102,13 +102,13 @@ conda run -n LangChain python -m unittest tests.test_index_incremental_acceptanc
 评测会跑数据集并落盘报告到 .artifacts/reports
 
 ```bash
-conda run -n LangChain python -m riskagent_rag.evaluation.run --stage step4 --label step4
+conda run -n LangChain python -m riskagent_agenticrag.evaluation.run --stage step4 --label step4
 ```
 
 ## 9. 启动 HTTP API
 
 ```bash
-conda run -n LangChain python -m riskagent_rag.api.server
+conda run -n LangChain python -m riskagent_agenticrag.api.server
 ```
 
 ## 10. 用 API 提问并看 trace

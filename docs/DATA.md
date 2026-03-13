@@ -15,9 +15,9 @@ Chunk 是 LangChain 的 Document 对象
 
 ### 生成位置
 
-- 语料加载: [source_loader.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/rag/source_loader.py)
-- 切分与元数据增强: [ingestion.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/rag/ingestion.py)
-- 增量写入向量库: [indexer.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/indexing/indexer.py) 与 [milvus_store.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/indexing/milvus_store.py)
+- 语料加载: [source_loader.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/rag/source_loader.py)
+- 切分与元数据增强: [ingestion.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/rag/ingestion.py)
+- 增量写入向量库: [indexer.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/indexing/indexer.py) 与 [milvus_store.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/indexing/milvus_store.py)
 
 ### 主要用途
 
@@ -29,7 +29,7 @@ Chunk 是 LangChain 的 Document 对象
 
 chunk_id 用于稳定定位引用
 它由 source start_index page_content 共同生成哈希摘要
-实现位置在 [ingestion.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/rag/ingestion.py#L128-L155)
+实现位置在 [ingestion.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/rag/ingestion.py#L128-L155)
 
 关键影响
 
@@ -70,7 +70,7 @@ chunk_id 用于稳定定位引用
 ## Sparse Corpus Row
 
 该数据用于 BM25 稀疏检索
-写入位置在 [sparse_index.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/rag/sparse_index.py)
+写入位置在 [sparse_index.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/rag/sparse_index.py)
 
 一行一个 JSON 对象
 
@@ -83,7 +83,7 @@ chunk_id 用于稳定定位引用
 
 Citation 是 UI 和报告里展示的最小引用结构
 它从 docs 的 metadata 提取而来
-实现位置在 [pipeline.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/rag/pipeline.py#L73-L110)
+实现位置在 [pipeline.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/rag/pipeline.py#L73-L110)
 
 结构
 
@@ -99,7 +99,7 @@ Citation 是 UI 和报告里展示的最小引用结构
 
 Evidence Set 用于 validator gate 的可执行校验
 它由检索返回 docs 构建
-实现位置在 [agentic_primitives.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/rag/agentic_primitives.py#L296-L338)
+实现位置在 [agentic_primitives.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/rag/agentic_primitives.py#L296-L338)
 
 结构
 
@@ -118,7 +118,7 @@ Evidence Set 用于 validator gate 的可执行校验
 
 Claim 是对 answer 的段落级结构化切分
 它必须携带 evidence_ids 以便 evidence_gate 可执行
-实现位置在 [agentic_primitives.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/rag/agentic_primitives.py#L341-L396)
+实现位置在 [agentic_primitives.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/rag/agentic_primitives.py#L341-L396)
 
 结构
 
@@ -130,7 +130,7 @@ Claim 是对 answer 的段落级结构化切分
 
 Decision Log 用于解释 agentic 决策过程
 它是一个 dict 列表 贯穿 rewrite critique revise tool decision
-常见字段在 [langgraph_runner.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/orchestration/langgraph_runner.py)
+常见字段在 [langgraph_runner.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/orchestration/langgraph_runner.py)
 
 结构
 
@@ -144,7 +144,7 @@ Decision Log 用于解释 agentic 决策过程
 
 Tool Trace 用于记录工具调用输入输出
 它来自 data_agent 的输出 并被 numeric consistency gate 使用
-相关入口在 [langgraph_runner.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/orchestration/langgraph_runner.py)
+相关入口在 [langgraph_runner.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/orchestration/langgraph_runner.py)
 
 结构是 dict
 字段取决于具体 tool 实现
@@ -152,10 +152,9 @@ Tool Trace 用于记录工具调用输入输出
 
 ## Trace
 
-Trace 是每次请求的执行轨迹
-它和 request response 放在同一个 artifacts bundle 目录
+Trace 是每次请求的执行轨迹, 和 request response 放在同一个 artifacts bundle 目录.
 
-目录结构
+目录结构:
 
 ```text
 .artifacts/<timestamp>_<request_id>/
@@ -165,16 +164,46 @@ Trace 是每次请求的执行轨迹
   trace.json
 ```
 
-trace.json 包含
-- nodes 每个 LangGraph 节点的耗时 输入摘要 输出摘要
-- retrieve_and_critique 节点会记录 top8 docs 的引用信息和原文片段 snippet
+### trace.json 字段
 
-详细字段见 [TRACE.md](./TRACE.md)
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| request_id | string | 请求唯一标识 |
+| timestamp | string | ISO 格式时间戳 |
+| nodes | list[dict] | 每个 LangGraph 节点的执行记录 |
+
+每个 node 记录:
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| node_name | string | 节点名 如 rewrite retrieve_and_critique |
+| start_ms | float | 节点开始时间 |
+| end_ms | float | 节点结束时间 |
+| duration_ms | float | 耗时 |
+| input_summary | string | 输入摘要 |
+| output_summary | string | 输出摘要 |
+
+retrieve_and_critique 节点额外记录:
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| top_docs | list[dict] | top8 检索结果 |
+| top_docs[].source | string | 文档来源 |
+| top_docs[].chunk_id | string | chunk 标识 |
+| top_docs[].snippet | string | 原文片段 |
+| top_docs[].rerank_score | float | 精排分数 |
+
+### 排障路径
+
+1. 先看 `nodes` 找耗时最长的节点
+2. 看 `retrieve_and_critique.top_docs` 确认检索质量
+3. 看 `synthesize_answer.output_summary` 确认生成内容
+4. 看 `validate_and_save` 确认 gate 结果
 
 ## Evaluation Report
 
 评测报告写入 .artifacts/reports
-入口在 [evaluation/run.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_rag/evaluation/run.py)
+入口在 [evaluation/run.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/evaluation/run.py)
 
 核心结构
 

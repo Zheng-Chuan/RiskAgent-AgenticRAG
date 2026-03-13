@@ -55,7 +55,7 @@
 - [x] Cross encoder reranking 对粗排结果精排 剔除语义相关但事实无关的噪音
 - [x] Hybrid search BM25 稀疏 + 向量稠密 让专有名词绝对召回 同时保留语义理解
 - [x] 产出阶段评测报告 写入 .artifacts/reports 并记录已做与未做
-  - `python -m riskagent_rag.evaluation.run --stage step1 --stage-notes "rerank and hybrid"`
+  - `python -m riskagent_agenticrag.evaluation.run --stage step1 --stage-notes "rerank and hybrid"`
 
 ### Week 9 已完成 查询理解与智能路由 step2
 
@@ -64,7 +64,7 @@
 - [x] Sub question decomposition 把复杂问题拆成可检索可验证的子问题
 - [x] Semantic router 依据意图选择索引与工具 让系统不再一招走天下
 - [x] 产出阶段评测报告 写入 .artifacts/reports 并记录已做与未做
-  - `python -m riskagent_rag.evaluation.run --stage step2 --stage-notes "query intelligence and routing"`
+  - `python -m riskagent_agenticrag.evaluation.run --stage step2 --stage-notes "query intelligence and routing"`
 
 ### Week 10 已完成 高级索引策略 step3
 
@@ -72,7 +72,7 @@
 - [x] Summary indexing 为 section 生成摘要并索引 专门服务宏观总结类问题
 - [x] HyDE indexing 为 chunk 生成假设性问题并索引 缓解 query 与文档表述不一致
 - [x] 产出阶段评测报告 写入 .artifacts/reports 并记录已做与未做
-  - `python -m riskagent_rag.evaluation.run --stage step3 --stage-notes "advanced indexing"`
+  - `python -m riskagent_agenticrag.evaluation.run --stage step3 --stage-notes "advanced indexing"`
 
 ### Week 11 已完成 Self RAG 与动态决策 step4
 
@@ -80,7 +80,7 @@
 - [x] Self reflection scoring 引入 IsRel IsSup IsUse 等分级评分 输出可度量的反思信号
 - [x] Grade docs and grade generation 在生成前后都做质量门控 把 agentic loop 变成可控的闭环
 - [x] 产出阶段评测报告 写入 .artifacts/reports 并记录已做与未做
-  - `python -m riskagent_rag.evaluation.run --stage step4 --stage-notes "self rag"`
+  - `python -m riskagent_agenticrag.evaluation.run --stage step4 --stage-notes "self rag"`
 
 ### Week 12 已完成 服务化接口与契约 v1
 
@@ -138,8 +138,8 @@ LLM strategy
   - [x] docs/INTERVIEW.md: 50 道硬核面试题清单, 用于边做项目边答题
 - 验收
   - [x] 1 条命令启动 demo
-    - [x] CLI: `conda run -n LangChain python -m riskagent_rag.cli index`
-    - [x] CLI: `conda run -n LangChain python -m riskagent_rag.cli ask --question "what is FRTB"`
+    - [x] CLI: `conda run -n LangChain python -m riskagent_agenticrag.cli index`
+    - [x] CLI: `conda run -n LangChain python -m riskagent_agenticrag.cli ask --question "what is FRTB"`
   - [x] 返回 citations, 且可定位来源
   - [x] 至少 1 条 e2e smoke test 可通过
     - [x] `conda run -n LangChain python -m unittest tests.test_week1_rag_baseline`
@@ -347,7 +347,7 @@ LLM strategy
     - [x] failure taxonomy coverage 每类 failure_reason 至少 1 条用例
   - [x] 评测运行器与报告
     - [x] 一条命令运行评测
-      - [x] conda run -n LangChain python -m riskagent_rag.evaluation.run
+      - [x] conda run -n LangChain python -m riskagent_agenticrag.evaluation.run
     - [x] 报告落盘
       - [x] JSON 报告包含 per sample 结果与汇总
       - [x] 报告路径建议放到 .artifacts 下的 reports 子目录
@@ -385,7 +385,7 @@ LLM strategy
   - [x] 正样本拒答率保持低位 负样本拒答率保持高位
   - [ ] 增补 gate 阻断收益率与 gate 误杀率 指标并进入统一报告
   - [ ] 增补 gate 对照评测 CLI
-    - [ ] `python -m riskagent_rag.evaluation.run --profile gate --with-gate --baseline-report <path>`
+    - [ ] `python -m riskagent_agenticrag.evaluation.run --profile gate --with-gate --baseline-report <path>`
 
 ### Week 6: 引用精准度与幻觉检测 (Citation Precision)
 
@@ -404,7 +404,7 @@ LLM strategy
   - [ ] 增补 retrieval 本体指标 Recall@K MRR nDCG@K
   - [ ] 增补检索诊断指标 Dense 命中率 Sparse 命中率 Hybrid 增益率 Rerank uplift
   - [ ] 增补检索指标 CLI
-    - [ ] `python -m riskagent_rag.evaluation.run --profile retrieval --retrieval-k 5,10,20 --label retrieval_v1`
+    - [ ] `python -m riskagent_agenticrag.evaluation.run --profile retrieval --retrieval-k 5,10,20 --label retrieval_v1`
 
 ### Week 7: 金融领域一致性 (Domain Consistency)
 
@@ -420,7 +420,7 @@ LLM strategy
   - [ ] 增补成本与时延指标 并与领域一致性联合观察
   - [ ] 增补稳定性指标 success error timeout 与 failure_reason 分布
   - [ ] 增补稳定性与成本评测 CLI
-    - [ ] `python -m riskagent_rag.evaluation.run --profile reliability --include-cost --include-latency --label reliability_v1`
+    - [ ] `python -m riskagent_agenticrag.evaluation.run --profile reliability --include-cost --include-latency --label reliability_v1`
 
 #### Phase 4: SOTA RAG Optimization
 
@@ -448,14 +448,14 @@ LLM strategy
     - [x] confidence signal 输出 rerank score 分布与 gap 作为后续自适应检索与拒答依据
   - [x] **阶段评测报告**
     - [x] 完成后运行并落盘到 .artifacts/reports
-      - [x] `python -m riskagent_rag.evaluation.run --stage step1 --stage-notes "rerank and hybrid"`
+      - [x] `python -m riskagent_agenticrag.evaluation.run --stage step1 --stage-notes "rerank and hybrid"`
 - **验收**
   - [x] 仅用真实语料与真实 embeddings 与真实 reranker 跑通测试
     - [x] `python -m unittest tests.test_week8_hybrid_rerank_acceptance`
   - [x] 仅用真实语料与真实 embeddings 与真实 reranker 跑通新增验收测试
     - [x] `python -m unittest tests.test_week8_retrieval_highlights_acceptance`
   - [x] 产出 step1 评测报告并可与 baseline 对比
-    - [x] `python -m riskagent_rag.evaluation.run --stage step1 --label step1 --enable-citation-judge --citation-judge-mode llm`
+    - [x] `python -m riskagent_agenticrag.evaluation.run --stage step1 --label step1 --enable-citation-judge --citation-judge-mode llm`
 
 ### Week 9: 查询理解与智能路由
 
@@ -472,12 +472,12 @@ LLM strategy
     - [x] 方案: 基于意图规则选择策略 例如 compare 背景 procedure
   - [x] **阶段评测报告**
     - [x] 完成后运行并落盘到 .artifacts/reports
-      - [x] `python -m riskagent_rag.evaluation.run --stage step2 --label step2 --enable-citation-judge --citation-judge-mode llm`
+      - [x] `python -m riskagent_agenticrag.evaluation.run --stage step2 --label step2 --enable-citation-judge --citation-judge-mode llm`
 - **验收**
   - [x] 仅用真实语料与真实 embeddings 跑通测试
     - [x] `python -m unittest tests.test_week9_query_routing_acceptance`
   - [x] 产出 step2 评测报告并可与 step1 报告对比
-    - [x] `python -m riskagent_rag.evaluation.run --stage step2 --label step2 --enable-citation-judge --citation-judge-mode llm`
+    - [x] `python -m riskagent_agenticrag.evaluation.run --stage step2 --label step2 --enable-citation-judge --citation-judge-mode llm`
 
 ### Week 10: 高级索引策略
 
@@ -495,12 +495,12 @@ LLM strategy
     - [x] 目的: 缓解 query 与文档表述不一致 以 question to question 匹配
   - [x] **阶段评测报告**
     - [x] 完成后运行并落盘到 .artifacts/reports
-      - [x] `python -m riskagent_rag.evaluation.run --stage step3 --label step3 --enable-citation-judge --citation-judge-mode llm`
+      - [x] `python -m riskagent_agenticrag.evaluation.run --stage step3 --label step3 --enable-citation-judge --citation-judge-mode llm`
 - **验收**
   - [x] 仅用真实语料与真实 embeddings 跑通测试
     - [x] `python -m unittest tests.test_week10_advanced_indexing_acceptance`
   - [x] 产出 step3 评测报告并可与 step2 报告对比
-    - [x] `python -m riskagent_rag.evaluation.run --stage step3 --label step3 --enable-citation-judge --citation-judge-mode llm`
+    - [x] `python -m riskagent_agenticrag.evaluation.run --stage step3 --label step3 --enable-citation-judge --citation-judge-mode llm`
 
 ### Week 11: Self RAG 与动态决策
 
@@ -515,12 +515,12 @@ LLM strategy
     - [x] 方案: retrieve grade docs generate grade generation loop if needed
   - [x] **阶段评测报告**
     - [x] 完成后运行并落盘到 .artifacts/reports
-      - [x] `python -m riskagent_rag.evaluation.run --stage step4 --label step4 --enable-citation-judge --citation-judge-mode llm`
+      - [x] `python -m riskagent_agenticrag.evaluation.run --stage step4 --label step4 --enable-citation-judge --citation-judge-mode llm`
 - **验收**
   - [x] 仅用真实语料与真实 embeddings 跑通测试
     - [x] `python -m unittest tests.test_week11_self_rag_acceptance`
   - [x] 产出 step4 评测报告并可与 step3 报告对比
-    - [x] `python -m riskagent_rag.evaluation.run --stage step4 --label step4 --enable-citation-judge --citation-judge-mode llm`
+    - [x] `python -m riskagent_agenticrag.evaluation.run --stage step4 --label step4 --enable-citation-judge --citation-judge-mode llm`
 
 ---
 
@@ -577,10 +577,10 @@ LLM strategy
     - [x] token in out cache hit estimated usd
     - [x] success_rate error_rate timeout_rate
   - [x] 评测 CLI 扩展
-    - [x] `python -m riskagent_rag.evaluation.run --profile retrieval --label retrieval_v1`
-    - [x] `python -m riskagent_rag.evaluation.run --profile gate --with-gate --label gate_v1`
-    - [x] `python -m riskagent_rag.evaluation.run --profile reliability --include-cost --include-latency --label reliability_v1`
-    - [x] `python -m riskagent_rag.evaluation.run --compare-report <new> --baseline-report <old>`
+    - [x] `python -m riskagent_agenticrag.evaluation.run --profile retrieval --label retrieval_v1`
+    - [x] `python -m riskagent_agenticrag.evaluation.run --profile gate --with-gate --label gate_v1`
+    - [x] `python -m riskagent_agenticrag.evaluation.run --profile reliability --include-cost --include-latency --label reliability_v1`
+    - [x] `python -m riskagent_agenticrag.evaluation.run --compare-report <new> --baseline-report <old>`
 - 验收
   - [x] 同一评测集可输出 retrieval gate reliability cost 四类指标
   - [x] 报告中自动给出相对 baseline 的 diff 与 regression 标记
@@ -599,7 +599,7 @@ LLM strategy
     - [x] pass warning fail 三级判定
     - [x] 退化项自动列表化并带建议动作
   - [x] CLI 门禁命令
-    - [x] `python -m riskagent_rag.evaluation.run --profile all --enforce-thresholds --thresholds docs/eval_thresholds.yaml`
+    - [x] `python -m riskagent_agenticrag.evaluation.run --profile all --enforce-thresholds --thresholds docs/eval_thresholds.yaml`
 - 验收
   - [x] 任一关键指标退化时命令返回非零退出码
   - [x] 报告自动生成 regression summary 便于 PR 评审

@@ -22,6 +22,14 @@ dependencies = [
     "uvicorn",
     "prometheus-client",
     "httpx",
+    # Document processing
+    "python-docx>=0.8.11",  # Word文档处理
+    "pandas>=1.3.0",        # Excel处理依赖
+    "openpyxl>=3.0.0",      # .xlsx格式支持
+    "xlrd>=2.0.0",          # .xls格式支持
+    "beautifulsoup4>=4.9.0",  # HTML解析
+    "lxml>=4.6.0",          # HTML解析器
+    "tabulate>=0.8.0",      # DataFrame转markdown表格
 ]
 
 [tool.setuptools.packages.find]

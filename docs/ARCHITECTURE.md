@@ -1,12 +1,41 @@
 # ARCHITECTURE
 
-## 高层目标
+## 一页读懂
 
-- 面向企业内部软件工程师
-- 用 RAG 基于语料回答
-- answer 必须带 citations 方便回溯到原文
-- 编排层用 LangGraph
-- LLM 统一走 OpenAI compatible (OpenRouter)
+面向企业内部软件工程师的 Agentic RAG 系统, 基于语料回答金融风险问题.
+answer 必须带 citations 方便回溯到原文, 编排层用 LangGraph, LLM 统一走 OpenAI compatible (OpenRouter).
+
+请求流程:
+
+```mermaid
+sequenceDiagram
+  participant U as User
+  participant S as RiskAgentSystem
+  participant LG as LangGraph
+  participant R as Retriever
+  participant LLM as LLM
+  participant G as Gates
+  U->>S: question
+  S->>LG: run agentic loop
+  LG->>R: retrieve docs
+  R-->>LG: contexts
+  LG->>LLM: generate answer
+  LLM-->>LG: answer + claims
+  LG->>G: validate
+  G-->>LG: pass / fail
+  LG-->>S: response + artifacts
+  S-->>U: answer + citations + trace
+```
+
+每次请求都会落盘 artifacts bundle:
+
+```text
+.artifacts/<timestamp>_<request_id>/
+  request.json
+  response.json
+  structured_response.json
+  trace.json
+```
 
 ## 快速架构图
 
@@ -40,17 +69,17 @@ flowchart TB
 
 ## 核心模块
 
-- `riskagent_rag.indexing`
+- `riskagent_agenticrag.indexing`
   - 增量索引 构建 manifest 写入 Milvus 与各类语料 JSONL
-- `riskagent_rag.rag`
+- `riskagent_agenticrag.rag`
   - ingest chunking
   - retrieve rerank reroute
-- `riskagent_rag.llm`
+- `riskagent_agenticrag.llm`
   - LLM 接入封装
   - OpenAI compatible client
-- `riskagent_rag.api`
+- `riskagent_agenticrag.api`
   - HTTP API v1 healthz readyz metrics ask chat
-- `riskagent_rag.agents`
+- `riskagent_agenticrag.agents`
   - retrieval agent
   - explanation agent
   - coordinator

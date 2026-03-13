@@ -46,7 +46,7 @@ class TestIntegrationFRTBRealMiddlewareArtifact(unittest.TestCase):
             if sock.connect_ex(("127.0.0.1", 19530)) != 0:
                 self.fail("Milvus docker middleware is not reachable at 127.0.0.1:19530")
 
-        from riskagent_rag.indexing.indexer import incremental_index
+        from riskagent_agenticrag.indexing.indexer import incremental_index
 
         incremental_index(corpus_dir=self.corpus_dir, persist_dir=self.persist_dir, include_paths=None)
 
@@ -100,11 +100,11 @@ class TestIntegrationFRTBRealMiddlewareArtifact(unittest.TestCase):
         )
 
     def test_frtb_full_flow_and_artifact_bundle_with_real_middleware(self) -> None:
-        from riskagent_rag.app import RiskAgentSystem
+        from riskagent_agenticrag.app import RiskAgentSystem
 
         system = RiskAgentSystem()
-        with patch("riskagent_rag.rag.agentic_primitives.call_llm_json", side_effect=self._fake_llm_json), patch(
-            "riskagent_rag.llm.generate.call_llm_text", side_effect=self._fake_llm_text
+        with patch("riskagent_agenticrag.rag.agentic_primitives.call_llm_json", side_effect=self._fake_llm_json), patch(
+            "riskagent_agenticrag.llm.generate.call_llm_text", side_effect=self._fake_llm_text
         ):
             out = system.chat("what is FRTB", max_rounds=2, request_id=self.request_id)
 

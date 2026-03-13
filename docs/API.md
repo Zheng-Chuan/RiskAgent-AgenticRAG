@@ -3,7 +3,7 @@
 ## 启动服务
 
 ```bash
-conda run -n LangChain python -m riskagent_rag.api.server
+conda run -n LangChain python -m riskagent_agenticrag.api.server
 ```
 
 环境变量

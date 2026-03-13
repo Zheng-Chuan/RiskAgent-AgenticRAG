@@ -6,7 +6,7 @@ import shutil
 import tempfile
 import unittest
 
-from riskagent_rag.indexing.indexer import incremental_index
+from riskagent_agenticrag.indexing.indexer import incremental_index
 
 
 class TestIncrementalIndexAcceptance(unittest.TestCase):

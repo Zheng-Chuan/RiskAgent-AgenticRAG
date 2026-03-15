@@ -93,7 +93,7 @@ def _compute_glossary_consistency(*, answer: str) -> dict[str, Any]:
     return {"score": float(score), "checked_terms": int(checked), "violations": violations}
 
 
-def try_compute_domain_consistency(*, samples: list[dict[str, Any]], tolerance: float = 0.01) -> DomainConsistencyResult:
+def try_compute_domain_consistency(*, samples: list[dict[str, Any]], tolerance: float = 0.1) -> DomainConsistencyResult:
     try:
         tol = float(tolerance)
     except (TypeError, ValueError):

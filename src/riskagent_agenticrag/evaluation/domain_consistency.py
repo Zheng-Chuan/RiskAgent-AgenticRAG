@@ -24,7 +24,7 @@ _MVP_GLOSSARY_FORBIDDEN: dict[str, list[str]] = {
 
 def _extract_numbers(text: str) -> list[float]:
     t = str(text or "")
-    matches = re.findall(r"-?\d{1,3}(?:,\d{3})*(?:\.\d+)?%?", t)
+    matches = re.findall(r"-?\d+(?:,\d{3})*(?:\.\d+)?%?", t)
     out: list[float] = []
     for m in matches:
         try:
@@ -32,7 +32,7 @@ def _extract_numbers(text: str) -> list[float]:
             is_pct = raw.endswith("%")
             raw = raw[:-1] if is_pct else raw
             v = float(raw)
-            if abs(v - round(v)) < 1e-9 and 100 <= abs(v) <= 9999:
+            if abs(v - round(v)) < 1e-9 and len(str(int(abs(v)))) >= 3:
                 continue
             out.append(v / 100.0 if is_pct else v)
         except ValueError:

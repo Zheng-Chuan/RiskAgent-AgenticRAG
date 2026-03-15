@@ -48,7 +48,7 @@ def _call_via_curl(
         payload_file = f.name
     try:
         cmd = [
-            "curl", "-s", "-X", "POST", url,
+            "curl", "-v", "-s", "-X", "POST", url,
             "-H", "Content-Type: application/json",
             "-H", f"Authorization: Bearer {api_key}",
             "-d", f"@{payload_file}",
@@ -56,8 +56,9 @@ def _call_via_curl(
         ]
         result = subprocess.run(cmd, capture_output=True, timeout=185.0)
         if result.returncode != 0:
+            stdout = result.stdout.decode("utf-8", errors="replace") if result.stdout else ""
             stderr = result.stderr.decode("utf-8", errors="replace") if result.stderr else ""
-            raise RuntimeError(f"curl failed (code {result.returncode}): {stderr}")
+            raise RuntimeError(f"curl failed (code {result.returncode})\nstdout: {stdout}\nstderr: {stderr}")
         data = json.loads(result.stdout.decode("utf-8", errors="replace"))
         return data["choices"][0]["message"]["content"] or ""
     finally:

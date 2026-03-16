@@ -8,19 +8,31 @@
       "minimum": 0.8,
       "direction": "higher_is_better"
     },
-    "faithfulness": {
+    "ragas_faithfulness": {
       "minimum": 0.7,
       "direction": "higher_is_better"
     },
-    "answer_relevancy": {
+    "ragas_answer_relevancy": {
       "minimum": 0.7,
       "direction": "higher_is_better"
     },
-    "context_precision": {
+    "ragas_context_relevancy": {
       "minimum": 0.6,
       "direction": "higher_is_better"
     },
-    "context_recall": {
+    "ragas_context_precision_no_ref": {
+      "minimum": 0.6,
+      "direction": "higher_is_better"
+    },
+    "ragas_contradiction_score": {
+      "maximum": 0.3,
+      "direction": "lower_is_better"
+    },
+    "ragas_context_recall": {
+      "minimum": 0.6,
+      "direction": "higher_is_better"
+    },
+    "ragas_answer_correctness": {
       "minimum": 0.6,
       "direction": "higher_is_better"
     },

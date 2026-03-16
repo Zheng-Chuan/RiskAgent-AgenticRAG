@@ -22,7 +22,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from riskagent_agenticrag.config.settings import settings
 
@@ -147,6 +147,7 @@ def compute_all_ragas_metrics(
     samples: list[dict[str, Any]],
     include_reference_based: bool = True,
     include_context_precision: bool = True,
+    include_low_priority: bool = False,
 ) -> RagasMetricsResult:
     """计算所有 RAGAS 指标.
     
@@ -245,15 +246,28 @@ def compute_all_ragas_metrics(
     ground_truth_metrics = [
         (context_recall, "context_recall", ["llm"]),
         (answer_correctness, "answer_correctness", ["llm", "embeddings"]),
-        (answer_similarity, "answer_similarity", ["embeddings"]),
     ]
-    
+
+    # 低优先级指标 (默认关闭)
+    low_priority_metrics = []
+    if include_low_priority:
+        low_priority_metrics = [
+            (answer_similarity, "answer_similarity", ["embeddings"]),
+            (noise_sensitivity, "noise_sensitivity", ["llm"]),
+        ]
+
     # 需要 reference_contexts 的指标
     reference_context_metrics = [
         (context_precision, "context_precision", ["llm"]),
-        (context_entity_recall, "context_entity_recall", ["llm"]),
     ]
-    
+
+    # 低优先级 reference 指标 (默认关闭)
+    low_priority_reference_metrics = []
+    if include_low_priority and has_reference_contexts:
+        low_priority_reference_metrics = [
+            (context_entity_recall, "context_entity_recall", ["llm"]),
+        ]
+
     # 添加基础指标
     for metric_cls, name, deps in base_metrics:
         m = metric_cls.__class__()
@@ -262,7 +276,16 @@ def compute_all_ragas_metrics(
             m.embeddings = embeddings
         metrics_list.append(m)
         enabled_metrics.append(name)
-    
+
+    # 添加低优先级指标
+    for metric_cls, name, deps in low_priority_metrics:
+        m = metric_cls.__class__()
+        m.llm = llm
+        if "embeddings" in deps:
+            m.embeddings = embeddings
+        metrics_list.append(m)
+        enabled_metrics.append(name)
+
     # 添加需要 ground_truth 的指标
     if include_reference_based and has_ground_truth:
         for metric_cls, name, deps in ground_truth_metrics:
@@ -272,7 +295,7 @@ def compute_all_ragas_metrics(
                 m.embeddings = embeddings
             metrics_list.append(m)
             enabled_metrics.append(name)
-    
+
     # 添加需要 reference_contexts 的指标
     if include_context_precision and has_reference_contexts:
         for metric_cls, name, deps in reference_context_metrics:
@@ -282,6 +305,15 @@ def compute_all_ragas_metrics(
                 m.embeddings = embeddings
             metrics_list.append(m)
             enabled_metrics.append(name)
+
+    # 添加低优先级 reference 指标
+    for metric_cls, name, deps in low_priority_reference_metrics:
+        m = metric_cls.__class__()
+        m.llm = llm
+        if "embeddings" in deps:
+            m.embeddings = embeddings
+        metrics_list.append(m)
+        enabled_metrics.append(name)
     
     if not metrics_list:
         return RagasMetricsResult(
@@ -318,6 +350,47 @@ def compute_all_ragas_metrics(
         return RagasMetricsResult(
             enabled=True, ok=False, metrics={}, raw_scores={}, error=f"result extraction failed: {e}"
         )
+    
+    # 计算新增指标：无 Reference 的 Context Precision 和 Contradiction Detection
+    try:
+        cp_no_ref_scores = []
+        contradiction_scores = []
+        
+        for s in samples:
+            question = str(s.get("question", ""))
+            answer = str(s.get("answer", ""))
+            contexts = [str(c) for c in s.get("contexts", []) if c]
+            
+            # 计算 Context Precision (No Reference)
+            if question and contexts:
+                try:
+                    cp_result = compute_context_precision_no_ref(question, contexts, llm=llm)
+                    cp_no_ref_scores.append(cp_result.score)
+                except Exception:
+                    cp_no_ref_scores.append(0.0)
+            
+            # 计算 Contradiction Detection
+            if question and answer and contexts:
+                try:
+                    cont_result = compute_contradiction_detection(question, answer, contexts, llm=llm)
+                    contradiction_scores.append(cont_result.contradiction_score)
+                except Exception:
+                    contradiction_scores.append(0.0)
+        
+        # 添加到结果
+        if cp_no_ref_scores:
+            valid_cp = [s for s in cp_no_ref_scores if s is not None]
+            if valid_cp:
+                metrics_out["ragas_context_precision_no_ref"] = sum(valid_cp) / len(valid_cp)
+                raw_scores["ragas_context_precision_no_ref"] = valid_cp
+        
+        if contradiction_scores:
+            valid_cont = [s for s in contradiction_scores if s is not None]
+            if valid_cont:
+                metrics_out["ragas_contradiction_score"] = sum(valid_cont) / len(valid_cont)
+                raw_scores["ragas_contradiction_score"] = valid_cont
+    except Exception as e:
+        pass
     
     # 添加元数据
     metrics_out["ragas_samples_evaluated"] = len(rows)
@@ -364,6 +437,174 @@ def try_compute_ragas_metrics(
     )
 
 
+# ---------------------------------------------------------------------------
+# 新增指标: 无 Reference 版本的 Context Precision & Contradiction Detection
+# ---------------------------------------------------------------------------
+
+
+@dataclass
+class ContextPrecisionNoRefResult:
+    """无 Reference 的 Context Precision 结果."""
+    score: float
+    per_context_scores: List[float]
+    reasoning: str
+
+
+def compute_context_precision_no_ref(
+    question: str,
+    contexts: List[str],
+    llm: Any = None,
+) -> ContextPrecisionNoRefResult:
+    """计算无 Reference 版本的 Context Precision.
+    
+    使用 LLM 判断每个检索到的上下文片段是否与问题相关，
+    不需要 reference_contexts 标注数据。
+    
+    Args:
+        question: 用户问题
+        contexts: 检索到的上下文列表
+        llm: LLM 实例 (可选，内部会自动创建)
+    
+    Returns:
+        ContextPrecisionNoRefResult 包含分数和详细信息
+    """
+    from riskagent_agenticrag.llm.generate import call_llm_json
+
+    if llm is None:
+        llm = _get_ragas_llm()
+
+    per_context_scores = []
+    relevant_count = 0
+
+    prompt_template = """你是一个信息检索质量评估专家。请判断给定的上下文片段是否与用户问题相关。
+
+用户问题: {question}
+
+上下文片段:
+{context}
+
+请判断这个上下文片段是否与问题相关:
+- 相关: 这个片段包含可以帮助回答问题的信息
+- 不相关: 这个片段与问题无关或没有帮助
+
+以JSON格式返回:
+{{
+  "is_relevant": true/false,
+  "confidence": 0.0-1.0,
+  "reason": "简短说明"
+}}"""
+
+    for idx, ctx in enumerate(contexts):
+        prompt = prompt_template.format(
+            question=question,
+            context=ctx[:1500] if len(ctx) > 1500 else ctx
+        )
+        try:
+            result = call_llm_json(prompt, temperature=0.0)
+            is_relevant = bool(result.get("is_relevant", False))
+            confidence = float(result.get("confidence", 0.5))
+            score = confidence if is_relevant else 0.0
+            per_context_scores.append(score)
+            if is_relevant:
+                relevant_count += 1
+        except Exception:
+            per_context_scores.append(0.0)
+
+    avg_score = sum(per_context_scores) / len(per_context_scores) if per_context_scores else 0.0
+
+    return ContextPrecisionNoRefResult(
+        score=avg_score,
+        per_context_scores=per_context_scores,
+        reasoning=f"评估了 {len(contexts)} 个上下文片段，{relevant_count} 个被判定为相关"
+    )
+
+
+@dataclass
+class ContradictionDetectionResult:
+    """矛盾检测结果."""
+    has_contradiction: bool
+    contradiction_score: float
+    contradiction_details: List[dict]
+
+
+def compute_contradiction_detection(
+    question: str,
+    answer: str,
+    contexts: List[str],
+    llm: Any = None,
+) -> ContradictionDetectionResult:
+    """检测答案与上下文之间是否存在矛盾，以及答案内部是否自相矛盾.
+    
+    Args:
+        question: 用户问题
+        answer: 生成的答案
+        contexts: 检索到的上下文
+        llm: LLM 实例 (可选)
+    
+    Returns:
+        ContradictionDetectionResult
+    """
+    from riskagent_agenticrag.llm.generate import call_llm_json
+
+    if llm is None:
+        llm = _get_ragas_llm()
+
+    contradiction_details = []
+
+    context_text = "\n\n".join([f"[Context {i+1}]\n{ctx[:1000]}" for i, ctx in enumerate(contexts)])
+
+    prompt = """你是一个事实一致性检查专家。请检查以下内容是否存在矛盾：
+
+1. 答案与检索上下文之间是否存在矛盾
+2. 答案内部是否存在自相矛盾
+
+用户问题: {question}
+
+检索上下文:
+{context_text}
+
+生成的答案:
+{answer}
+
+请分析是否存在矛盾，并以JSON格式返回:
+{{
+  "has_contradiction": true/false,
+  "contradiction_score": 0.0-1.0 (0=无矛盾, 1=严重矛盾),
+  "details": [
+    {{
+      "type": "answer_context_contradiction" 或 "answer_internal_contradiction",
+      "description": "矛盾描述",
+      "severity": "low"/"medium"/"high"
+    }}
+  ]
+}}"""
+
+    try:
+        result = call_llm_json(
+            prompt.format(
+                question=question,
+                context_text=context_text,
+                answer=answer[:3000] if len(answer) > 3000 else answer
+            ),
+            temperature=0.0
+        )
+        has_contradiction = bool(result.get("has_contradiction", False))
+        contradiction_score = float(result.get("contradiction_score", 0.0))
+        details = result.get("details", [])
+        if isinstance(details, list):
+            contradiction_details = details
+    except Exception:
+        has_contradiction = False
+        contradiction_score = 0.0
+        contradiction_details = []
+
+    return ContradictionDetectionResult(
+        has_contradiction=has_contradiction,
+        contradiction_score=contradiction_score,
+        contradiction_details=contradiction_details
+    )
+
+
 def get_all_metrics_description() -> dict[str, dict[str, str]]:
     """获取所有指标的详细说明."""
     return {
@@ -374,6 +615,13 @@ def get_all_metrics_description() -> dict[str, dict[str, str]]:
             "description": "检索到的上下文中有多少是相关的",
             "range": "0-1",
             "requires": "reference_contexts",
+        },
+        "ragas_context_precision_no_ref": {
+            "name": "Context Precision (No Reference)",
+            "category": "上下文质量",
+            "description": "无标注数据版本的 Context Precision，用 LLM 判断上下文相关性",
+            "range": "0-1",
+            "requires": "无",
         },
         "ragas_context_recall": {
             "name": "Context Recall",
@@ -395,6 +643,7 @@ def get_all_metrics_description() -> dict[str, dict[str, str]]:
             "description": "上下文中实体的召回率",
             "range": "0-1",
             "requires": "reference_contexts",
+            "priority": "low",
         },
         # 答案质量
         "ragas_faithfulness": {
@@ -424,6 +673,15 @@ def get_all_metrics_description() -> dict[str, dict[str, str]]:
             "description": "答案与参考答案的语义相似度",
             "range": "0-1",
             "requires": "reference_answer",
+            "priority": "low",
+        },
+        # 真实性与幻觉
+        "ragas_contradiction_score": {
+            "name": "Contradiction Score",
+            "category": "真实性与幻觉",
+            "description": "答案与上下文之间或答案内部的矛盾程度",
+            "range": "0-1",
+            "requires": "无",
         },
         # 鲁棒性
         "ragas_noise_sensitivity": {
@@ -432,6 +690,7 @@ def get_all_metrics_description() -> dict[str, dict[str, str]]:
             "description": "系统对噪声上下文的敏感程度",
             "range": "0-1",
             "requires": "无",
+            "priority": "low",
         },
         "ragas_response_completeness": {
             "name": "Response Completeness",

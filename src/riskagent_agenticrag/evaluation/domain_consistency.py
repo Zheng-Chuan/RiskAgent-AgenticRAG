@@ -24,10 +24,16 @@ _MVP_GLOSSARY_FORBIDDEN: dict[str, list[str]] = {
 
 def _extract_numbers(text: str) -> list[float]:
     t = str(text or "")
+    # 移除引用标记
     t = re.sub(r"\b(page|doc|document|section|chapter|chunk)\s*#?\s*\d+(?:\.\d+)?", " ", t, flags=re.IGNORECASE)
     t = re.sub(r"\[source=[^\]]*?chunk_id=[^\]]*?\]", " ", t, flags=re.IGNORECASE)
     t = re.sub(r"\(page\s*#?\s*\d+(?:\.\d+)?\)", " ", t, flags=re.IGNORECASE)
     t = re.sub(r"\(doc\s*#?\s*\d+(?:\.\d+)?\)", " ", t, flags=re.IGNORECASE)
+    
+    # 移除章节编号模式 (如 "1)", "2.", "3)", "1.1", "2.2." 等)
+    # 匹配: 行首或空白字符后的 数字 + ) 或 .
+    t = re.sub(r"(^|\s)\d+(?:\.\d+)*[.)]", " ", t)
+    
     matches = re.findall(r"-?\d+(?:,\d{3})*(?:\.\d+)?%?", t)
     out: list[float] = []
     for m in matches:
@@ -36,8 +42,6 @@ def _extract_numbers(text: str) -> list[float]:
             is_pct = raw.endswith("%")
             raw = raw[:-1] if is_pct else raw
             v = float(raw)
-            if abs(v - round(v)) < 1e-9 and (1 <= abs(v) <= 100):
-                continue
             out.append(v / 100.0 if is_pct else v)
         except ValueError:
             continue

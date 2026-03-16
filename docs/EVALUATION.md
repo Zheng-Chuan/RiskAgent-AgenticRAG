@@ -1,10 +1,178 @@
-# EVALUATION
+# Evaluation 模块
 
-这份文档是评测唯一入口，解决四件事：
-- 指标含义是什么，如何解释
-- 对比实验怎么设计，如何定位提升来源
-- 历史实验数据结论是什么，怎么在面试中说明
-- 评测失败时怎么排障和阻断退化发布
+Evaluation 模块是 RiskAgent-AgenticRAG 的评测驱动开发（EDD）核心，提供全面的多维度评估体系。
+
+## 模块职责
+
+| 职责 | 说明 |
+|------|------|
+| 多维度指标计算 | 检索质量、引用精度、领域一致性、RAGAS 指标等 |
+| 评估报告生成 | JSON/Markdown 格式，包含样本级和汇总级结果 |
+| 阈值门禁策略 | 可配置的阈值，自动判定是否可发布 |
+| 退化检测与基线比较 | 与历史报告对比，标记退化项 |
+| 灵活的指标计算工具 | 支持指定模块和具体指标 |
+
+## 主要文件
+
+| 文件 | 说明 |
+|------|------|
+| `run.py` | 端到端评估入口 |
+| `compute_metric.py` | 灵活的指标计算工具（新增） |
+| `ragas_metrics.py` | RAGAS 指标（含新增指标） |
+| `domain_consistency.py` | 领域一致性（数值、术语） |
+| `citation_precision.py` | 引用精度与幻觉检测 |
+| `advanced_metrics.py` | 检索、门禁、可靠性与成本指标 |
+| `reporting.py` | 报告生成与退化检测 |
+| `thresholds.py` | 阈值配置加载 |
+| `dataset.py` | 测试数据集加载 |
+
+---
+
+## 指标体系
+
+### 1. 指标模块划分
+
+| 模块 | 包含指标 |
+|------|---------|
+| **domain_consistency** | numeric_consistency_score, glossary_consistency_score, domain_consistency_score |
+| **citation_precision** | citations_coverage, citation_precision, hallucination_rate_in_citations |
+| **ragas** | ragas_faithfulness, ragas_answer_relevancy, ragas_context_relevancy, ragas_response_completeness, ragas_context_precision_no_ref, ragas_contradiction_score |
+| **advanced** | retrieval_metrics, gate_metrics, reliability_metrics |
+
+### 2. RAGAS 指标
+
+| 指标 | 含义 | 典型解释 |
+|------|------|---------|
+| ragas_faithfulness | 答案忠实度 | 答案是否基于上下文 |
+| ragas_answer_relevancy | 答案相关性 | 答案是否切题 |
+| ragas_context_relevancy | 上下文相关性 | 检索上下文与问题的相关度 |
+| ragas_response_completeness | 回答完整性 | 答案是否完整覆盖问题要求 |
+| **ragas_context_precision_no_ref** | 无标注上下文精确度 | 无 reference 时用 LLM 判断上下文相关性 |
+| **ragas_contradiction_score** | 矛盾检测得分 | 答案与上下文或答案内部的矛盾程度 |
+
+### 3. 检索质量指标
+
+| 指标 | 含义 |
+|------|------|
+| retrieval_recall_at_K | 前 K 个结果的召回率 |
+| retrieval_mrr | 平均倒数排名 |
+| retrieval_ndcg_at_K | 归一化折损累计增益 |
+| retrieval_dense_hit_rate | Dense 检索命中率 |
+| retrieval_sparse_hit_rate | Sparse 检索命中率 |
+| retrieval_hybrid_gain_rate | 混合检索增益率 |
+| retrieval_rerank_uplift | 重排提升率 |
+
+### 4. 引用质量指标
+
+| 指标 | 含义 |
+|------|------|
+| citations_coverage | 回答是否带有效引用 |
+| citation_precision | 引用是否支持句子结论 |
+| hallucination_rate_in_citations | 带引用但不被支持比例 |
+
+### 5. 领域一致性指标
+
+| 指标 | 含义 |
+|------|------|
+| numeric_consistency_score | 数值一致性得分（修复后: 0.514） |
+| glossary_consistency_score | 术语一致性得分 |
+| domain_consistency_score | 领域一致性总分 |
+
+### 6. 门禁指标
+
+| 指标 | 含义 |
+|------|------|
+| gate_block_rate | 门禁阻断率 |
+| gate_block_benefit_rate | 门禁阻断收益率 |
+| gate_false_kill_rate | 门禁误杀率 |
+
+### 7. 可靠性与成本指标
+
+| 指标 | 含义 |
+|------|------|
+| reliability_success_rate | 成功率 |
+| reliability_error_rate | 错误率 |
+| reliability_timeout_rate | 超时率 |
+| latency_p50_ms / p95_ms / p99_ms | 时延 |
+| cost_estimated_usd | 估算成本 |
+
+---
+
+## 使用方式
+
+### 1. 端到端评估
+
+```bash
+# 基础评测
+python -m riskagent_agenticrag.evaluation.run --stage step4 --label step4
+
+# 全量评测 + 阈值门禁
+python -m riskagent_agenticrag.evaluation.run \
+  --stage step4 \
+  --label final_v1 \
+  --enable-ragas \
+  --profile all \
+  --retrieval-k 1,3,5,10 \
+  --include-latency \
+  --enforce-thresholds \
+  --thresholds docs/eval_thresholds.yaml
+```
+
+### 2. 灵活的指标计算工具
+
+新增 `compute_metric.py` 工具，支持：
+
+```bash
+# 列出指定模块的可用指标
+python -m riskagent_agenticrag.evaluation.compute_metric \
+  --list-metrics --module domain_consistency
+
+# 只计算单一模块的所有指标
+python -m riskagent_agenticrag.evaluation.compute_metric \
+  --report .artifacts/reports/rag_eval_final_v1_20260308_144921.json \
+  --module domain_consistency
+
+# 只计算指定指标
+python -m riskagent_agenticrag.evaluation.compute_metric \
+  --report .artifacts/reports/rag_eval_final_v1_20260308_144921.json \
+  --module domain_consistency \
+  --metrics numeric_consistency_score
+
+# 计算多个指标
+python -m riskagent_agenticrag.evaluation.compute_metric \
+  --report .artifacts/reports/rag_eval_final_v1_20260308_144921.json \
+  --module domain_consistency \
+  --metrics numeric_consistency_score,glossary_consistency_score
+```
+
+支持的模块：
+- `domain_consistency` - 领域一致性
+- `citation_precision` - 引用精度
+- `ragas` - RAGAS 指标
+
+---
+
+## 模块边界与隔离
+
+Evaluation 模块与其他模块的边界：
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                     Evaluation 模块                          │
+├─────────────────────────────────────────────────────────────┤
+│  - 输入: 已有评估报告 JSON 或 dataset                    │
+│  - 输出: metrics, reports, threshold decisions            │
+│  - 不依赖: Indexing/Querying 运行时                       │
+│  - 可独立运行: 可基于已有的 report 重算指标               │
+└─────────────────────────────────────────────────────────────┘
+         ↕
+┌──────────────────────┐  ┌──────────────────────┐
+│   Indexing 模块     │  │   Querying 模块     │
+│   (数据准备)        │  │   (推理)            │
+└──────────────────────┘  └──────────────────────┘
+```
+
+---
 
 ## 评测目标
 
@@ -22,6 +190,8 @@ flowchart LR
   M --> R
 ```
 
+---
+
 ## 前置条件
 
 必需环境变量：
@@ -34,43 +204,47 @@ flowchart LR
 - `EMBEDDINGS_MODEL` 默认 `sentence-transformers/all-MiniLM-L6-v2`
 - `MILVUS_HOST` `MILVUS_PORT` 本地中间件接入
 
+---
+
 ## 常用命令
 
-基础评测：
+### 基础评测
 
 ```bash
-conda run -n LangChain python -m riskagent_agenticrag.evaluation.run --stage step4 --label step4
+python -m riskagent_agenticrag.evaluation.run --stage step4 --label step4
 ```
 
-检索质量：
+### 检索质量
 
 ```bash
-conda run -n LangChain python -m riskagent_agenticrag.evaluation.run --profile retrieval --retrieval-k 5,10,20 --label retrieval_v1
+python -m riskagent_agenticrag.evaluation.run --profile retrieval --retrieval-k 5,10,20 --label retrieval_v1
 ```
 
-门禁收益：
+### 门禁收益
 
 ```bash
-conda run -n LangChain python -m riskagent_agenticrag.evaluation.run --profile gate --with-gate --label gate_v1
+python -m riskagent_agenticrag.evaluation.run --profile gate --with-gate --label gate_v1
 ```
 
-稳定性与成本：
+### 稳定性与成本
 
 ```bash
-conda run -n LangChain python -m riskagent_agenticrag.evaluation.run --profile reliability --include-latency --include-cost --label reliability_v1
+python -m riskagent_agenticrag.evaluation.run --profile reliability --include-latency --include-cost --label reliability_v1
 ```
 
-基线对比：
+### 基线对比
 
 ```bash
-conda run -n LangChain python -m riskagent_agenticrag.evaluation.run --profile all --compare-report .artifacts/reports/your_baseline.json --label all_v1
+python -m riskagent_agenticrag.evaluation.run --profile all --compare-report .artifacts/reports/your_baseline.json --label all_v1
 ```
 
-阈值门禁：
+### 阈值门禁
 
 ```bash
-conda run -n LangChain python -m riskagent_agenticrag.evaluation.run --profile all --enforce-thresholds --thresholds docs/eval_thresholds.yaml --label gate_all_v1
+python -m riskagent_agenticrag.evaluation.run --profile all --enforce-thresholds --thresholds docs/eval_thresholds.yaml --label gate_all_v1
 ```
+
+---
 
 ## 参数速览
 
@@ -78,181 +252,13 @@ conda run -n LangChain python -m riskagent_agenticrag.evaluation.run --profile a
 - `--profile` all retrieval gate reliability
 - `--retrieval-k` 例如 1,3,5 或 5,10,20
 - `--compare-report` 和 `--baseline-report` 基线报告路径
-- `--enforce-thresholds` 开启门禁，fail 返回非零退出码
-- `--enable-citation-judge` `--citation-judge-mode` 开启句级引用精度评测
 
-judge 模式：
-- auto 优先 llm，不可用时退到 heuristic
-- llm 强制 llm
-- heuristic 离线规则打分
+---
 
-## 指标含义
+## 相关文档
 
-### retrieval
-
-| 指标 | 含义 | 典型解释 |
-| --- | --- | --- |
-| retrieval_recall_at_K | K 内是否命中相关证据 | 越高说明召回覆盖越好 |
-| retrieval_mrr | 首个相关结果排名倒数平均 | 越高说明相关文档更靠前 |
-| retrieval_ndcg_at_K | 排序质量综合指标 | 越高说明排序更合理 |
-| retrieval_dense_hit_rate | dense 召回可用率 | 稠密检索稳定性 |
-| retrieval_sparse_hit_rate | sparse 召回可用率 | 关键词检索稳定性 |
-| retrieval_hybrid_gain_rate | 混合检索收益率 | 融合策略有效性 |
-| retrieval_rerank_uplift | 重排前后排名提升 | cross-encoder 价值 |
-
-### gate
-
-| 指标 | 含义 | 典型解释 |
-| --- | --- | --- |
-| gate_block_rate | 被门禁拦截比例 | 门禁触发强度 |
-| gate_block_benefit_rate | 阻断了不可靠输出的比例 | 门禁收益 |
-| gate_false_kill_rate | 误杀可用答案比例 | 越低越好 |
-| failure_reason_distribution | 失败原因分布 | 退化定位入口 |
-
-### reliability latency cost
-
-| 指标 | 含义 | 典型解释 |
-| --- | --- | --- |
-| reliability_success_rate | 成功率 | 越高越好 |
-| reliability_error_rate | 错误率 | 越低越好 |
-| reliability_timeout_rate | 超时率 | 越低越好 |
-| latency_p50_ms p95_ms p99_ms | 端到端时延分位 | 尾时延是上线重点 |
-| node_latency_p95 | 节点级 p95 时延 | 定位瓶颈节点 |
-| cost_estimated_total_tokens | 单请求 token 估算 | 成本基线 |
-| cost_estimated_usd | 单请求美元成本估算 | 预算控制 |
-
-### citation and domain
-
-| 指标 | 含义 | 典型解释 |
-| --- | --- | --- |
-| citations_coverage | 回答是否带有效引用 | 证据覆盖 |
-| citation_precision | 引用是否支持句子结论 | 证据精度 |
-| hallucination_rate_in_citations | 带引用但不被支持比例 | 越低越好 |
-| numeric_consistency_score | 数值一致性得分 | 数值可信度 |
-| glossary_consistency_score | 术语一致性得分 | 术语规范性 |
-| domain_consistency_score | 领域一致性总分 | 业务对齐程度 |
-
-## 对比与提升实验方案
-
-推荐三组实验：
-- baseline：基础链路，作为对照组
-- ablation：逐项关闭能力，定位边际收益
-- final：全量能力 + 门禁，作为发布候选
-
-建议 ablation 维度：
-- 关闭 rerank，观察 `retrieval_mrr` `retrieval_ndcg_at_K`
-- 关闭 hybrid 一路，观察 `retrieval_recall_at_K` 命中率
-- 关闭高级索引，观察长文档相关问题的一致性
-- 关闭 self-rag 与门禁，观察 `gate_false_kill_rate` 与错误率
-
-统一复现实验命令：
-
-```bash
-python -m riskagent_agenticrag.evaluation.run --profile all --label baseline_all_v1
-python -m riskagent_agenticrag.evaluation.run --profile retrieval --retrieval-k 5,10,20 --label retrieval_all_v1 --compare-report .artifacts/reports/<baseline>.json
-python -m riskagent_agenticrag.evaluation.run --profile gate --with-gate --label gate_all_v1 --compare-report .artifacts/reports/<baseline>.json
-python -m riskagent_agenticrag.evaluation.run --profile reliability --include-latency --include-cost --label reliability_all_v1 --compare-report .artifacts/reports/<baseline>.json
-python -m riskagent_agenticrag.evaluation.run --profile all --enforce-thresholds --thresholds docs/eval_thresholds.yaml --label final_gate_v1 --compare-report .artifacts/reports/<baseline>.json
-```
-
-## 历史实验数据小结
-
-以下数据来自仓库内可复现报告：
-- baseline：`.artifacts/reports/rag_eval_step1_real_20260127_072539.json`
-- final：`.artifacts/reports/rag_eval_step4_20260202_102949.json`
-- 数据集：`tests/data/questions.json` 共 20 题
-
-| 指标 | baseline | final | delta |
-| --- | ---: | ---: | ---: |
-| citations_coverage | 1.0000 | 1.0000 | +0.0000 |
-| citation_precision | 0.3986 | 0.2071 | -0.1914 |
-| numeric_consistency_score | 0.2468 | 0.5212 | +0.2744 |
-| domain_consistency_score | 0.6234 | 0.7606 | +0.1372 |
-
-结论口径：
-- 领域一致性与数值一致性显著提升
-- 引用覆盖保持稳定
-- citation_precision 在这组跨阶段历史报告中下降，解释时需明确口径并建议同口径重跑
-
-## 报告阅读与排障
-
-先看：
-- `metrics` 判断整体质量
-- `baseline.diff` 判断是否退化
-- `threshold_gate.verdict` 判断是否允许发布
-
-再看：
-- `samples.status` `samples.failure_reason` 定位失败样本
-- `samples.node_latencies` 找性能瓶颈
-- `debug.artifact_bundle_dir/trace.json` 追踪节点决策
-
-## 新增评测样本
-
-编辑 `tests/data/questions.json`：
-
-```json
-[
-  {
-    "id": "q1",
-    "question": "What is FRTB",
-    "reference_answer": "...",
-    "ground_truth_contexts": ["..."]
-  }
-]
-```
-
-## 验收建议
-
-- 功能回归: `python -m pytest tests/`
-- 评测链路: 至少跑一次 `--profile all`
-- 门禁链路: 跑一次 `--enforce-thresholds` 验证退出码
-- trace 排障说明见 [DATA.md](./DATA.md) 的 Trace 章节
-
-## 面试速答
-
-### 指标速答卡
-
-- 对比口径
-  - baseline: `.artifacts/reports/rag_eval_step1_real_20260127_072539.json`
-  - final: `.artifacts/reports/rag_eval_step4_20260202_102949.json`
-  - 数据集: `tests/data/questions.json` 共 20 题
-- 关键可背指标
-  - `domain_consistency_score`: `0.6234 -> 0.7606` `(+0.1372)`
-  - `numeric_consistency_score`: `0.2468 -> 0.5212` `(+0.2744)`
-  - `citations_coverage`: `1.0000 -> 1.0000` `(持平)`
-- 追问应答
-  - 为什么 `citation_precision` 下降: 跨阶段历史报告对比, 口径与配置并非完全同构, 最终上线以同口径重跑结果为准
-  - 如何阻断退化发布: 使用 `--enforce-thresholds` 和 `docs/eval_thresholds.yaml`, 门禁失败返回非零退出码
-
-### 高频题速答
-
-- Q1 多智能体方案的价值是什么
-  A: 把检索 生成 评审拆成独立职责, 便于定位退化来源并做节点级治理
-- Q2 为什么强调引用是 contract
-  A: 回答必须可回溯到语料证据, 否则无法用于工程排障与风险解释
-- Q3 如何定义有效引用
-  A: 引用必须能映射到真实 source 与片段位置, 并支撑当前句结论
-- Q4 如何判断检索优化是否真实有效
-  A: 先看 retrieval_recall_at_K retrieval_mrr retrieval_ndcg_at_K, 再看样本级失败分布是否收敛
-- Q5 门禁指标最核心看什么
-  A: 主要看 gate_block_benefit_rate 和 gate_false_kill_rate, 目标是高收益低误杀
-- Q6 为什么需要阈值门禁
-  A: 把评测结果转成可执行发布规则, 避免主观判断带来质量回退
-- Q7 如何解释性能与成本
-  A: 用 latency_p95_ms latency_p99_ms 说明尾时延, 用 cost_estimated_total_tokens 与 cost_estimated_usd 说明成本
-- Q8 如何保证实验可复现
-  A: 固定数据集 固定评测命令 保留 baseline 报告并输出对比 diff
-- Q9 为什么要有 trace
-  A: trace 能定位失败节点 上下游输入输出和时延瓶颈, 是排障主入口
-- Q10 线上问题优先排查顺序
-  A: 先看 threshold_gate 与 baseline.diff, 再看 samples.failure_reason, 最后下钻 trace
-- Q11 如何避免"看起来提升但不可上线"
-  A: 必须同口径对比并通过阈值门禁, 单次离线提升不等于可发布
-- Q12 项目对业务方最直接的价值
-  A: 提供可验证 可解释 可回归的风险问答, 不只给结论, 还给证据与退化边界
-
-### 面试建议
-
-- 讲结果时固定四步: 口径 -> 指标 -> 机制 -> 风险边界
-- 讲优化时固定三步: baseline 问题 -> 改动策略 -> 指标变化
-- 讲风险时主动补充: 哪些指标仍需同口径重跑确认
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - 系统架构
+- [INDEX.md](./INDEX.md) - Indexing 模块
+- [QUERY.md](./QUERY.md) - Querying 模块
+- [DATA.md](./DATA.md) - 数据说明
+- [eval_thresholds.yaml](./eval_thresholds.yaml) - 阈值配置

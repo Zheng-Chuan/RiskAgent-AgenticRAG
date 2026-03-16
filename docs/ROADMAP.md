@@ -4,21 +4,21 @@
 
 下面按项目实际完成时间顺序整理 每一条都说明它解决了什么问题 以及为什么它重要
 
-### Week 1 已完成 baseline 与工程骨架
+### Stage 1 已完成 baseline 与工程骨架
 
 - [x] 一键启动 UI 与 CLI 让任何人拉代码就能跑起来
 - [x] 端到端闭环 ingest retrieve answer citations 把可回溯作为第一原则
 - [x] secrets 全走环境变量 避免仓库泄露与本地配置混乱
 - [x] 端到端 smoke test 固化最小回归入口 防止链路被改坏
 
-### Week 2 已完成 语料接入与引用质量
+### Stage 2 已完成 语料接入与引用质量
 
 - [x] 语料接入支持 markdown 与 pdf 把知识源扩展到常见格式
 - [x] 分层切分 chunk 固化 section path 与来源定位 让 citations 能精确回指原文位置
 - [x] embeddings provider 可切换并固化维度 让检索质量可控可对比
 - [x] 20 题引用覆盖率评测 用最简单指标压住幻觉并驱动检索迭代
 
-### Week 3 已完成 单 agent agentic loop 与可控性
+### Stage 3 已完成 单 agent agentic loop 与可控性
 
 - [x] query rewrite critique revise re retrieve 闭环 检索差就自动改写并重试
 - [x] 工具调用与结构化 contract 输出 把可计算事实从 LLM 生成里剥离出去
@@ -26,38 +26,38 @@
 - [x] validator gates 证据一致性 数值一致性 拒答 fail fast 让错误早暴露
 - [x] LangGraph 编排可选启用 纯函数与图编排双跑 保持可测试与可演进
 
-### Week 4 已完成 评测体系与回归框架
+### Stage 4 已完成 评测体系与回归框架
 
 - [x] RAGAS 集成与离线可跑指标 默认不依赖外部服务也能跑评测
 - [x] 自定义指标补齐 citations coverage numeric consistency 等本项目关注点
 - [x] 报告落盘与回归对比 读取上一份报告标记退化 让优化有数据证据
 
-### Week 5 已完成 拒答机制与负样本评测
+### Stage 5 已完成 拒答机制与负样本评测
 
 - [x] 负样本数据集 覆盖库外知识 无意义输入 恶意输入
 - [x] refusal gate 强制在证据不足时拒答 并给 next actions 避免硬编
 - [x] refusal rate 指标 让系统在可信度上可量化可回归
 
-### Week 6 已完成 引用精准度与幻觉检测
+### Stage 6 已完成 引用精准度与幻觉检测
 
 - [x] citation precision 句粒度评测 衡量 answer 的每句是否被 contexts 支持
 - [x] citation judge 支持 auto llm heuristic 三种模式 兼顾成本与可信度
 - [x] hallucination rate in citations 指标 直接量化引用相关的幻觉占比
 
-### Week 7 已完成 金融领域一致性
+### Stage 7 已完成 金融领域一致性
 
 - [x] numeric consistency 自动对齐 answer 数字与工具输出 解决金融场景的数值可信度
 - [x] glossary check 检测术语误用 约束领域表达一致性
 - [x] domain consistency score 汇总为可追踪的指标 让领域质量可回归
 
-### Week 8 已完成 混合检索与重排序 step1
+### Stage 8 已完成 混合检索与重排序 step1
 
 - [x] Cross encoder reranking 对粗排结果精排 剔除语义相关但事实无关的噪音
 - [x] Hybrid search BM25 稀疏 + 向量稠密 让专有名词绝对召回 同时保留语义理解
 - [x] 产出阶段评测报告 写入 .artifacts/reports 并记录已做与未做
   - `python -m riskagent_agenticrag.evaluation.run --stage step1 --stage-notes "rerank and hybrid"`
 
-### Week 9 已完成 查询理解与智能路由 step2
+### Stage 9 已完成 查询理解与智能路由 step2
 
 - [x] Query expansion 多视角并行检索 覆盖不同表达与不同信息需求角度
 - [x] Step back prompting 退一步抽象问题 先拿背景知识再回答细节
@@ -66,7 +66,7 @@
 - [x] 产出阶段评测报告 写入 .artifacts/reports 并记录已做与未做
   - `python -m riskagent_agenticrag.evaluation.run --stage step2 --stage-notes "query intelligence and routing"`
 
-### Week 10 已完成 高级索引策略 step3
+### Stage 10 已完成 高级索引策略 step3
 
 - [x] Parent child indexing small to big 以小 chunk 检索 以大 chunk 生成 兼顾精准与上下文完整
 - [x] Summary indexing 为 section 生成摘要并索引 专门服务宏观总结类问题
@@ -74,7 +74,7 @@
 - [x] 产出阶段评测报告 写入 .artifacts/reports 并记录已做与未做
   - `python -m riskagent_agenticrag.evaluation.run --stage step3 --stage-notes "advanced indexing"`
 
-### Week 11 已完成 Self RAG 与动态决策 step4
+### Stage 11 已完成 Self RAG 与动态决策 step4
 
 - [x] Adaptive retrieval 显式判断上下文是否足够 不够则继续检索或拒答
 - [x] Self reflection scoring 引入 IsRel IsSup IsUse 等分级评分 输出可度量的反思信号
@@ -82,13 +82,13 @@
 - [x] 产出阶段评测报告 写入 .artifacts/reports 并记录已做与未做
   - `python -m riskagent_agenticrag.evaluation.run --stage step4 --stage-notes "self rag"`
 
-### Week 12 已完成 服务化接口与契约 v1
+### Stage 12 已完成 服务化接口与契约 v1
 
 - [x] HTTP API v1 与 schema 固化 支持 ask chat health ready metrics
 - [x] request_id evidence_set claims tool_traces decision_log 全链路稳定输出
 - [x] API key 可选鉴权 支持最小生产接入
 
-### Week 13 已完成 可观测性与调试体验
+### Stage 13 已完成 可观测性与调试体验
 
 - [x] request_id run_id model_id prompt_version retriever_version 统一日志字段
 - [x] trace contract 固化 每次 run 可落盘节点耗时与关键中间产物
@@ -126,9 +126,9 @@ LLM strategy
 
 备注 本项目优先保证本地可运行与可复现 但会补齐最小生产化闭环 包括接口契约 可观测性 成本控制 安全与质量门禁
 
-## Week 计划
+## Stage 计划
 
-### Week 1: baseline 跑通 + 工程化骨架
+### Stage 1: baseline 跑通 + 工程化骨架
 
 - 交付
   - [x] requirements.txt 与 Python 版本固化
@@ -143,10 +143,10 @@ LLM strategy
   - [x] 返回 citations, 且可定位来源
   - [x] 至少 1 条 e2e smoke test 可通过
     - [x] `conda run -n LangChain python -m unittest tests.test_week1_rag_baseline`
-  - 进度: Week 1 已完成
+  - 进度: Stage 1 已完成
   - 为什么要做 先把启动方式和回归入口固定住
   - 不然你每改一次代码 都要花时间在环境和手工验证上
-  - 为 Week 2 打基础 Week 2 要扩充语料和问题集
+  - 为 Stage 2 打基础 Stage 2 要扩充语料和问题集
   - 需要稳定入口做回归对比 才知道引用质量到底有没有变好
 
 #### Phase 0: 基础强化与项目骨架
@@ -170,7 +170,7 @@ LLM strategy
 - [x] 无明文 secrets
 - [x] 至少 1 条端到端测试可通过
 
-### Week 2: RAG MVP 闭环与引用质量
+### Stage 2: RAG MVP 闭环与引用质量
 
 - 交付
   - [x] corpus 语料接入(至少包含 Background.md)
@@ -181,7 +181,7 @@ LLM strategy
     - [x] `conda run -n LangChain python -m unittest tests.test_week2_rag_citation_quality`
   - 为什么要做 引用覆盖率是最简单也最管用的指标
   - 它能压住幻觉 也会逼着我们去优化检索和切分
-  - 为 Week 3 打基础: Week 3 引入 agentic loop 时, 每条关键结论都必须能回指证据, 否则会放大幻觉.
+  - 为 Stage 3 打基础: Stage 3 引入 agentic loop 时, 每条关键结论都必须能回指证据, 否则会放大幻觉.
 
 #### Phase 1: RAG MVP 面向工程师的业务解释
 
@@ -207,7 +207,7 @@ LLM strategy
   - [x] 本地优先 例如 Milvus
 - [x] embeddings
   - [x] MVP: FakeEmbeddings(离线可运行)
-  - [x] Week 2: 切换为真实 embeddings 并固化 provider 与维度
+  - [x] Stage 2: 切换为真实 embeddings 并固化 provider 与维度
 
 ##### 1.3 生成与引用
 
@@ -235,7 +235,7 @@ LLM strategy
 - [x] 端到端流程可复现
   - [x] 清空索引 -> ingest -> 查询 -> 返回答案
 
-### Week 3: 单 agent 的 agentic RAG MVP
+### Stage 3: 单 agent 的 agentic RAG MVP
 
 目标: 先保持单 agent 编排, 但要有 agentic 行为, 比如会改写 query, 会自检, 会重试检索, 会用工具, 也会做 validator
 
@@ -312,7 +312,7 @@ LLM strategy
   - [x] 术语表与缩写表 (via Background.md)
   - [x] 业务对象字典 例如 position security desk trader
 
-### Week 4: 基于 RAGAS 的评测模块
+### Stage 4: 基于 RAGAS 的评测模块
 
 - 交付
   - [x] 数据集与记录格式
@@ -366,7 +366,7 @@ LLM strategy
   - [x] 默认不依赖外部服务即可跑通 offline 指标
   - [x] 为什么要做 agentic RAG 系统的技术深度来自 contract 可控性 与可回归
 
-### Week 5: 拒答机制与负样本评测 (Refusal Quality)
+### Stage 5: 拒答机制与负样本评测 (Refusal Quality)
 
 #### Phase 3: Advanced Evaluation & Reliability (2026-02)
 
@@ -387,7 +387,7 @@ LLM strategy
   - [ ] 增补 gate 对照评测 CLI
     - [ ] `python -m riskagent_agenticrag.evaluation.run --profile gate --with-gate --baseline-report <path>`
 
-### Week 6: 引用精准度与幻觉检测 (Citation Precision)
+### Stage 6: 引用精准度与幻觉检测 (Citation Precision)
 
 - **交付**
   - [x] 自动化 Citation Judge
@@ -406,7 +406,7 @@ LLM strategy
   - [ ] 增补检索指标 CLI
     - [ ] `python -m riskagent_agenticrag.evaluation.run --profile retrieval --retrieval-k 5,10,20 --label retrieval_v1`
 
-### Week 7: 金融领域一致性 (Domain Consistency)
+### Stage 7: 金融领域一致性 (Domain Consistency)
 
 - **交付**
   - [x] 数值一致性校验 (Numeric Consistency)
@@ -426,7 +426,7 @@ LLM strategy
 
 > 基于 Advanced RAG 理论图谱 持续提升检索与生成质量
 
-### Week 8: 混合检索与重排序
+### Stage 8: 混合检索与重排序
 
 目标 先把检索侧做强 让同样的评测集在 citations precision 与 domain consistency 上立刻可见提升
 
@@ -457,7 +457,7 @@ LLM strategy
   - [x] 产出 step1 评测报告并可与 baseline 对比
     - [x] `python -m riskagent_agenticrag.evaluation.run --stage step1 --label step1 --enable-citation-judge --citation-judge-mode llm`
 
-### Week 9: 查询理解与智能路由
+### Stage 9: 查询理解与智能路由
 
 目标 让系统不再只有一招 通过并行检索与路由覆盖更多表达与更复杂的问题结构
 
@@ -479,7 +479,7 @@ LLM strategy
   - [x] 产出 step2 评测报告并可与 step1 报告对比
     - [x] `python -m riskagent_agenticrag.evaluation.run --stage step2 --label step2 --enable-citation-judge --citation-judge-mode llm`
 
-### Week 10: 高级索引策略
+### Stage 10: 高级索引策略
 
 目标 从索引结构层面解决长文档与宏观问题 切片太小丢上下文 切片太大语义模糊的矛盾
 
@@ -502,7 +502,7 @@ LLM strategy
   - [x] 产出 step3 评测报告并可与 step2 报告对比
     - [x] `python -m riskagent_agenticrag.evaluation.run --stage step3 --label step3 --enable-citation-judge --citation-judge-mode llm`
 
-### Week 11: Self RAG 与动态决策
+### Stage 11: Self RAG 与动态决策
 
 目标 在生成前后引入显式打分与门控 把现有的 agentic loop 升级成可度量可控的动态决策系统
 
@@ -524,11 +524,11 @@ LLM strategy
 
 ---
 
-## Phase 5: Productionization 可信上线闭环 (Week 12 - Week 13)
+## Phase 5: Productionization 可信上线闭环 (Stage 12 - Stage 13)
 
 目标 把 demo 升级成可上线的 LLM 应用工程作品集 重点是契约 稳定性 安全 可观测 成本 与质量门禁
 
-### Week 12: 服务化接口与契约 v1
+### Stage 12: 服务化接口与契约 v1
 
 - 交付
   - [x] HTTP API v1
@@ -547,7 +547,7 @@ LLM strategy
   - [x] 所有响应可被 schema 校验
   - [x] 对同一输入在相同参数下输出结构稳定
 
-### Week 13: 可观测性与调试体验
+### Stage 13: 可观测性与调试体验
 
 - 目标
   - [x] 统一 trace 与日志契约 让失败定位和回放成本可控
@@ -559,7 +559,7 @@ LLM strategy
 - 验收
   - [x] 任意一次失败都能从 trace 定位到 failure_reason 与责任节点
 
-### Week 14: 评测体系 2.0 指标补全与 CLI
+### Stage 14: 评测体系 2.0 指标补全与 CLI
 
 目标 把评测从回答质量扩展到检索质量 门禁收益 成本时延 稳定性 形成可量化可回归闭环
 
@@ -586,7 +586,7 @@ LLM strategy
   - [x] 报告中自动给出相对 baseline 的 diff 与 regression 标记
   - [x] 三个 profile 命令可在本地一键跑通并落盘到 .artifacts/reports
 
-### Week 15: 回归门禁与阈值策略
+### Stage 15: 回归门禁与阈值策略
 
 目标 把指标变成工程门禁 让每次变更都可自动判定是否可发布
 
@@ -604,7 +604,7 @@ LLM strategy
   - [x] 任一关键指标退化时命令返回非零退出码
   - [x] 报告自动生成 regression summary 便于 PR 评审
 
-### Week 16: 指标叙事与简历证据化
+### Stage 16: 指标叙事与简历证据化
 
 目标 把技术实现转成面试可验证叙事 每条亮点都能回指指标与报告
 
@@ -631,28 +631,28 @@ LLM strategy
 
 | Milestone | 预计时间 | 验收输出 |
 | --------- | -------- | -------- |
-| Week 1 | 已完成 | baseline RAG demo + citations + smoke test |
-| Week 2 | 已完成 | 真实 embeddings + 稳定 chunk_id + 20 题评测覆盖 |
-| Week 3 | 已完成 | 业务场景多 agent MVP + 工具调用 + guardrails |
-| Week 4 | 已完成 | 结构化输出落盘 + 评测升级 + 文档固化 |
-| Week 5 | 已完成 | 负样本集 + Refusal Gate 优化 |
-| Week 6 | 已完成 | Citation Precision 自动化评测 |
-| Week 7 | 已完成 | 领域一致性校验 数值与术语 |
-| Week 8 | 已完成 | 混合检索与重排序 step1 |
-| Week 9 | 已完成 | 查询理解与智能路由 step2 |
-| Week 10 | 已完成 | 高级索引策略 step3 |
-| Week 11 | 已完成 | Self RAG 与动态决策 |
-| Week 12 | 已完成 | HTTP API v1 + 契约 |
-| Week 13 | 已完成 | 可观测性与调试体验 |
-| Week 14 | 已完成 | 评测体系 2.0 指标补全 + CLI |
-| Week 15 | 已完成 | 回归门禁与阈值策略 |
-| Week 16 | 进行中 | 指标叙事与简历证据化 待写回 RESUME |
+| Stage 1 | 已完成 | baseline RAG demo + citations + smoke test |
+| Stage 2 | 已完成 | 真实 embeddings + 稳定 chunk_id + 20 题评测覆盖 |
+| Stage 3 | 已完成 | 业务场景多 agent MVP + 工具调用 + guardrails |
+| Stage 4 | 已完成 | 结构化输出落盘 + 评测升级 + 文档固化 |
+| Stage 5 | 已完成 | 负样本集 + Refusal Gate 优化 |
+| Stage 6 | 已完成 | Citation Precision 自动化评测 |
+| Stage 7 | 已完成 | 领域一致性校验 数值与术语 |
+| Stage 8 | 已完成 | 混合检索与重排序 step1 |
+| Stage 9 | 已完成 | 查询理解与智能路由 step2 |
+| Stage 10 | 已完成 | 高级索引策略 step3 |
+| Stage 11 | 已完成 | Self RAG 与动态决策 |
+| Stage 12 | 已完成 | HTTP API v1 + 契约 |
+| Stage 13 | 已完成 | 可观测性与调试体验 |
+| Stage 14 | 已完成 | 评测体系 2.0 指标补全 + CLI |
+| Stage 15 | 已完成 | 回归门禁与阈值策略 |
+| Stage 16 | 进行中 | 指标叙事与简历证据化 待写回 RESUME |
 
 **总计** 16 周 含 Phase 4 到 Phase 6
 
 ## 开发建议
 
-1. 每完成一个 Week 就提交 Git, 保持可回溯
+1. 每完成一个 Stage 就提交 Git, 保持可回溯
 2. 以数据口径与引用为第一优先级, 宁可少答也不要编造
 3. 每周至少 1 次 demo, 记录输入输出与问题清单
 4. 先做 CLI 后做 UI, 降低早期复杂度

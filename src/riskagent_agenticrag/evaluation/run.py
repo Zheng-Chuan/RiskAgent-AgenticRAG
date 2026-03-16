@@ -273,6 +273,7 @@ def run_evaluation(
             samples=samples,
             include_reference_based=True,
             include_context_precision=True,
+            include_low_priority=False,
         )
         ragas_result = {
             "enabled": ragas_out.enabled,
@@ -338,6 +339,8 @@ def run_evaluation(
                 "ragas_context_recall": "context_recall",
                 "ragas_answer_correctness": "answer_correctness",
                 "ragas_factual_correctness": "factual_correctness",
+                "ragas_context_precision_no_ref": "context_precision_no_ref",
+                "ragas_contradiction_score": "contradiction_score",
             }
             for ragas_key, standard_key in metric_mapping.items():
                 if ragas_key in ragas_metrics:

@@ -123,6 +123,13 @@ def compare_reports(
         "retrieval_rerank_uplift",
         "gate_block_benefit_rate",
         "reliability_success_rate",
+        "ragas_faithfulness",
+        "ragas_answer_relevancy",
+        "ragas_context_relevancy",
+        "ragas_context_precision_no_ref",
+        "ragas_context_recall",
+        "ragas_answer_correctness",
+        "ragas_response_completeness",
     }
     lower_better_explicit = {
         "hallucination_rate_in_citations",
@@ -133,6 +140,7 @@ def compare_reports(
         "latency_p95_ms",
         "latency_p99_ms",
         "cost_estimated_usd",
+        "ragas_contradiction_score",
     }
     out: dict[str, Any] = {}
 

@@ -1,211 +1,176 @@
-# ARCHITECTURE
+# 系统架构
 
-## 一页读懂
+## 整体架构
 
-面向企业内部软件工程师的 Agentic RAG 系统, 基于语料回答金融风险问题.
-answer 必须带 citations 方便回溯到原文, 编排层用 LangGraph, LLM 统一走 OpenAI compatible (OpenRouter).
+RiskAgent-AgenticRAG 是一个面向金融风险领域的 Agentic RAG 系统，采用模块化设计，主要分为三大核心模块：
 
-请求流程:
-
-```mermaid
-sequenceDiagram
-  participant U as User
-  participant S as RiskAgentSystem
-  participant LG as LangGraph
-  participant R as Retriever
-  participant LLM as LLM
-  participant G as Gates
-  U->>S: question
-  S->>LG: run agentic loop
-  LG->>R: retrieve docs
-  R-->>LG: contexts
-  LG->>LLM: generate answer
-  LLM-->>LG: answer + claims
-  LG->>G: validate
-  G-->>LG: pass / fail
-  LG-->>S: response + artifacts
-  S-->>U: answer + citations + trace
 ```
-
-每次请求都会落盘 artifacts bundle:
-
-```text
-.artifacts/<timestamp>_<request_id>/
-  request.json
-  response.json
-  structured_response.json
-  trace.json
+┌─────────────────────────────────────────────────────────────────────────┐
+│                         RiskAgent-AgenticRAG                              │
+├─────────────────────────────────────────────────────────────────────────┤
+│  ┌──────────────┐  ┌──────────────┐  ┌───────────────────────────────┐ │
+│  │   Indexing   │  │   Querying   │  │        Evaluation             │ │
+│  │   模块       │  │   模块       │  │        模块                   │ │
+│  │              │  │              │  │                               │ │
+│  - 文档预处理   │  - 多轮检索    │  - 指标计算                      │ │
+│  - 分块         │  - Agentic Loop │  - 报告生成                      │ │
+│  - 索引构建     │  - 答案合成    │  - 阈值门禁                      │ │
+│  - 持久化       │  - 引用追踪    │  - 退化检测                      │ │
+│  └──────────────┘  └──────────────┘  └───────────────────────────────┘ │
+└─────────────────────────────────────────────────────────────────────────┘
 ```
-
-## 快速架构图
-
-```mermaid
-flowchart TB
-  API[FastAPI] --> APP[RiskAgentSystem]
-  CLI[CLI] --> APP
-  APP --> LG[LangGraph workflow]
-  LG --> RET[Retriever]
-  RET --> IDX[Index artifacts]
-  RET --> MIL[Milvus]
-  LG --> LLM[LLM]
-  LG --> GATE[Validator gates]
-  GATE --> ART[Artifacts bundle]
-  ART --> TR[trace.json]
-```
-
-读图要点
-1 API CLI 共享同一个业务门面 RiskAgentSystem
-2 LangGraph 是唯一主流程
-3 每次请求都会落盘 artifacts bundle 目录 里面有 trace request response
-
-## 大模型接入
-
-统一使用 OpenRouter 的 OpenAI compatible 接口
-
-- 只需配置 `OPENAI_API_KEY` 或 `LLM_API_KEY`
-- 可选配置 `OPENROUTER_SITE_URL` `OPENROUTER_APP_NAME`
-
-未配置或无法连接 LLM 时会直接报错
 
 ## 核心模块
 
-- `riskagent_agenticrag.indexing`
-  - 增量索引 构建 manifest 写入 Milvus 与各类语料 JSONL
-- `riskagent_agenticrag.rag`
-  - ingest chunking
-  - retrieve rerank reroute
-- `riskagent_agenticrag.llm`
-  - LLM 接入封装
-  - OpenAI compatible client
-- `riskagent_agenticrag.api`
-  - HTTP API v1 healthz readyz metrics ask chat
-- `riskagent_agenticrag.agents`
-  - retrieval agent
-  - explanation agent
-  - coordinator
+### 1. Indexing 模块 (索引构建)
 
-## 数据流
+**职责**:
+- 文档加载与预处理
+- 文档分块 (Chunking)
+- 向量化 (Embedding)
+- 索引构建 (向量索引 + 关键词索引)
+- 增量索引
 
-sources -> chunk -> embeddings -> milvus
-query -> retrieve -> contexts -> multi-agent -> answer + citations
+**主要文件**:
+- `src/riskagent_agenticrag/indexing/indexer.py` - 索引构建器
+- `src/riskagent_agenticrag/indexing/milvus_store.py` - Milvus 存储
+- `src/riskagent_agenticrag/rag/chunking.py` - 文档分块
+- `src/riskagent_agenticrag/rag/embeddings.py` - 向量化
+- `src/riskagent_agenticrag/rag/source_loader.py` - 文档加载
 
-## LangGraph Agentic Loop 可视化
+**详细文档**: [INDEX.md](./INDEX.md)
 
-这是 RiskAgent 项目中 agentic RAG loop 的执行流程图.
-
-### 流程图
-
-```mermaid
 ---
-config:
-  flowchart:
-    curve: linear
+
+### 2. Querying 模块 (查询与推理)
+
+**职责**:
+- 多轮检索 (Agentic Loop)
+- 查询改写
+- 检索质量评估 (Self-RAG)
+- 工具调用 (DataAgent)
+- 答案合成
+- 引用生成
+- 响应验证
+
+**主要文件**:
+- `src/riskagent_agenticrag/orchestration/langgraph_runner.py` - LangGraph 编排
+- `src/riskagent_agenticrag/orchestration/nodes.py` - Agentic Loop 节点
+- `src/riskagent_agenticrag/rag/retriever_factory.py` - 检索器工厂
+- `src/riskagent_agenticrag/rag/hybrid_retriever.py` - 混合检索
+- `src/riskagent_agenticrag/rag/self_rag.py` - Self-RAG 评分
+- `src/riskagent_agenticrag/agents/data_agent.py` - DataAgent 工具
+
+**详细文档**: [QUERY.md](./QUERY.md)
+
 ---
-graph TD;
-  __start__([<p>__start__</p>]):::first
-  rewrite(rewrite)
-  retrieve_and_critique(retrieve_and_critique)
-  revise_query(revise_query)
-  decide_tool_use(decide_tool_use)
-  call_tool(call_tool)
-  synthesize_answer(synthesize_answer)
-  validate_and_save(validate_and_save)
-  __end__([<p>__end__</p>]):::last
-  __start__ --> rewrite;
-  call_tool --> synthesize_answer;
-  decide_tool_use -.-> call_tool;
-  decide_tool_use -.-> synthesize_answer;
-  retrieve_and_critique -.-> decide_tool_use;
-  retrieve_and_critique -.-> revise_query;
-  revise_query --> retrieve_and_critique;
-  rewrite --> retrieve_and_critique;
-  synthesize_answer --> validate_and_save;
-  validate_and_save --> __end__;
-  classDef default fill:#f2f0ff,line-height:1.2
-  classDef first fill-opacity:0
-  classDef last fill:#bfb6fc
+
+### 3. Evaluation 模块 (评估)
+
+**职责**:
+- 多维度指标计算
+- 评估报告生成
+- 阈值门禁策略
+- 退化检测与基线比较
+- 指标计算工具
+
+**主要文件**:
+- `src/riskagent_agenticrag/evaluation/run.py` - 端到端评估入口
+- `src/riskagent_agenticrag/evaluation/ragas_metrics.py` - RAGAS 指标
+- `src/riskagent_agenticrag/evaluation/domain_consistency.py` - 领域一致性
+- `src/riskagent_agenticrag/evaluation/citation_precision.py` - 引用精度
+- `src/riskagent_agenticrag/evaluation/advanced_metrics.py` - 高级指标
+- `src/riskagent_agenticrag/evaluation/compute_metric.py` - 指标计算工具
+- `src/riskagent_agenticrag/evaluation/reporting.py` - 报告与退化检测
+- `src/riskagent_agenticrag/evaluation/thresholds.py` - 阈值配置
+
+**详细文档**: [EVALUATION.md](./EVALUATION.md)
+
+---
+
+## 数据流动
+
+```
+Corpus (PDF/Word/HTML/Markdown)
+    ↓
+[Indexing 模块]
+    ├─→ Chunking (文档分块)
+    ├─→ Embedding (向量化)
+    └─→ Index (索引构建)
+         ↓
+    Milvus 索引
+         ↓
+[Querying 模块]
+    ├─→ Query Rewrite (查询改写)
+    ├─→ Retrieve (混合检索)
+    ├─→ Self-RAG (质量评估)
+    ├─→ Tool Use (工具调用)
+    ├─→ Synthesize (答案合成)
+    └─→ Validate (响应验证)
+         ↓
+    带引用的可验证回答
+         ↓
+[Evaluation 模块]
+    ├─→ 检索质量指标
+    ├─→ 引用精度指标
+    ├─→ 领域一致性指标
+    ├─→ RAGAS 指标
+    ├─→ 可靠性与成本指标
+    └─→ 退化检测
+         ↓
+    评估报告 + 阈值门禁
 ```
 
-### 节点说明
+---
 
-- **查询改写 (rewrite)**: 将用户问题改写为更适合检索的 query
-- **检索与评估 (retrieve_and_critique)**: 检索文档并评估质量
-- **修订查询 (revise_query)**: 基于 critique 改进 query
-- **决策工具调用 (decide_tool_use)**: LLM 决定是否需要调用工具
-- **调用工具 (call_tool)**: 调用 DataAgent 获取结构化数据
-- **合成答案 (synthesize_answer)**: 基于检索结果和工具输出生成最终答案
-- **验证与落盘 (validate_and_save)**: 运行 validator gates 并保存 artifacts
+## 技术栈
 
-### 详细流程图 (含 Week 8-11 高级特性)
+| 层次 | 技术选型 | 说明 |
+|------|----------|------|
+| 编排层 | LangGraph | Agentic Loop 工作流 |
+| LLM 接入 | OpenAI 兼容 (OpenRouter) | 支持多种模型 |
+| 向量数据库 | Milvus | 支持 Docker/Lite 模式 |
+| 嵌入模型 | BAAI/bge-large-zh-v1.5 | 默认中文嵌入 |
+| Web 框架 | FastAPI | HTTP API |
+| 评估框架 | RAGAS + 自研 | 多维度评估 |
 
-此图展示了系统内部的详细逻辑，特别是 Retrieve & Critique 节点内部的混合检索、查询理解、高级索引和 Self-RAG 评分流程。
+---
 
-```mermaid
-graph TD
-    %% LangGraph Nodes
-    Start((Start)) --> Rewrite[Node: Rewrite Query<br/>查询改写]
-    Rewrite --> Retrieve[Node: Retrieve & Critique<br/>检索与评估]
+## 目录结构
 
-    %% Internal Logic of Retrieve Node
-    subgraph Retrieve_Internal [Retrieve & Critique 节点内部逻辑]
-        direction TB
-        QueryIntel[Query Intelligence<br/>(Week 9: 意图路由/变体生成)]
-        Hybrid[Hybrid Retriever<br/>(Week 8: Dense + Sparse + Rerank)]
-        AdvIndex[Advanced Indexing<br/>(Week 10: Parent/Summary/HyDE)]
-        SelfRAG_Grade[Self-RAG Grading<br/>(Week 11: 质量打分)]
-        
-        QueryIntel --> Hybrid
-        Hybrid --> AdvIndex
-        AdvIndex --> SelfRAG_Grade
-    end
-
-    %% Flow Control
-    Retrieve -- 质量不足/需要更多信息 --> Revise[Node: Revise Query<br/>查询修订]
-    Revise --> Retrieve
-
-    Retrieve -- 质量达标 --> ToolDecide[Node: Decide Tool Use<br/>工具决策]
-
-    ToolDecide -- 需要工具 --> CallTool[Node: Call Tool<br/>调用风险数据工具]
-    CallTool --> Synthesize
-    ToolDecide -- 不需要 --> Synthesize[Node: Synthesize Answer<br/>答案合成]
-
-    Synthesize --> Validate[Node: Validate & Save<br/>幻觉检查 & 落盘]
-    Validate --> End((End))
-
-    %% Styling
-    style Retrieve fill:#e1f5fe,stroke:#01579b,stroke-width:2px
-    style Retrieve_Internal fill:#ffffff,stroke:#0288d1,stroke-dasharray: 5 5
+```
+src/riskagent_agenticrag/
+├── agents/           # 智能体 (DataAgent)
+├── api/              # HTTP API 服务
+├── artifacts/        # Artifacts 存储
+├── cli/              # 命令行工具
+├── config/           # 配置管理
+├── contracts/        # 数据契约
+├── evaluation/       # 评估模块 (Evaluation)
+├── indexing/         # 索引模块 (Indexing)
+├── llm/              # LLM 调用
+├── orchestration/    # 编排层
+├── rag/              # RAG 核心 (Querying 模块主要部分)
+├── tools/            # 工具集
+├── validators/       # 验证器 (Gates)
+└── app.py            # 系统入口
 ```
 
-### 查看方式
+---
 
-1. 在 GitHub 上直接查看 (GitHub 原生支持 Mermaid)
-2. 使用 Mermaid 在线编辑器: https://mermaid.live/
-3. 在支持 Mermaid 的 Markdown 编辑器中查看 (如 Typora, VS Code with Mermaid extension)
+## 设计原则
 
-## 质量保障与开发方法论 (Quality Assurance & Methodology)
+1. **模块化**: 三大核心模块相对独立，边界清晰
+2. **可观测性**: 完整的 trace 记录和 artifacts 落盘
+3. **可验证性**: 所有回答附带引用，可回溯到原文
+4. **评测驱动**: 完善的评估框架，支持阈值门禁和退化检测
+5. **领域特定**: 针对金融风险领域优化（数值、术语一致性）
 
-### Evaluation Driven Development (EDD)
+---
 
-本项目采用 **EDD (评测驱动开发)** 模式，即在开发功能之前，先定义评测样本与通过标准。
+## 详细文档
 
-- **原则**: 先定义 "Bad Case" (坏样本)，再优化系统直到 Pass。
-- **流程**:
-  1.  发现问题或定义新需求。
-  2.  在评测集 (`tests/data/eval_set.json` 或专用负样本集) 中添加对应的测试用例。
-  3.  运行评测脚本，确认失败 (Red Phase)。
-  4.  修改 Agent 逻辑或 Prompt。
-  5.  再次运行评测，确认通过且无回归 (Green Phase)。
-
-### 拒答机制 (Refusal Mechanism)
-
-为了保证金融场景的可信度，系统必须具备**拒答能力**。
-
-- **架构要求**:
-  - **负样本集 (Negative Dataset)**: 评测集中必须包含 20%+ 的负样本（如库外知识、恶意提问、无意义输入）。
-  - **Refusal Gate**: 在 Agentic Loop 中必须包含显式的拒答门控（Refusal Gate）。
-    - 当检索结果 (`docs`) 为空或相关性 (`context_relevance`) 低于阈值时，必须拒答。
-    - 当生成的 `claims` 无法被 `evidence` 强支撑时，必须拒答或标记为不确定。
-  - **验收标准**:
-    - 正样本拒答率 (False Refusal Rate) < 5%
-    - 负样本拒答率 (True Refusal Rate) > 95%
+- [INDEX.md](./INDEX.md) - Indexing 模块详细文档
+- [QUERY.md](./QUERY.md) - Querying 模块详细文档
+- [EVALUATION.md](./EVALUATION.md) - Evaluation 模块详细文档
+- [DATA.md](./DATA.md) - 数据说明

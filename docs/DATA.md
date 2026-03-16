@@ -1,212 +1,120 @@
-# DATA 数据字典
+# 数据说明
 
-这个文件用来描述项目里的关键中间数据结构和用途
-目标是让你看到一份数据就能知道它从哪里来 用来做什么 影响什么指标
+本文档说明 RiskAgent-AgenticRAG 项目中涉及的各类数据。
 
-## Chunk
+## 1. 语料库 (Corpus)
 
-### 定义
-
-Chunk 是 LangChain 的 Document 对象
-它代表被切分后的最小可检索单元
-
-- page_content: string 该 chunk 的文本内容
-- metadata: dict 该 chunk 的结构化元数据
-
-### 生成位置
-
-- 语料加载: [source_loader.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/rag/source_loader.py)
-- 切分与元数据增强: [ingestion.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/rag/ingestion.py)
-- 增量写入向量库: [indexer.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/indexing/indexer.py) 与 [milvus_store.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/indexing/milvus_store.py)
-
-### 主要用途
-
-- 作为 embeddings 的输入 生成向量写入 Milvus
-- 作为 BM25 稀疏检索的语料落盘到 sparse_corpus.jsonl
-- 作为 citations evidence_set 的来源 支撑可解释性与校验
-
-### chunk_id 的设计
-
-chunk_id 用于稳定定位引用
-它由 source start_index page_content 共同生成哈希摘要
-实现位置在 [ingestion.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/rag/ingestion.py#L128-L155)
-
-关键影响
-
-- 切分规则或语料内容变动会导致 chunk_id 变化
-- 索引采用文件粒度增量更新 未变化文件会跳过 变更文件会重建该文件的 chunk
-
-### 核心字段
-
-下表按产生阶段划分字段
-
-| 字段 | 类型 | 产生阶段 | 用途 |
-| --- | --- | --- | --- |
-| page_content | string | ingestion | embeddings 输入 生成 contexts 生成回答 |
-| source | string | source_loader | 引用定位 文档去重 多样性约束 |
-| file_type | string | source_loader | 区分 md 与 pdf 影响切分与定位 |
-| page | int | source_loader pdf | pdf 引用定位 |
-| section_path | string | ingestion md | 标题路径 用于引用定位 与多样性约束 |
-| start_index | int | ingestion | 引用定位 evidence gate 的粒度要求 |
-| start_line | int | ingestion md | md 引用定位 |
-| end_line | int | ingestion md | md 引用定位 |
-| chunk_index | int | ingestion | 调试 排查 |
-| chunk_id | string | ingestion | citations evidence_set claim 绑定 |
-
-检索阶段会追加一些排序相关字段
-
-| 字段 | 类型 | 产生阶段 | 用途 |
-| --- | --- | --- | --- |
-| retrieval_sources | list[string] | retrieval | 标记 dense sparse 来源 便于分析 |
-| dense_rank | int | retrieval | debug 与融合分析 |
-| sparse_rank | int | retrieval | debug 与融合分析 |
-| rrf_score | float | retrieval | 融合排序的主分数 |
-| bm25_score | float | retrieval | 稀疏得分归一化 用于 coarse score |
-| metadata_boost | float | retrieval | source 与 section 命中时的轻量加权 |
-| coarse_score | float | retrieval | 候选压缩阶段的打分 |
-| rerank_score | float | retrieval | cross encoder 精排分数 |
-| confidence_gap_to_top1 | float | retrieval | 置信差距信号 用于后续自适应检索 |
-
-## Sparse Corpus Row
-
-该数据用于 BM25 稀疏检索
-写入位置在 [sparse_index.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/rag/sparse_index.py)
-
-一行一个 JSON 对象
-
-- page_content: string 同 chunk.page_content
-- metadata: dict 同 chunk.metadata
-
-文件默认路径是 .milvus/sparse_corpus.jsonl
-
-## Citation
-
-Citation 是 UI 和报告里展示的最小引用结构
-它从 docs 的 metadata 提取而来
-实现位置在 [pipeline.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/rag/pipeline.py#L73-L110)
-
-结构
-
-- source: string
-- chunk_id: string
-- start_index: int optional
-- section_path: string optional
-- page: int optional
-- start_line: int optional
-- end_line: int optional
-
-## Evidence Set Item
-
-Evidence Set 用于 validator gate 的可执行校验
-它由检索返回 docs 构建
-实现位置在 [agentic_primitives.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/rag/agentic_primitives.py#L296-L338)
-
-结构
-
-- evidence_id: string ev_0 ev_1
-- source: string
-- chunk_id: string
-- start_index: int
-- snippet: string 前 200 字符
-- section_path: string optional
-- start_line: int optional
-- end_line: int optional
-- page: int optional
-- text: string optional 仅 include_text=true 时存在
-
-## Claim
-
-Claim 是对 answer 的段落级结构化切分
-它必须携带 evidence_ids 以便 evidence_gate 可执行
-实现位置在 [agentic_primitives.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/rag/agentic_primitives.py#L341-L396)
-
-结构
-
-- claim_id: string cl_0 cl_1
-- statement: string
-- evidence_ids: list[string] 指向 evidence_id
-
-## Decision Log Entry
-
-Decision Log 用于解释 agentic 决策过程
-它是一个 dict 列表 贯穿 rewrite critique revise tool decision
-常见字段在 [langgraph_runner.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/orchestration/langgraph_runner.py)
-
-结构
-
-- step_id: string
-- agent: string
-- rationale: string
-- chosen: string
-- alternatives: list[string]
-
-## Tool Trace
-
-Tool Trace 用于记录工具调用输入输出
-它来自 data_agent 的输出 并被 numeric consistency gate 使用
-相关入口在 [langgraph_runner.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/orchestration/langgraph_runner.py)
-
-结构是 dict
-字段取决于具体 tool 实现
-至少应包含 tool_output 或 output 以便数字回指
-
-## Trace
-
-Trace 是每次请求的执行轨迹, 和 request response 放在同一个 artifacts bundle 目录.
-
-目录结构:
-
-```text
-.artifacts/<timestamp>_<request_id>/
-  request.json
-  response.json
-  structured_response.json
-  trace.json
+### 目录结构
+```
+corpus/
+├── acceptance/           # 验收测试文档
+├── regulatory_seed/      # 监管文档
+│   ├── md/en/           # Markdown 格式
+│   └── pdf/en/          # PDF 格式
+└── Background.md        # 背景知识
 ```
 
-### trace.json 字段
+### 支持格式
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| request_id | string | 请求唯一标识 |
-| timestamp | string | ISO 格式时间戳 |
-| nodes | list[dict] | 每个 LangGraph 节点的执行记录 |
+| 格式 | 说明 |
+|------|------|
+| PDF | `.pdf`，金融监管文档 |
+| Word | `.docx` |
+| Markdown | `.md` |
+| HTML | `.html` |
 
-每个 node 记录:
+### 内容主题
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| node_name | string | 节点名 如 rewrite retrieve_and_critique |
-| start_ms | float | 节点开始时间 |
-| end_ms | float | 节点结束时间 |
-| duration_ms | float | 耗时 |
-| input_summary | string | 输入摘要 |
-| output_summary | string | 输出摘要 |
+- FRTB (Fundamental Review of the Trading Book)
+- CVA (Credit Valuation Adjustment)
+- XVA 系列
+- Basel III
+- 金融风险术语
 
-retrieve_and_critique 节点额外记录:
+---
 
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| top_docs | list[dict] | top8 检索结果 |
-| top_docs[].source | string | 文档来源 |
-| top_docs[].chunk_id | string | chunk 标识 |
-| top_docs[].snippet | string | 原文片段 |
-| top_docs[].rerank_score | float | 精排分数 |
+## 2. 测试数据集
 
-### 排障路径
+### 位置
+`tests/data/questions.json`
 
-1. 先看 `nodes` 找耗时最长的节点
-2. 看 `retrieve_and_critique.top_docs` 确认检索质量
-3. 看 `synthesize_answer.output_summary` 确认生成内容
-4. 看 `validate_and_save` 确认 gate 结果
+### 数据结构
+```json
+{
+  "item_id": "q01",
+  "question": "What is FRTB?",
+  "reference_answer": "...",
+  "reference_contexts": [...],
+  "ground_truth_contexts": [...]
+}
+```
 
-## Evaluation Report
+### 字段说明
 
-评测报告写入 .artifacts/reports
-入口在 [evaluation/run.py](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/src/riskagent_agenticrag/evaluation/run.py)
+| 字段 | 说明 | 是否必需 |
+|------|------|---------|
+| `item_id` | 问题 ID | 是 |
+| `question` | 用户问题 | 是 |
+| `reference_answer` | 参考答案 | 否 |
+| `reference_contexts` | 参考上下文 | 否 |
+| `ground_truth_contexts` | 真实上下文 | 否 |
 
-核心结构
+---
 
-- inputs: corpus_dir dataset_path retriever_mode reranker_model
-- metrics: citations_coverage citation_precision domain_consistency_score 等
-- samples: 每条样本的 question answer contexts citations passed
+## 3. 索引数据
+
+### 位置
+`.milvus/`
+
+### 目录结构
+```
+.milvus/
+├── milvus_lite/          # Milvus Lite 数据
+└── index_manifest.json   # 索引清单
+```
+
+### index_manifest.json
+记录已索引文档的元数据：
+- 文档路径
+- 最后修改时间
+- 哈希值
+- 分块信息
+
+---
+
+## 4. 评估 Artifacts
+
+### 位置
+`.artifacts/`
+
+### 目录结构
+```
+.artifacts/
+├── artifacts/            # 单次请求的 artifacts
+│   └── <id>/
+│       ├── trace.json    # 完整 trace
+│       └── ...
+└── reports/              # 评估报告
+    ├── rag_eval_*.md     # Markdown 报告
+    ├── rag_eval_*.json   # JSON 报告
+    └── ...
+```
+
+---
+
+## 5. 配置数据
+
+### 阈值配置
+`docs/eval_thresholds.yaml` - 评估指标阈值和门禁策略
+
+### 环境变量
+- `OPENROUTER_API_KEY` - LLM API Key
+- `EMBEDDINGS_PROVIDER` - 嵌入模型提供者
+
+---
+
+## 相关文档
+
+- [ARCHITECTURE.md](./ARCHITECTURE.md) - 系统架构
+- [INDEX.md](./INDEX.md) - Indexing 模块
+- [EVALUATION.md](./EVALUATION.md) - 评估模块

@@ -73,7 +73,7 @@ def node_retrieve_and_critique(state: AgenticState) -> AgenticState:
 
     docs = retriever.invoke(current_query)
 
-    self_rag_enabled = os.getenv("RISKAGENT_SELF_RAG", "").lower().strip() in {"true", "1", "yes"}
+    self_rag_enabled = os.getenv("RISKAGENT_SELF_RAG", "true").lower().strip() in {"true", "1", "yes"}
     self_sufficient = False
     if self_rag_enabled:
         g = grade_docs(question=question, docs=docs)
@@ -420,7 +420,7 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
         "tool_args": state.get("tool_args", {}),
         "tool_should_call": state.get("should_call_tool", False),
     }
-    self_rag_enabled = os.getenv("RISKAGENT_SELF_RAG", "").lower().strip() in {"true", "1", "yes"}
+    self_rag_enabled = os.getenv("RISKAGENT_SELF_RAG", "true").lower().strip() in {"true", "1", "yes"}
     if self_rag_enabled:
         gen = grade_generation(failure_reason=failure_reason)
         self_rag = (state.get("debug") or {}).get("self_rag")

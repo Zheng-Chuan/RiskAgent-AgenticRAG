@@ -208,7 +208,7 @@ class QueryIntelligentRetriever:
 
 
 def query_intel_enabled() -> bool:
-    raw = os.getenv("RISKAGENT_ENABLE_QUERY_INTEL", "").lower().strip()
+    raw = os.getenv("RISKAGENT_ENABLE_QUERY_INTEL", "true").lower().strip()
     if not raw:
-        return False
+        return True
     return raw in {"true", "1", "yes"}

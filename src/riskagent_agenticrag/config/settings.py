@@ -119,11 +119,17 @@ class PathConfig:
 class FeatureConfig:
     """功能开关配置"""
     use_langgraph: bool = False
+    self_rag_enabled: bool = True
+    query_intel_enabled: bool = True
+    retriever_mode: str = "step2"
     
     @classmethod
     def from_env(cls) -> FeatureConfig:
         return cls(
-            use_langgraph=os.getenv("USE_LANGGRAPH", "").lower().strip() in {"true", "1", "yes"}
+            use_langgraph=os.getenv("USE_LANGGRAPH", "").lower().strip() in {"true", "1", "yes"},
+            self_rag_enabled=os.getenv("RISKAGENT_SELF_RAG", "true").lower().strip() in {"true", "1", "yes"},
+            query_intel_enabled=os.getenv("RISKAGENT_ENABLE_QUERY_INTEL", "true").lower().strip() in {"true", "1", "yes"},
+            retriever_mode=os.getenv("RISKAGENT_RETRIEVER_MODE", "step2").lower().strip(),
         )
 
 

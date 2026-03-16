@@ -11,7 +11,7 @@ from riskagent_agenticrag.rag.sparse_index import load_sparse_corpus
 
 
 def build_retriever(*, persist_dir: Path, final_k: int = 4):
-    mode = os.getenv("RISKAGENT_RETRIEVER_MODE", "step4").lower().strip()
+    mode = os.getenv("RISKAGENT_RETRIEVER_MODE", "step2").lower().strip()
 
     dense_k = int(os.getenv("RISKAGENT_DENSE_K", "30"))
     sparse_k = int(os.getenv("RISKAGENT_SPARSE_K", "30"))

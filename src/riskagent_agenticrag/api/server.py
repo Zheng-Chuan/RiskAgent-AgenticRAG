@@ -11,7 +11,11 @@ from typing import Any, Optional
 from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.errors import RateLimitExceeded
+from slowapi.util import get_remote_address
 
 from riskagent_agenticrag.api.schemas import (
     ApiError,
@@ -23,6 +27,15 @@ from riskagent_agenticrag.api.schemas import (
 )
 from riskagent_agenticrag.app import RiskAgentSystem
 from riskagent_agenticrag.config.settings import settings
+from riskagent_agenticrag.constants import (
+    DEFAULT_API_HOST,
+    DEFAULT_API_PORT,
+    HTTP_401_UNAUTHORIZED,
+    HTTP_429_TOO_MANY_REQUESTS,
+    HTTP_500_INTERNAL_SERVER_ERROR,
+    HTTP_503_SERVICE_UNAVAILABLE,
+)
+from riskagent_agenticrag.exceptions import AuthenticationError
 from riskagent_agenticrag.indexing.indexer import MANIFEST_FILENAME
 from riskagent_agenticrag.indexing.milvus_store import build_milvus_client
 from riskagent_agenticrag.rag.embeddings import build_embeddings
@@ -31,34 +44,55 @@ from riskagent_agenticrag.rag.embeddings import build_embeddings
 _REQ_TOTAL = Counter("riskagent_http_requests_total", "Total HTTP requests", ["path", "method", "status"])
 _REQ_LAT_MS = Histogram("riskagent_http_request_latency_ms", "HTTP request latency ms", ["path", "method"])
 
+# ---- 速率限制 ----
+limiter = Limiter(key_func=get_remote_address)
+
+# ---- 认证 ----
+security = HTTPBearer(auto_error=False)
+
 
 # ---------------------------------------------------------------------------
 # 认证 & 错误处理
 # ---------------------------------------------------------------------------
 
-def _require_api_key(x_api_key: Optional[str], authorization: Optional[str]) -> None:
-    expected = os.getenv("RISKAGENT_API_KEY", "").strip()
+def _require_api_key(
+    x_api_key: Optional[str] = None,
+    authorization: Optional[HTTPAuthorizationCredentials] = None,
+) -> None:
+    """验证 API Key."""
+    if not settings.api_auth.enabled:
+        return
+
+    expected = settings.api_auth.secret.get_secret_value()
     if not expected:
         return
+
     provided = ""
     if x_api_key:
         provided = str(x_api_key).strip()
     if not provided and authorization:
-        auth = str(authorization).strip()
-        if auth.lower().startswith("bearer "):
-            provided = auth.split(" ", 1)[1].strip()
+        provided = str(authorization.credentials).strip()
+
     if provided != expected:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="unauthorized")
+        raise AuthenticationError("Invalid API key")
 
 
-def auth_dep(
+async def auth_dep(
     x_api_key: Optional[str] = Header(default=None, alias="X-API-Key"),
-    authorization: Optional[str] = Header(default=None, alias="Authorization"),
+    authorization: Optional[HTTPAuthorizationCredentials] = Depends(security),
 ) -> None:
-    _require_api_key(x_api_key, authorization)
+    """认证依赖注入."""
+    try:
+        _require_api_key(x_api_key, authorization)
+    except AuthenticationError as e:
+        raise HTTPException(
+            status_code=HTTP_401_UNAUTHORIZED,
+            detail="Unauthorized",
+        ) from e
 
 
 def _error_from_exc(exc: Exception) -> ApiError:
+    """从异常构造错误响应."""
     msg = str(exc)
     if "Missing LLM API key" in msg:
         return ApiError(error_code="llm_missing_key", message=msg, retryable=False)
@@ -70,12 +104,15 @@ def _error_from_exc(exc: Exception) -> ApiError:
 
 
 def _error_from_http(*, code: int, detail: Any) -> ApiError:
-    if code == status.HTTP_401_UNAUTHORIZED:
+    """从 HTTP 状态码构造错误响应."""
+    if code == HTTP_401_UNAUTHORIZED:
         return ApiError(error_code="unauthorized", message=str(detail), retryable=False)
     if code == status.HTTP_422_UNPROCESSABLE_ENTITY:
         return ApiError(error_code="invalid_request", message="invalid request", retryable=False, details={"detail": detail})
-    if code == status.HTTP_503_SERVICE_UNAVAILABLE:
+    if code == HTTP_503_SERVICE_UNAVAILABLE:
         return ApiError(error_code="not_ready", message="service not ready", retryable=True, details={"detail": detail})
+    if code == HTTP_429_TOO_MANY_REQUESTS:
+        return ApiError(error_code="rate_limit_exceeded", message="Rate limit exceeded", retryable=True)
     return ApiError(error_code="http_error", message=str(detail), retryable=False, details={"status_code": code})
 
 
@@ -153,7 +190,7 @@ def _ready_details() -> tuple[bool, dict[str, Any]]:
     persist_dir = settings.paths.milvus_lite_dir
     manifest_ok = bool(persist_dir.exists() and (persist_dir / MANIFEST_FILENAME).exists())
     details["index_manifest"] = {"ok": manifest_ok, "persist_dir": str(persist_dir)}
-    details["llm_key"] = {"ok": bool(settings.llm.api_key)}
+    details["llm_key"] = {"ok": bool(settings.llm.api_key or settings.llm.openai_api_key)}
 
     emb_ok = False
     try:
@@ -171,6 +208,18 @@ def _ready_details() -> tuple[bool, dict[str, Any]]:
         milvus_ok = False
         details["milvus"] = {"ok": False, "error": str(exc)}
 
+    # 检查 Redis 连接（如果启用）
+    redis_ok = True
+    try:
+        from riskagent_agenticrag.cache import get_cache
+        cache = get_cache()
+        cache.set("health_check", "ok", ttl=10)
+        redis_ok = cache.get("health_check") == "ok"
+        details["redis"] = {"ok": redis_ok}
+    except Exception:
+        details["redis"] = {"ok": False, "error": "Redis not available"}
+        redis_ok = False
+
     ok = bool(manifest_ok and details["llm_key"]["ok"] and emb_ok and milvus_ok)
     return ok, details
 
@@ -181,6 +230,10 @@ def _ready_details() -> tuple[bool, dict[str, Any]]:
 
 system = RiskAgentSystem()
 app = FastAPI(title="RiskAgent API", version="v1")
+
+# 注册速率限制
+app.state.limiter = limiter
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 
 @app.exception_handler(HTTPException)
@@ -207,25 +260,31 @@ def request_validation_exception_handler(request: Request, exc: RequestValidatio
 
 @app.get("/healthz", response_model=HealthResponse)
 def healthz() -> HealthResponse:
+    """健康检查端点."""
     return HealthResponse(status="ok")
 
 
 @app.get("/readyz", response_model=ReadyResponse)
 def readyz(response: Response) -> ReadyResponse:
+    """就绪检查端点."""
     ok, details = _ready_details()
     if ok:
         return ReadyResponse(status="ready", details=details)
-    response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    response.status_code = HTTP_503_SERVICE_UNAVAILABLE
     return ReadyResponse(status="not_ready", details=details)
 
 
 @app.get("/metrics")
 def metrics() -> Response:
+    """Prometheus 指标端点."""
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 @app.post("/v1/ask", response_model=AskResponse, dependencies=[Depends(auth_dep)])
-def v1_ask(req: AskRequest, response: Response) -> AskResponse:
+@limiter.limit(f"{settings.rate_limit.per_minute}/minute")
+@limiter.limit(f"{settings.rate_limit.per_hour}/hour")
+def v1_ask(request: Request, req: AskRequest, response: Response) -> AskResponse:
+    """提问端点."""
     request_id = req.request_id or str(uuid.uuid4())
     start = time.time() * 1000.0
     out: dict[str, Any] | None = None
@@ -239,15 +298,18 @@ def v1_ask(req: AskRequest, response: Response) -> AskResponse:
     except HTTPException:
         raise
     except Exception as exc:
-        code = 500
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        code = HTTP_500_INTERNAL_SERVER_ERROR
+        response.status_code = HTTP_500_INTERNAL_SERVER_ERROR
         return _make_error_response(request_id=request_id, error=_error_from_exc(exc))
     finally:
         _record_metrics("/v1/ask", "POST", code, start, request_id, out)
 
 
 @app.post("/v1/chat", response_model=AskResponse, dependencies=[Depends(auth_dep)])
-def v1_chat(req: ChatRequest, response: Response) -> AskResponse:
+@limiter.limit(f"{settings.rate_limit.per_minute}/minute")
+@limiter.limit(f"{settings.rate_limit.per_hour}/hour")
+def v1_chat(request: Request, req: ChatRequest, response: Response) -> AskResponse:
+    """聊天端点."""
     request_id = req.request_id or str(uuid.uuid4())
     start = time.time() * 1000.0
     out: dict[str, Any] | None = None
@@ -277,17 +339,18 @@ def v1_chat(req: ChatRequest, response: Response) -> AskResponse:
     except HTTPException:
         raise
     except Exception as exc:
-        code = 500
-        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        code = HTTP_500_INTERNAL_SERVER_ERROR
+        response.status_code = HTTP_500_INTERNAL_SERVER_ERROR
         return _make_error_response(request_id=request_id, error=_error_from_exc(exc))
     finally:
         _record_metrics("/v1/chat", "POST", code, start, request_id, out)
 
 
 def main() -> None:
+    """启动 API 服务器."""
     import uvicorn
-    host = os.getenv("RISKAGENT_API_HOST", "0.0.0.0")
-    port = int(os.getenv("RISKAGENT_API_PORT", "8000"))
+    host = os.getenv("RISKAGENT_API_HOST", DEFAULT_API_HOST)
+    port = int(os.getenv("RISKAGENT_API_PORT", str(DEFAULT_API_PORT)))
     uvicorn.run("riskagent_agenticrag.api.server:app", host=host, port=port, reload=False)
 
 

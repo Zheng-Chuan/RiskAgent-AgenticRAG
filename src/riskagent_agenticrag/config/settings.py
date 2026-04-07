@@ -1,148 +1,165 @@
+"""RiskAgent Configuration -- 使用 pydantic-settings 管理配置."""
+
 from __future__ import annotations
 
 import os
 import pathlib
-from dataclasses import dataclass, field
+from typing import Annotated, Literal
 
-# Load environment variables from .env file (override existing values)
-try:
-    from dotenv import load_dotenv
-    load_dotenv(dotenv_path=pathlib.Path(__file__).resolve().parents[3] / ".env", override=True)
-except Exception:
-    pass
+from pydantic import Field, SecretStr
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
-@dataclass
-class MilvusConfig:
-    """Milvus 向量数据库配置"""
+class MilvusConfig(BaseSettings):
+    """Milvus 向量数据库配置."""
+
+    model_config = SettingsConfigDict(env_prefix="MILVUS_", extra="ignore")
+
     uri: str | None = None
-    host: str | None = None
+    host: str = "localhost"
     port: int = 19530
     user: str | None = None
-    password: str | None = None
+    password: SecretStr | None = None
     secure: bool = False
     collection_name: str = "riskagent_agenticrag"
     index_type: str = "IVF_FLAT"
-    metric_type: str = "L2"
+    metric_type: Literal["L2", "IP", "COSINE"] = "L2"
     nlist: int = 128
     nprobe: int = 16
     wait_ready: bool = True
     health_port: int = 9091
     ready_timeout_s: float = 120.0
-    consistency_level: str = "Session"
-    use_docker: bool = False  # 如果为 True，强制使用 Docker 模式而不是 Lite
-
-    @classmethod
-    def from_env(cls) -> MilvusConfig:
-        return cls(
-            uri=os.getenv("MILVUS_URI"),
-            host=os.getenv("MILVUS_HOST"),
-            port=int(os.getenv("MILVUS_PORT", "19530")),
-            user=os.getenv("MILVUS_USER"),
-            password=os.getenv("MILVUS_PASSWORD"),
-            secure=os.getenv("MILVUS_SECURE", "").lower().strip() in {"true", "1", "yes"},
-            collection_name=os.getenv("MILVUS_COLLECTION", "riskagent_agenticrag"),
-            index_type=os.getenv("MILVUS_INDEX_TYPE", "IVF_FLAT"),
-            metric_type=os.getenv("MILVUS_METRIC", "L2"),
-            nlist=int(os.getenv("MILVUS_NLIST", "128")),
-            nprobe=int(os.getenv("MILVUS_NPROBE", "16")),
-            wait_ready=os.getenv("MILVUS_WAIT_READY", "true").lower().strip() in {"true", "1", "yes"},
-            health_port=int(os.getenv("MILVUS_HEALTH_PORT", "9091")),
-            ready_timeout_s=float(os.getenv("MILVUS_READY_TIMEOUT_S", "120")),
-            consistency_level=os.getenv("MILVUS_CONSISTENCY", "Session"),
-            use_docker=os.getenv("RISKAGENT_USE_DOCKER_MILVUS", "").lower().strip() in {"true", "1", "yes"},
-        )
+    consistency_level: Literal["Strong", "Session", "Bounded", "Eventually"] = "Session"
+    use_docker: bool = Field(default=False, alias="RISKAGENT_USE_DOCKER_MILVUS")
 
 
-@dataclass
-class EmbeddingsConfig:
-    """Embedding 模型配置"""
-    provider: str = "hf"  # hf, openai, etc.
-    # BGE3 (BAAI/bge-large-zh-v1.5) - 多语言支持更好，向量维度1024
+class RedisConfig(BaseSettings):
+    """Redis 缓存配置."""
+
+    model_config = SettingsConfigDict(env_prefix="REDIS_", extra="ignore")
+
+    host: str = "localhost"
+    port: int = 6379
+    password: SecretStr = SecretStr("riskagent")
+    db: int = 0
+    url: str | None = None
+
+    @property
+    def redis_url(self) -> str:
+        """构建 Redis 连接 URL."""
+        if self.url:
+            return self.url
+        password_str = self.password.get_secret_value()
+        if password_str:
+            return f"redis://:{password_str}@{self.host}:{self.port}/{self.db}"
+        return f"redis://{self.host}:{self.port}/{self.db}"
+
+
+class EmbeddingsConfig(BaseSettings):
+    """Embedding 模型配置."""
+
+    model_config = SettingsConfigDict(env_prefix="EMBEDDINGS_", extra="ignore")
+
+    provider: Literal["hf", "openai"] = "hf"
     model_name: str = "BAAI/bge-large-zh-v1.5"
 
-    @classmethod
-    def from_env(cls) -> EmbeddingsConfig:
-        return cls(
-            provider=os.getenv("EMBEDDINGS_PROVIDER", "hf"),
-            model_name=os.getenv("EMBEDDINGS_MODEL", "BAAI/bge-large-zh-v1.5"),
-        )
 
+class LLMConfig(BaseSettings):
+    """LLM 服务配置."""
 
-@dataclass
-class LLMConfig:
-    """LLM 服务配置"""
-    api_key: str | None = None
+    model_config = SettingsConfigDict(env_prefix="LLM_", extra="ignore")
+
+    api_key: SecretStr | None = Field(default=None, alias="LLM_API_KEY")
+    openai_api_key: SecretStr | None = Field(default=None, alias="OPENAI_API_KEY")
     base_url: str = "https://api.n1n.ai/v1"
     model: str = "qwen3-8b"
     provider: str = "openai_compatible"
 
-    @classmethod
-    def from_env(cls) -> LLMConfig:
-        return cls(
-            api_key=os.getenv("LLM_API_KEY") or os.getenv("OPENAI_API_KEY"),
-            base_url=os.getenv("LLM_BASE_URL", "https://api.n1n.ai/v1"),
-            model=os.getenv("LLM_MODEL", "qwen3-8b"),
-            provider="openai_compatible",
-        )
-
-
-@dataclass
-class PathConfig:
-    """项目路径配置"""
-    project_root: pathlib.Path = field(default_factory=lambda: pathlib.Path(__file__).resolve().parents[3])
-    
     @property
-    def corpus_dir(self) -> pathlib.Path:
-        v = os.getenv("RISKAGENT_CORPUS_DIR", "").strip()
-        if v:
-            return pathlib.Path(v).expanduser().resolve()
-        return self.project_root / "corpus"
-    
+    def resolved_api_key(self) -> SecretStr:
+        """获取解析后的 API Key."""
+        if self.api_key:
+            return self.api_key
+        if self.openai_api_key:
+            return self.openai_api_key
+        raise ValueError("No API key configured")
+
+
+class PathConfig(BaseSettings):
+    """项目路径配置."""
+
+    model_config = SettingsConfigDict(env_prefix="RISKAGENT_", extra="ignore")
+
+    project_root: pathlib.Path = Field(
+        default_factory=lambda: pathlib.Path(__file__).resolve().parents[3]
+    )
+    corpus_dir: pathlib.Path = Field(default_factory=lambda: pathlib.Path("corpus"))
+    persist_dir: pathlib.Path = Field(default_factory=lambda: pathlib.Path(".milvus"))
+
     @property
     def milvus_lite_dir(self) -> pathlib.Path:
-        v = os.getenv("RISKAGENT_PERSIST_DIR", "").strip()
-        if v:
-            return pathlib.Path(v).expanduser().resolve()
-        return self.project_root / ".milvus"
-    
+        return self.persist_dir
+
     @property
     def models_dir(self) -> pathlib.Path:
         return self.project_root / "models"
-    
+
     @property
     def hf_cache_dir(self) -> pathlib.Path:
         return self.models_dir / "hf"
 
 
-@dataclass
-class FeatureConfig:
-    """功能开关配置"""
-    use_langgraph: bool = False
+class FeatureConfig(BaseSettings):
+    """功能开关配置."""
+
+    model_config = SettingsConfigDict(env_prefix="RISKAGENT_", extra="ignore")
+
+    use_langgraph: bool = Field(default=False, alias="USE_LANGGRAPH")
     self_rag_enabled: bool = True
     query_intel_enabled: bool = True
     retriever_mode: str = "step2"
-    
-    @classmethod
-    def from_env(cls) -> FeatureConfig:
-        return cls(
-            use_langgraph=os.getenv("USE_LANGGRAPH", "").lower().strip() in {"true", "1", "yes"},
-            self_rag_enabled=os.getenv("RISKAGENT_SELF_RAG", "true").lower().strip() in {"true", "1", "yes"},
-            query_intel_enabled=os.getenv("RISKAGENT_ENABLE_QUERY_INTEL", "true").lower().strip() in {"true", "1", "yes"},
-            retriever_mode=os.getenv("RISKAGENT_RETRIEVER_MODE", "step2").lower().strip(),
-        )
+    prompt_version: str = "v1"
+    trace_snippet_chars: int = 240
 
 
-@dataclass
-class Settings:
-    """全局配置聚合类"""
-    milvus: MilvusConfig = field(default_factory=MilvusConfig.from_env)
-    embeddings: EmbeddingsConfig = field(default_factory=EmbeddingsConfig.from_env)
-    llm: LLMConfig = field(default_factory=LLMConfig.from_env)
-    paths: PathConfig = field(default_factory=PathConfig)
-    features: FeatureConfig = field(default_factory=FeatureConfig.from_env)
-    
+class RateLimitConfig(BaseSettings):
+    """速率限制配置."""
+
+    model_config = SettingsConfigDict(env_prefix="RATE_LIMIT_", extra="ignore")
+
+    enabled: bool = True
+    per_minute: int = 60
+    per_hour: int = 1000
+
+
+class APIAuthConfig(BaseSettings):
+    """API 认证配置."""
+
+    model_config = SettingsConfigDict(env_prefix="API_KEY_", extra="ignore")
+
+    enabled: bool = True
+    secret: SecretStr = SecretStr("change-me-in-production")
+
+
+class Settings(BaseSettings):
+    """全局配置聚合类."""
+
+    model_config = SettingsConfigDict(
+        env_file=".env",
+        env_file_encoding="utf-8",
+        extra="ignore",
+    )
+
     project_name: str = "RiskAgent-AgenticRAG"
+
+    milvus: MilvusConfig = Field(default_factory=MilvusConfig)
+    redis: RedisConfig = Field(default_factory=RedisConfig)
+    embeddings: EmbeddingsConfig = Field(default_factory=EmbeddingsConfig)
+    llm: LLMConfig = Field(default_factory=LLMConfig)
+    paths: PathConfig = Field(default_factory=PathConfig)
+    features: FeatureConfig = Field(default_factory=FeatureConfig)
+    rate_limit: RateLimitConfig = Field(default_factory=RateLimitConfig)
+    api_auth: APIAuthConfig = Field(default_factory=APIAuthConfig)
 
 
 # 单例实例

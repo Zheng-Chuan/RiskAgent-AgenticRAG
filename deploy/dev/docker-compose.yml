@@ -26,3 +26,20 @@ services:
       timeout: 20s
       retries: 3
       start_period: 90s
+
+  redis:
+    container_name: riskagent-agenticrag-redis
+    image: redis:7-alpine
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-riskagent}
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./redis/volumes/data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-riskagent}", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    environment:
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-riskagent}

@@ -23,6 +23,7 @@ conda run -n LangChain python -m riskagent_agenticrag.cli ask --question "what i
 | [API](docs/API.md) | HTTP API v1 契约和调用示例 |
 | [DATA](docs/DATA.md) | 核心数据结构 字段约定 Trace 排障 |
 | [EVALUATION](docs/EVALUATION.md) | 指标定义 对比实验 历史数据 门禁策略 面试速答 |
+| [PRD](docs/PRD.md) | 当前现状 顶尖 RAG 改进方案 与可验收 checklist |
 | [ROADMAP](docs/ROADMAP.md) | 里程碑 交付项 验收状态 |
 | [eval_thresholds.yaml](docs/eval_thresholds.yaml) | 阈值门禁配置 |
 

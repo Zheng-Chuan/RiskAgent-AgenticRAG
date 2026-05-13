@@ -40,7 +40,7 @@ ClaimStatus = Literal["supported", "unsupported", "needs_more_info"]
 
 def _utc_now_iso() -> str:
     # 中文注释: 统一时间戳格式, 便于 logs 和 artifacts 对齐.
-    return datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+    return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 class _StrictBaseModel(BaseModel):

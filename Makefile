@@ -1,4 +1,4 @@
-.PHONY: install install-dev test lint typecheck format clean docs help
+.PHONY: install install-dev lock-env test lint typecheck format clean docs help offline-regression accept-release
 
 # 定义默认目标
 .DEFAULT_GOAL := help
@@ -13,15 +13,18 @@ install:  ## 安装项目依赖
 install-dev:  ## 安装项目依赖（含开发依赖）
 	pip install -e ".[dev]"
 
+lock-env:  ## 生成可复现环境
+	conda env create -f environment.yml || conda env update -f environment.yml --prune
+
 # ==========================================
 # 代码质量
 # ==========================================
 
 test:  ## 运行测试
-	python -m pytest tests/ -v --tb=short
+	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/ -v --tb=short
 
 test-cov:  ## 运行测试并生成覆盖率报告
-	python -m pytest tests/ -v --cov=src --cov-report=html --cov-report=term
+	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -p pytest_cov tests/ -v --cov=src --cov-report=html --cov-report=term
 
 test-watch:  ## 监听文件变化并自动运行测试
 	ptw tests/
@@ -68,6 +71,12 @@ api:  ## 启动 API 服务器
 
 eval:  ## 运行评测
 	conda run -n LangChain python -m riskagent_agenticrag.evaluation.run --stage step4 --label step4
+
+offline-regression:  ## 运行纯离线回归
+	bash scripts/run_offline_regression.sh
+
+accept-release:  ## 运行最小发布验收
+	bash scripts/release_acceptance.sh
 
 # ==========================================
 # 清理

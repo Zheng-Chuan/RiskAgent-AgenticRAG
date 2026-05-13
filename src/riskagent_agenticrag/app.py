@@ -22,6 +22,7 @@ class RiskAgentSystem:
 
     def __init__(self):
         self._retriever = None
+        self._retriever_persist_dir = None
         # 初始化时配置 LangSmith
         setup_langsmith(project_name=settings.project_name)
 
@@ -33,11 +34,12 @@ class RiskAgentSystem:
 
     def _ensure_resources(self) -> Any:
         """确保 Retriever 和 Graph 已初始化"""
-        if self._retriever:
+        persist_dir = settings.paths.milvus_lite_dir
+        if self._retriever is not None and self._retriever_persist_dir == persist_dir:
             return self._retriever
 
-        persist_dir = settings.paths.milvus_lite_dir
         self._retriever = build_retriever(persist_dir=persist_dir, final_k=4)
+        self._retriever_persist_dir = persist_dir
         return self._retriever
 
     def chat(

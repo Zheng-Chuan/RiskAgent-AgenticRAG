@@ -60,7 +60,7 @@ class EmbeddingsConfig(BaseSettings):
 
     model_config = SettingsConfigDict(env_prefix="EMBEDDINGS_", extra="ignore")
 
-    provider: Literal["hf", "openai"] = "hf"
+    provider: Literal["hf", "openai", "hash"] = "hf"
     model_name: str = "BAAI/bge-large-zh-v1.5"
 
 
@@ -98,6 +98,9 @@ class PathConfig(BaseSettings):
 
     @property
     def milvus_lite_dir(self) -> pathlib.Path:
+        runtime_persist_dir = os.getenv("RISKAGENT_PERSIST_DIR", "").strip()
+        if runtime_persist_dir:
+            return pathlib.Path(runtime_persist_dir)
         return self.persist_dir
 
     @property

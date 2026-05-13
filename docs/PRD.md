@@ -17,7 +17,7 @@
 - [x] Milestone 1. 纯 RAG 收敛
 - [x] Milestone 2. 评测独立化
 - [x] Milestone 3. 门禁与报告可信化
-- [ ] Milestone 4. 工程稳定化
+- [x] Milestone 4. 工程稳定化
 
 ## 任务 checklist
 
@@ -115,17 +115,17 @@
 
 ### Milestone 4. 工程稳定化
 
-- [ ] 锁定关键依赖并修复环境兼容问题
+- [x] 锁定关键依赖并修复环境兼容问题
   - 验收标准: 新环境执行核心评测与核心测试时 不因 Milvus protobuf FastAPI pydantic 等依赖冲突失败
-  - 验收证据: 依赖锁定文件更新. 环境验证测试通过
+  - 验收证据: `pyproject.toml` `requirements-lock.txt` `environment.yml` 已更新. `bash scripts/run_offline_regression.sh` 通过
 
-- [ ] 增加纯离线回归入口
+- [x] 增加纯离线回归入口
   - 验收标准: 在无在线 judge 条件下仍可跑完最小回归集
-  - 验收证据: 回归脚本存在. 离线路径测试通过
+  - 验收证据: `scripts/run_offline_regression.sh` 已固定离线环境变量与最小回归集. 本地执行通过 45 项测试
 
-- [ ] 建立最小发布验收命令
+- [x] 建立最小发布验收命令
   - 验收标准: 1 条命令完成 index eval report gate 的标准验收流程
-  - 验收证据: `Makefile` 或脚本命令存在. 本地执行日志可复核
+  - 验收证据: `scripts/release_acceptance.sh` 与 `Makefile` 的 `accept-release` 已就绪. `bash scripts/release_acceptance.sh` 执行通过
 
 ## 发布验收口径
 

@@ -20,7 +20,7 @@ from riskagent_agenticrag.tools.mock_risk_tool import monitor_desk_exposure
 
 def _utc_now_iso() -> str:
     # 中文注释: 与 contract 文件保持一致的格式.
-    return datetime.datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+    return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
 def run_data_agent(

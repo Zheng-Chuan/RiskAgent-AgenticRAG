@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -37,13 +37,14 @@ def save_artifact(
     artifacts_path = Path(base_dir)
     artifacts_path.mkdir(parents=True, exist_ok=True)
 
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    now_utc = datetime.now(timezone.utc)
+    timestamp = now_utc.strftime("%Y%m%d_%H%M%S")
     filename = f"{timestamp}_{request_id}.json"
     filepath = artifacts_path / filename
 
     artifact = {
         "request_id": request_id,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
+        "timestamp": now_utc.isoformat().replace("+00:00", "Z"),
         "request": request_data,
         "response": response_data,
     }

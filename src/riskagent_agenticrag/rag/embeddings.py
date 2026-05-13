@@ -5,7 +5,10 @@ from __future__ import annotations
 import importlib
 import os
 import pathlib
+import re
 import warnings
+from hashlib import sha256
+from math import sqrt
 
 from langchain_core.embeddings import Embeddings
 
@@ -36,6 +39,34 @@ def _local_embeddings_dir(model_name: str) -> pathlib.Path:
     return settings.paths.models_dir / "embeddings" / safe
 
 
+class HashEmbeddings(Embeddings):
+    """离线回归使用的确定性 embeddings."""
+
+    def __init__(self, dimension: int = 64) -> None:
+        self._dimension = int(dimension)
+
+    def _embed_text(self, text: str) -> list[float]:
+        vec = [0.0] * self._dimension
+        tokens = re.findall(r"\w+|[^\w\s]", str(text or "").lower())
+        if not tokens:
+            tokens = [""]
+        # 中文注释: 用稳定哈希把 token 投影到固定维度 向量可复现且完全离线.
+        for token in tokens:
+            digest = sha256(token.encode("utf-8")).digest()
+            for idx in range(self._dimension):
+                raw = digest[idx % len(digest)]
+                sign = 1.0 if digest[(idx + 7) % len(digest)] % 2 == 0 else -1.0
+                vec[idx] += sign * (raw / 255.0)
+        norm = sqrt(sum(v * v for v in vec)) or 1.0
+        return [v / norm for v in vec]
+
+    def embed_documents(self, texts: list[str]) -> list[list[float]]:
+        return [self._embed_text(text) for text in texts]
+
+    def embed_query(self, text: str) -> list[float]:
+        return self._embed_text(text)
+
+
 def build_embeddings() -> Embeddings:
     """构建 HuggingFace Embeddings 实例.
 
@@ -46,6 +77,8 @@ def build_embeddings() -> Embeddings:
     _ensure_project_hf_cache_env()
 
     provider = str(settings.embeddings.provider or "hf").lower().strip()
+    if provider == "hash":
+        return HashEmbeddings()
     if provider != "hf":
         raise RuntimeError(f"Unsupported embeddings provider: {provider}")
 
@@ -92,4 +125,3 @@ def export_embeddings_model_to_repo_dir() -> dict[str, str]:
         raise RuntimeError("Export requires sentence_transformers installed") from e
     SentenceTransformer(model_name).save(str(target_dir))
     return {"model": model_name, "export_dir": str(target_dir)}
-

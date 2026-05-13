@@ -25,6 +25,7 @@ try:
     warnings.filterwarnings("ignore", category=LangChainDeprecationWarning)
 except ImportError:
     pass
+warnings.filterwarnings("ignore", message=".*allowed_objects.*")
 warnings.filterwarnings("ignore", message=".*pydantic_v1.*")
 warnings.filterwarnings("ignore", message=".*class-validator.*")
 warnings.filterwarnings("ignore", message=".*pkg_resources.*")

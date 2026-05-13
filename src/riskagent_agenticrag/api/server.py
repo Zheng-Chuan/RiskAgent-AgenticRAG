@@ -8,10 +8,11 @@ import time
 import uuid
 from typing import Any, Optional
 
-from fastapi import Depends, FastAPI, Header, HTTPException, Request, Response, status
+from fastapi import Body, Depends, FastAPI, Header, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from pydantic import ValidationError
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
@@ -55,6 +56,15 @@ security = HTTPBearer(auto_error=False)
 # 认证 & 错误处理
 # ---------------------------------------------------------------------------
 
+def _expected_api_key() -> str:
+    # 中文注释: 优先兼容运行时环境变量 让测试和旧部署方式都能生效.
+    for env_name in ("API_KEY_SECRET", "RISKAGENT_API_KEY"):
+        value = str(os.getenv(env_name, "")).strip()
+        if value:
+            return value
+    return settings.api_auth.secret.get_secret_value()
+
+
 def _require_api_key(
     x_api_key: Optional[str] = None,
     authorization: Optional[HTTPAuthorizationCredentials] = None,
@@ -63,7 +73,7 @@ def _require_api_key(
     if not settings.api_auth.enabled:
         return
 
-    expected = settings.api_auth.secret.get_secret_value()
+    expected = _expected_api_key()
     if not expected:
         return
 
@@ -282,8 +292,12 @@ def metrics() -> Response:
 @app.post("/v1/ask", response_model=AskResponse, dependencies=[Depends(auth_dep)])
 @limiter.limit(f"{settings.rate_limit.per_minute}/minute")
 @limiter.limit(f"{settings.rate_limit.per_hour}/hour")
-def v1_ask(request: Request, req: AskRequest, response: Response) -> AskResponse:
+def v1_ask(request: Request, response: Response, req_body: dict[str, Any] = Body(...)) -> AskResponse:
     """提问端点."""
+    try:
+        req = AskRequest.model_validate(req_body)
+    except ValidationError as exc:
+        raise RequestValidationError(exc.errors()) from exc
     request_id = req.request_id or str(uuid.uuid4())
     start = time.time() * 1000.0
     out: dict[str, Any] | None = None
@@ -307,8 +321,12 @@ def v1_ask(request: Request, req: AskRequest, response: Response) -> AskResponse
 @app.post("/v1/chat", response_model=AskResponse, dependencies=[Depends(auth_dep)])
 @limiter.limit(f"{settings.rate_limit.per_minute}/minute")
 @limiter.limit(f"{settings.rate_limit.per_hour}/hour")
-def v1_chat(request: Request, req: ChatRequest, response: Response) -> AskResponse:
+def v1_chat(request: Request, response: Response, req_body: dict[str, Any] = Body(...)) -> AskResponse:
     """聊天端点."""
+    try:
+        req = ChatRequest.model_validate(req_body)
+    except ValidationError as exc:
+        raise RequestValidationError(exc.errors()) from exc
     request_id = req.request_id or str(uuid.uuid4())
     start = time.time() * 1000.0
     out: dict[str, Any] | None = None

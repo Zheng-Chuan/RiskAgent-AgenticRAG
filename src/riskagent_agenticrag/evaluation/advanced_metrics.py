@@ -6,12 +6,10 @@ from dataclasses import dataclass
 from statistics import mean
 from typing import Any
 
-from riskagent_agenticrag.evaluation.citations import is_valid_citation
-
-
 @dataclass(frozen=True)
 class RetrievalMetrics:
     metrics: dict[str, float]
+    slice_metrics: dict[str, dict[str, float]]
 
 
 @dataclass(frozen=True)
@@ -48,24 +46,18 @@ def _quantile(values: list[float], q: float) -> float:
     return float(xs[low] * (1.0 - frac) + xs[high] * frac)
 
 
-def _metric_key_relevance_id(source: str, chunk_id: str) -> str:
-    return f"{source}::{chunk_id}"
+def _normalize_text(text: str) -> str:
+    return " ".join(str(text or "").lower().split())
 
 
-def _relevant_doc_ids_from_sample(sample: dict[str, Any]) -> set[str]:
-    raw = sample.get("citations")
+def _sample_qrels(sample: dict[str, Any]) -> list[dict[str, Any]]:
+    raw = sample.get("qrels")
     if not isinstance(raw, list):
-        return set()
-    out: set[str] = set()
-    for c in raw:
-        if not isinstance(c, dict):
-            continue
-        if not is_valid_citation(c):
-            continue
-        source = str(c.get("source") or "")
-        chunk_id = str(c.get("chunk_id") or "")
-        if source and chunk_id:
-            out.add(_metric_key_relevance_id(source, chunk_id))
+        return []
+    out: list[dict[str, Any]] = []
+    for row in raw:
+        if isinstance(row, dict):
+            out.append(row)
     return out
 
 
@@ -80,87 +72,119 @@ def _retrieved_rows(sample: dict[str, Any]) -> list[dict[str, Any]]:
     return out
 
 
+def _is_row_relevant(row: dict[str, Any], qrels: list[dict[str, Any]]) -> bool:
+    content = _normalize_text(str(row.get("content") or row.get("text") or row.get("snippet") or ""))
+    expanded = _normalize_text(str(row.get("expanded_text") or ""))
+    haystacks = [text for text in (content, expanded) if text]
+    if not haystacks:
+        return False
+    for qrel in qrels:
+        target = _normalize_text(str(qrel.get("text") or ""))
+        if not target:
+            continue
+        for haystack in haystacks:
+            if target in haystack or haystack in target:
+                return True
+    return False
+
+
+def _compute_single_retrieval_metrics(sample: dict[str, Any], ks: list[int]) -> dict[str, float]:
+    qrels = _sample_qrels(sample)
+    rows = _retrieved_rows(sample)
+    if not qrels:
+        metrics = {"retrieval_mrr": 0.0}
+        for k in ks:
+            metrics[f"retrieval_recall_at_{k}"] = 0.0
+            metrics[f"retrieval_ndcg_at_{k}"] = 0.0
+        return metrics
+
+    matched_relevance: dict[int, int] = {}
+    first_rank = 0
+    has_dense = False
+    has_sparse = False
+    for idx, row in enumerate(rows, start=1):
+        if row.get("dense_rank") is not None:
+            has_dense = True
+        if row.get("sparse_rank") is not None:
+            has_sparse = True
+        if not _is_row_relevant(row, qrels):
+            continue
+        if idx not in matched_relevance:
+            matched_relevance[idx] = max(int(q.get("relevance", 1)) for q in qrels)
+            if first_rank == 0:
+                first_rank = idx
+
+    total_relevant = len(qrels)
+    metrics: dict[str, float] = {
+        "retrieval_mrr": 1.0 / float(first_rank) if first_rank > 0 else 0.0,
+        "retrieval_dense_hit_rate": 1.0 if has_dense else 0.0,
+        "retrieval_sparse_hit_rate": 1.0 if has_sparse else 0.0,
+        "retrieval_hybrid_gain_rate": 1.0 if has_dense and has_sparse and first_rank > 0 else 0.0,
+        "retrieval_rerank_uplift": 0.0,
+    }
+
+    rel_rrf = [(_to_float(r.get("rrf_score")), i + 1) for i, r in enumerate(rows) if _is_row_relevant(r, qrels)]
+    rel_rerank = [(_to_float(r.get("rerank_score")), i + 1) for i, r in enumerate(rows) if _is_row_relevant(r, qrels)]
+    if rel_rrf and rel_rerank:
+        rrf_best = max(rel_rrf, key=lambda x: x[0])[1]
+        rerank_best = max(rel_rerank, key=lambda x: x[0])[1]
+        metrics["retrieval_rerank_uplift"] = float(rrf_best - rerank_best)
+
+    for k in ks:
+        hits = sum(1 for position in matched_relevance if position <= k)
+        metrics[f"retrieval_recall_at_{k}"] = float(hits) / float(max(1, total_relevant))
+
+        dcg = 0.0
+        for position, relevance in matched_relevance.items():
+            if position > k:
+                continue
+            dcg += (2.0 ** float(relevance) - 1.0) / math.log2(float(position) + 1.0)
+        ranked_relevance = sorted((int(q.get("relevance", 1)) for q in qrels), reverse=True)[:k]
+        idcg = 0.0
+        for i, relevance in enumerate(ranked_relevance, start=1):
+            idcg += (2.0 ** float(relevance) - 1.0) / math.log2(float(i) + 1.0)
+        metrics[f"retrieval_ndcg_at_{k}"] = (dcg / idcg) if idcg > 0 else 0.0
+    return metrics
+
+
 def compute_retrieval_metrics(samples: list[dict[str, Any]], *, ks: list[int]) -> RetrievalMetrics:
     clean_ks = sorted({int(k) for k in ks if int(k) > 0})
     if not clean_ks:
         clean_ks = [1, 3, 5]
 
-    recall_hits: dict[int, int] = {k: 0 for k in clean_ks}
-    ndcg_sum: dict[int, float] = {k: 0.0 for k in clean_ks}
-    mrr_scores: list[float] = []
-    dense_hits = 0
-    sparse_hits = 0
-    hybrid_gains = 0
-    rerank_improvements: list[float] = []
-    total = max(1, len(samples))
-
-    for sample in samples:
-        relevant = _relevant_doc_ids_from_sample(sample)
-        rows = _retrieved_rows(sample)
-        first_rank = 0
-        rel_positions: list[int] = []
-        has_dense = False
-        has_sparse = False
-
-        for idx, row in enumerate(rows, start=1):
-            source = str(row.get("source") or "")
-            chunk_id = str(row.get("chunk_id") or "")
-            if row.get("dense_rank") is not None:
-                has_dense = True
-            if row.get("sparse_rank") is not None:
-                has_sparse = True
-            if not source or not chunk_id:
-                continue
-            rid = _metric_key_relevance_id(source, chunk_id)
-            if rid in relevant:
-                rel_positions.append(idx)
-                if first_rank == 0:
-                    first_rank = idx
-
-        if has_dense:
-            dense_hits += 1
-        if has_sparse:
-            sparse_hits += 1
-        if has_dense and has_sparse and first_rank > 0:
-            hybrid_gains += 1
-        if first_rank > 0:
-            mrr_scores.append(1.0 / float(first_rank))
-        else:
-            mrr_scores.append(0.0)
-
+    per_sample = [_compute_single_retrieval_metrics(sample, clean_ks) for sample in samples]
+    if not per_sample:
+        empty: dict[str, float] = {"retrieval_mrr": 0.0}
         for k in clean_ks:
-            if first_rank > 0 and first_rank <= k:
-                recall_hits[k] += 1
+            empty[f"retrieval_recall_at_{k}"] = 0.0
+            empty[f"retrieval_ndcg_at_{k}"] = 0.0
+        return RetrievalMetrics(metrics=empty, slice_metrics={})
 
-            dcg = 0.0
-            for p in rel_positions:
-                if p > k:
-                    continue
-                dcg += 1.0 / math.log2(float(p) + 1.0)
-            ideal_rel = min(len(relevant), k)
-            idcg = 0.0
-            for i in range(1, ideal_rel + 1):
-                idcg += 1.0 / math.log2(float(i) + 1.0)
-            ndcg_sum[k] += (dcg / idcg) if idcg > 0 else 0.0
+    metric_names = sorted({name for sample_metrics in per_sample for name in sample_metrics})
+    metrics: dict[str, float] = {}
+    for name in metric_names:
+        values = [float(sample_metrics.get(name, 0.0)) for sample_metrics in per_sample]
+        metrics[name] = float(mean(values)) if values else 0.0
 
-        rel_rrf = [(_to_float(r.get("rrf_score")), i + 1) for i, r in enumerate(rows) if _metric_key_relevance_id(str(r.get("source") or ""), str(r.get("chunk_id") or "")) in relevant]
-        rel_rerank = [(_to_float(r.get("rerank_score")), i + 1) for i, r in enumerate(rows) if _metric_key_relevance_id(str(r.get("source") or ""), str(r.get("chunk_id") or "")) in relevant]
-        if rel_rrf and rel_rerank:
-            rrf_best = max(rel_rrf, key=lambda x: x[0])[1]
-            rerank_best = max(rel_rerank, key=lambda x: x[0])[1]
-            rerank_improvements.append(float(rrf_best - rerank_best))
+    slice_metrics: dict[str, dict[str, float]] = {}
+    grouped_samples: dict[str, list[dict[str, Any]]] = {}
+    for sample in samples:
+        tags = sample.get("tags")
+        if not isinstance(tags, list):
+            continue
+        for tag in tags:
+            key = str(tag).strip()
+            if not key:
+                continue
+            grouped_samples.setdefault(key, []).append(sample)
+    for tag, subset in grouped_samples.items():
+        subset_metrics = [_compute_single_retrieval_metrics(sample, clean_ks) for sample in subset]
+        slice_metrics[tag] = {
+            name: float(mean([float(row.get(name, 0.0)) for row in subset_metrics])) if subset_metrics else 0.0
+            for name in metric_names
+        }
 
-    metrics: dict[str, float] = {
-        "retrieval_mrr": float(mean(mrr_scores)) if mrr_scores else 0.0,
-        "retrieval_dense_hit_rate": float(dense_hits) / float(total),
-        "retrieval_sparse_hit_rate": float(sparse_hits) / float(total),
-        "retrieval_hybrid_gain_rate": float(hybrid_gains) / float(total),
-        "retrieval_rerank_uplift": float(mean(rerank_improvements)) if rerank_improvements else 0.0,
-    }
-    for k in clean_ks:
-        metrics[f"retrieval_recall_at_{k}"] = float(recall_hits[k]) / float(total)
-        metrics[f"retrieval_ndcg_at_{k}"] = float(ndcg_sum[k]) / float(total)
-    return RetrievalMetrics(metrics=metrics)
+    return RetrievalMetrics(metrics=metrics, slice_metrics=slice_metrics)
 
 
 def _failure_reason_key(raw: Any) -> str:
@@ -183,27 +207,53 @@ def compute_gate_metrics(samples: list[dict[str, Any]]) -> GateMetrics:
     blocked_beneficial = 0
     blocked_false_kill = 0
     dist: dict[str, int] = {}
+    labeled_total = 0
+    true_positive = 0
+    false_positive = 0
+    false_negative = 0
 
     for sample in samples:
         status = str(sample.get("status") or "")
         is_blocked = status != "ok"
         if is_blocked:
             blocked += 1
-        answer = str(sample.get("answer") or "").strip()
-        valid_count = int(sample.get("valid_citation_count") or 0)
-        if is_blocked and (not answer or valid_count == 0):
-            blocked_beneficial += 1
-        if is_blocked and answer and valid_count > 0:
-            blocked_false_kill += 1
+
+        gate_label = sample.get("gate_label")
+        should_block = None
+        if isinstance(gate_label, dict) and "should_block" in gate_label:
+            should_block = bool(gate_label.get("should_block"))
+        if should_block is not None:
+            labeled_total += 1
+            if is_blocked and should_block:
+                true_positive += 1
+                blocked_beneficial += 1
+            elif is_blocked and not should_block:
+                false_positive += 1
+                blocked_false_kill += 1
+            elif (not is_blocked) and should_block:
+                false_negative += 1
         key = _failure_reason_key(sample.get("failure_reason")) if is_blocked else "ok"
         dist[key] = int(dist.get(key, 0)) + 1
 
+    denominator = float(max(1, labeled_total))
     metrics = {
         "gate_block_rate": float(blocked) / float(total),
-        "gate_block_benefit_rate": float(blocked_beneficial) / float(total),
-        "gate_false_kill_rate": float(blocked_false_kill) / float(total),
+        "gate_block_benefit_rate": float(blocked_beneficial) / denominator,
+        "gate_false_kill_rate": float(blocked_false_kill) / denominator,
+        "gate_miss_rate": float(false_negative) / denominator,
     }
-    return GateMetrics(metrics=metrics, distributions={"failure_reason_distribution": dist})
+    return GateMetrics(
+        metrics=metrics,
+        distributions={
+            "failure_reason_distribution": dist,
+            "labeled_counts": {
+                "labeled_total": labeled_total,
+                "true_positive": true_positive,
+                "false_positive": false_positive,
+                "false_negative": false_negative,
+            },
+        },
+    )
 
 
 def compute_reliability_cost_metrics(

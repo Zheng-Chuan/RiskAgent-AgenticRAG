@@ -1,0 +1,37 @@
+{
+  "default": {
+    "minimum": 0.0,
+    "tolerance": 0.0
+  },
+  "fail_on_regression": true,
+  "metrics": {
+    "citation_coverage": {
+      "minimum": 0.8,
+      "direction": "higher_is_better"
+    },
+    "faithfulness": {
+      "minimum": 0.75,
+      "direction": "higher_is_better"
+    },
+    "answer_relevancy": {
+      "minimum": 0.7,
+      "direction": "higher_is_better"
+    },
+    "retrieval_recall_at_5": {
+      "minimum": 0.6,
+      "direction": "higher_is_better"
+    },
+    "numeric_consistency_score": {
+      "minimum": 0.8,
+      "direction": "higher_is_better"
+    },
+    "glossary_consistency_score": {
+      "minimum": 0.9,
+      "direction": "higher_is_better"
+    },
+    "hallucination_rate_in_citations": {
+      "maximum": 0.2,
+      "direction": "lower_is_better"
+    }
+  }
+}

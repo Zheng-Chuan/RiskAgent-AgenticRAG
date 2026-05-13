@@ -9,8 +9,6 @@ class ContractLangGraphTest(unittest.TestCase):
         p = str(prompt or "")
         if "\"query\"" in p and "Schema" in p:
             return {"query": "delta definition"}
-        if "\"should_call_tool\"" in p and "Schema" in p:
-            return {"should_call_tool": False, "args": {}, "reason": "not needed"}
         if "\"sufficient\"" in p and "Schema" in p:
             return {"sufficient": True, "improved_query": "", "reason": "ok"}
         return {}
@@ -30,13 +28,13 @@ class ContractLangGraphTest(unittest.TestCase):
         ), patch("riskagent_agenticrag.llm.generate.call_llm_text", side_effect=self._fake_llm_text):
             out = run_langgraph_agentic_chat(question=question, retriever=mock_retriever, max_rounds=max_rounds)
 
-        for k in ("answer", "docs", "citations", "decision_log", "tool_traces", "claims", "evidence_set", "status", "failure_reason", "debug"):
+        for k in ("answer", "docs", "citations", "decision_log", "claims", "evidence_set", "status", "failure_reason", "debug"):
             self.assertIn(k, out)
+        self.assertNotIn("tool_traces", out)
 
         self.assertIsInstance(out["answer"], str)
         self.assertIsInstance(out["citations"], list)
         self.assertIsInstance(out["decision_log"], list)
-        self.assertIsInstance(out["tool_traces"], list)
         self.assertIsInstance(out["claims"], list)
         self.assertIsInstance(out["evidence_set"], list)
         self.assertIn(out["status"], ["ok", "failed"])

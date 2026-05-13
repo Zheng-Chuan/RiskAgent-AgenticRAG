@@ -10,9 +10,7 @@ from langchain_core.documents import Document
 from riskagent_agenticrag.rag.utils import token_set
 
 
-def should_require_numeric_backing(*, question: str, should_call_tool: bool) -> bool:
-    if should_call_tool:
-        return True
+def should_require_numeric_backing(*, question: str) -> bool:
     q = str(question or "").lower()
     if any(x in q for x in ("delta", "breach", "exposure", "limit")):
         return True
@@ -102,4 +100,3 @@ def grade_generation(*, failure_reason: dict[str, Any] | None) -> dict[str, Any]
         "message": str(failure_reason.get("message") or ""),
         "details": failure_reason.get("details") or {},
     }
-

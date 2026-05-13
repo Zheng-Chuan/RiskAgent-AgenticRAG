@@ -32,6 +32,8 @@ class Week7DomainConsistencyQualityTest(unittest.TestCase):
         out = try_compute_domain_consistency(samples=samples, tolerance=0.001)
         self.assertTrue(out.ok)
         self.assertLess(float(out.metrics.get("numeric_consistency_score", 1.0)), 0.5)
+        self.assertEqual(len(out.details["numeric_failures"]), 1)
+        self.assertEqual(out.details["numeric_failures"][0]["id"], "s1")
 
     def test_glossary_violation(self) -> None:
         from riskagent_agenticrag.evaluation.domain_consistency import try_compute_domain_consistency
@@ -46,4 +48,5 @@ class Week7DomainConsistencyQualityTest(unittest.TestCase):
         out = try_compute_domain_consistency(samples=samples)
         self.assertTrue(out.ok)
         self.assertLess(float(out.metrics.get("glossary_consistency_score", 1.0)), 1.0)
-
+        self.assertEqual(len(out.details["glossary_violations"]), 1)
+        self.assertEqual(out.details["glossary_violations"][0]["id"], "s1")

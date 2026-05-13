@@ -106,6 +106,34 @@ def generate_markdown_report(
                         status = "🔴 Needs Improvement"
                     lines.append(f"| {display_name} | {value:.3f} | {status} |")
                 lines.append("")
+
+    answer_eval = report_data.get("answer_eval", {})
+    if isinstance(answer_eval, dict) and answer_eval.get("ok"):
+        lines.append("## Answer Evaluation")
+        lines.append("")
+        lines.append("| Metric | Value | Threshold |")
+        lines.append("|--------|-------|-----------|")
+        metrics = answer_eval.get("metrics", {})
+        thresholds = answer_eval.get("thresholds", {})
+        if isinstance(metrics, dict):
+            for key in ("citation_coverage", "faithfulness", "answer_relevancy", "sentence_support_rate"):
+                if key not in metrics:
+                    continue
+                value = float(metrics.get(key, 0.0) or 0.0)
+                threshold = thresholds.get(key, "-") if isinstance(thresholds, dict) else "-"
+                lines.append(f"| {key} | {value:.3f} | {threshold} |")
+        lines.append("")
+
+    threshold_gate = report_data.get("threshold_gate", {})
+    if isinstance(threshold_gate, dict):
+        lines.append("## Threshold Gate")
+        lines.append("")
+        lines.append(f"- Verdict: {threshold_gate.get('verdict', 'pass')}")
+        failures = threshold_gate.get("failures", [])
+        regressions = threshold_gate.get("regressions", [])
+        lines.append(f"- Threshold Failures: {len(failures) if isinstance(failures, list) else 0}")
+        lines.append(f"- Baseline Regressions: {len(regressions) if isinstance(regressions, list) else 0}")
+        lines.append("")
     
     # 详细样本结果
     if samples:
@@ -140,6 +168,15 @@ def generate_markdown_report(
                     if isinstance(v, (int, float)):
                         lines.append(f"- {k}: {v:.3f}")
                 lines.append("")
+
+            sentence_support = sample.get("sentence_support")
+            if isinstance(sentence_support, dict):
+                unsupported = sentence_support.get("unsupported_sentences", [])
+                if isinstance(unsupported, list) and unsupported:
+                    lines.append("**Unsupported Sentences:**")
+                    for sentence in unsupported:
+                        lines.append(f"- {sentence}")
+                    lines.append("")
             
             # 分隔线
             lines.append("---")

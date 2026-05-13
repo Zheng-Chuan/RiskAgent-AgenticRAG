@@ -1,0 +1,517 @@
+[
+  {
+    "id": "q01",
+    "qrels": [
+      {
+        "qrel_id": "q01_r1",
+        "text": "FRTB stands for Fundamental Review of the Trading Book. High level goals: Improve market risk capital framework after 2008. Increase risk sensitivity and model risk governance.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q02",
+    "qrels": [
+      {
+        "qrel_id": "q02_r1",
+        "text": "Delta: sensitivity to the underlying price level.",
+        "relevance": 2
+      },
+      {
+        "qrel_id": "q02_r2",
+        "text": "Greeks are sensitivities of a derivative value to small changes in risk factors.",
+        "relevance": 1
+      }
+    ]
+  },
+  {
+    "id": "q03",
+    "qrels": [
+      {
+        "qrel_id": "q03_r1",
+        "text": "Gamma: sensitivity of Delta to the underlying price.",
+        "relevance": 2
+      },
+      {
+        "qrel_id": "q03_r2",
+        "text": "Delta: sensitivity to the underlying price level.",
+        "relevance": 1
+      }
+    ]
+  },
+  {
+    "id": "q04",
+    "qrels": [
+      {
+        "qrel_id": "q04_r1",
+        "text": "Vega: sensitivity to volatility.",
+        "relevance": 2
+      },
+      {
+        "qrel_id": "q04_r2",
+        "text": "Greeks are sensitivities of a derivative value to small changes in risk factors.",
+        "relevance": 1
+      }
+    ]
+  },
+  {
+    "id": "q05",
+    "qrels": [
+      {
+        "qrel_id": "q05_r1",
+        "text": "CVA stands for Credit Valuation Adjustment.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q06",
+    "qrels": [
+      {
+        "qrel_id": "q06_r1",
+        "text": "FRTB stands for Fundamental Review of the Trading Book.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q07",
+    "qrels": [
+      {
+        "qrel_id": "q07_r1",
+        "text": "High level goals: Improve market risk capital framework after 2008. Increase risk sensitivity and model risk governance.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q08",
+    "qrels": [
+      {
+        "qrel_id": "q08_r1",
+        "text": "Credit Valuation Adjustment (CVA) is the price that an investor would pay to hedge the counterparty credit risk of a derivative instrument.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q09",
+    "qrels": [
+      {
+        "qrel_id": "q09_r1",
+        "text": "CVA was introduced as a new requirement for fair value accounting during the 2007/08 Global Financial Crisis.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q10",
+    "qrels": [
+      {
+        "qrel_id": "q10_r1",
+        "text": "XVA is an umbrella term for valuation adjustments including CVA, DVA, FVA, etc.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q11",
+    "qrels": [
+      {
+        "qrel_id": "q11_r1",
+        "text": "The Fundamental Review of the Trading Book (FRTB) is a comprehensive suite of capital rules developed by the Basel Committee on Banking Supervision (BCBS).",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q12",
+    "qrels": [
+      {
+        "qrel_id": "q12_r1",
+        "text": "Finalised in January 2016 as the Minimum Capital Requirements for Market Risk.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q13",
+    "qrels": [
+      {
+        "qrel_id": "q13_r1",
+        "text": "as part of Basel III",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q14",
+    "qrels": [
+      {
+        "qrel_id": "q14_r1",
+        "text": "Common concepts used in interviews and systems: Trading book vs banking book",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q15",
+    "qrels": [
+      {
+        "qrel_id": "q15_r1",
+        "text": "Common concepts used in interviews and systems: ... PnL attribution",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q16",
+    "qrels": [
+      {
+        "qrel_id": "q16_r1",
+        "text": "Common concepts used in interviews and systems: ... Backtesting",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q17",
+    "qrels": [
+      {
+        "qrel_id": "q17_r1",
+        "text": "Common concepts used in interviews and systems: Risk factor eligibility",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q18",
+    "qrels": [
+      {
+        "qrel_id": "q18_r1",
+        "text": "DVA (Debt Valuation Adjustment) is the valuation adjustment for own credit risk.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q19",
+    "qrels": [
+      {
+        "qrel_id": "q19_r1",
+        "text": "FVA (Funding Valuation Adjustment) is the valuation adjustment for funding costs.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q20",
+    "qrels": [
+      {
+        "qrel_id": "q20_r1",
+        "text": "KVA (Capital Valuation Adjustment) is the valuation adjustment for capital costs.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q21",
+    "qrels": [
+      {
+        "qrel_id": "q21_r1",
+        "text": "MVA (Margin Valuation Adjustment) is the valuation adjustment for margin costs.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q22",
+    "qrels": [
+      {
+        "qrel_id": "q22_r1",
+        "text": "ColVA (Collateral Valuation Adjustment) is the valuation adjustment for collateral.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q23",
+    "qrels": [
+      {
+        "qrel_id": "q23_r1",
+        "text": "The formula for calculating CVA is written with terms including ... default probability",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q24",
+    "qrels": [
+      {
+        "qrel_id": "q24_r1",
+        "text": "The formula for calculating CVA is written with terms including ... loss given default",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q25",
+    "qrels": [
+      {
+        "qrel_id": "q25_r1",
+        "text": "The formula for calculating CVA is written with terms including ... exposure over time",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q26",
+    "qrels": [
+      {
+        "qrel_id": "q26_r1",
+        "text": "The formula for calculating CVA is written with terms including maturity, discount factors",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q27",
+    "qrels": [
+      {
+        "qrel_id": "q27_r1",
+        "text": "In the EU, FRTB is being implemented as part of the Revised Capital Requirements Regulation (CRR II)",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q28",
+    "qrels": [
+      {
+        "qrel_id": "q28_r1",
+        "text": "it aims to address a number of identified shortcomings in the existing Basel II.5 framework",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q29",
+    "qrels": [
+      {
+        "qrel_id": "q29_r1",
+        "text": "While FRTB was not intended to increase banks' capital costs beyond those imposed by Basel II.5, it is clear ... that banks will see significant increases in their cost of capital, in particular to support their trading activities.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q30",
+    "qrels": [
+      {
+        "qrel_id": "q30_r1",
+        "text": "developed by the Basel Committee on Banking Supervision (BCBS)",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q31",
+    "qrels": [
+      {
+        "qrel_id": "q31_r1",
+        "text": "Theta is the sensitivity of a derivative's value to the passage of time.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q32",
+    "qrels": [
+      {
+        "qrel_id": "q32_r1",
+        "text": "Rho is the sensitivity of a derivative's value to changes in interest rates.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q33",
+    "qrels": [
+      {
+        "qrel_id": "q33_r1",
+        "text": "Volga is the sensitivity of Vega to changes in implied volatility (second-order Greek).",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q34",
+    "qrels": [
+      {
+        "qrel_id": "q34_r1",
+        "text": "Vanna is the sensitivity of Delta to changes in implied volatility, or sensitivity of Vega to changes in underlying price.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q35",
+    "qrels": [
+      {
+        "qrel_id": "q35_r1",
+        "text": "Charm is the sensitivity of Delta to the passage of time.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q36",
+    "qrels": [
+      {
+        "qrel_id": "q36_r1",
+        "text": "Historical volatility is based on past price movements, while implied volatility is the market's expectation of future volatility, derived from option prices.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q37",
+    "qrels": [
+      {
+        "qrel_id": "q37_r1",
+        "text": "A delta-neutral portfolio has a total delta of zero, meaning it is insensitive to small changes in the underlying price.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q38",
+    "qrels": [
+      {
+        "qrel_id": "q38_r1",
+        "text": "Gamma hedging adjusts a portfolio to reduce gamma, making it more stable to larger moves in the underlying.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q39",
+    "qrels": [
+      {
+        "qrel_id": "q39_r1",
+        "text": "Volatility skew is the pattern where implied volatility varies across strike prices, typically with lower strikes having higher volatility.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q40",
+    "qrels": [
+      {
+        "qrel_id": "q40_r1",
+        "text": "Volatility smile is a pattern where both out-of-the-money and in-the-money options have higher implied volatility than at-the-money options.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q41",
+    "qrels": [
+      {
+        "qrel_id": "q41_r1",
+        "text": "A risk factor is a market variable (e.g., interest rate, equity price, FX rate) that drives the value of a portfolio.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q42",
+    "qrels": [
+      {
+        "qrel_id": "q42_r1",
+        "text": "Model risk is the risk that a valuation or risk model produces incorrect results, which FRTB aims to address through governance.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q43",
+    "qrels": [
+      {
+        "qrel_id": "q43_r1",
+        "text": "Counterparty credit risk is the risk that a counterparty will default on its obligations, which is addressed by CVA.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q44",
+    "qrels": [
+      {
+        "qrel_id": "q44_r1",
+        "text": "Wrong-way risk occurs when exposure to a counterparty increases as the counterparty's credit quality deteriorates.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q45",
+    "qrels": [
+      {
+        "qrel_id": "q45_r1",
+        "text": "Right-way risk occurs when exposure to a counterparty decreases as the counterparty's credit quality deteriorates.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q46",
+    "qrels": [
+      {
+        "qrel_id": "q46_r1",
+        "text": "A CSA is a legal document that governs collateral arrangements between counterparties to mitigate counterparty risk.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q47",
+    "qrels": [
+      {
+        "qrel_id": "q47_r1",
+        "text": "Initial margin is collateral posted upfront to cover potential future exposure.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q48",
+    "qrels": [
+      {
+        "qrel_id": "q48_r1",
+        "text": "Variation margin is collateral exchanged daily to mark-to-market current exposure.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q49",
+    "qrels": [
+      {
+        "qrel_id": "q49_r1",
+        "text": "VaR is a measure of potential loss over a given horizon at a given confidence level.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q50",
+    "qrels": [
+      {
+        "qrel_id": "q50_r1",
+        "text": "Expected shortfall is the expected loss given that VaR is exceeded, a more conservative measure than VaR.",
+        "relevance": 2
+      }
+    ]
+  }
+]

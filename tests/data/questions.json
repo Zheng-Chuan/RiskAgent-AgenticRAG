@@ -5,6 +5,10 @@
     "reference_answer": "FRTB (Fundamental Review of the Trading Book) is a regulatory framework to improve market risk capital requirements after 2008. It increases risk sensitivity and model risk governance by introducing stricter requirements for risk factor eligibility, backtesting, and PnL attribution.",
     "ground_truth_contexts": [
       "FRTB stands for Fundamental Review of the Trading Book. High level goals: Improve market risk capital framework after 2008. Increase risk sensitivity and model risk governance."
+    ],
+    "tags": [
+      "regulation",
+      "definition"
     ]
   },
   {
@@ -14,6 +18,9 @@
     "ground_truth_contexts": [
       "Delta: sensitivity to the underlying price level.",
       "Greeks are sensitivities of a derivative value to small changes in risk factors."
+    ],
+    "tags": [
+      "greek"
     ]
   },
   {
@@ -23,6 +30,11 @@
     "ground_truth_contexts": [
       "Gamma: sensitivity of Delta to the underlying price.",
       "Delta: sensitivity to the underlying price level."
+    ],
+    "tags": [
+      "compare",
+      "greek",
+      "definition"
     ]
   },
   {
@@ -32,6 +44,10 @@
     "ground_truth_contexts": [
       "Vega: sensitivity to volatility.",
       "Greeks are sensitivities of a derivative value to small changes in risk factors."
+    ],
+    "tags": [
+      "greek",
+      "definition"
     ]
   },
   {
@@ -40,6 +56,10 @@
     "reference_answer": "CVA stands for Credit Valuation Adjustment and is an adjustment to the risk-free value to account for counterparty default risk.",
     "ground_truth_contexts": [
       "CVA stands for Credit Valuation Adjustment."
+    ],
+    "tags": [
+      "regulation",
+      "definition"
     ]
   },
   {
@@ -48,6 +68,10 @@
     "reference_answer": "FRTB stands for Fundamental Review of the Trading Book.",
     "ground_truth_contexts": [
       "FRTB stands for Fundamental Review of the Trading Book."
+    ],
+    "tags": [
+      "regulation",
+      "definition"
     ]
   },
   {
@@ -56,6 +80,10 @@
     "reference_answer": "FRTB aims to improve market risk capital framework after 2008 and increase risk sensitivity and model risk governance.",
     "ground_truth_contexts": [
       "High level goals: Improve market risk capital framework after 2008. Increase risk sensitivity and model risk governance."
+    ],
+    "tags": [
+      "regulation",
+      "definition"
     ]
   },
   {
@@ -64,6 +92,9 @@
     "reference_answer": "Credit Valuation Adjustment (CVA) is the price that an investor would pay to hedge the counterparty credit risk of a derivative instrument.",
     "ground_truth_contexts": [
       "Credit Valuation Adjustment (CVA) is the price that an investor would pay to hedge the counterparty credit risk of a derivative instrument."
+    ],
+    "tags": [
+      "definition"
     ]
   },
   {
@@ -72,13 +103,21 @@
     "reference_answer": "CVA was introduced as a new requirement for fair value accounting during the 2007/08 Global Financial Crisis.",
     "ground_truth_contexts": [
       "CVA was introduced as a new requirement for fair value accounting during the 2007/08 Global Financial Crisis."
+    ],
+    "tags": [
+      "chronology",
+      "regulation"
     ]
   },
   {
     "id": "q10",
     "question": "What is XVA?",
     "reference_answer": "XVA is an umbrella term for valuation adjustments including CVA, DVA, FVA, etc.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "regulation",
+      "definition"
+    ]
   },
   {
     "id": "q11",
@@ -86,6 +125,10 @@
     "reference_answer": "The Basel Committee on Banking Supervision (BCBS) develops global banking standards.",
     "ground_truth_contexts": [
       "The Fundamental Review of the Trading Book (FRTB) is a comprehensive suite of capital rules developed by the Basel Committee on Banking Supervision (BCBS)."
+    ],
+    "tags": [
+      "regulation",
+      "definition"
     ]
   },
   {
@@ -94,6 +137,10 @@
     "reference_answer": "FRTB was finalized in January 2016 as the Minimum Capital Requirements for Market Risk.",
     "ground_truth_contexts": [
       "Finalised in January 2016 as the Minimum Capital Requirements for Market Risk."
+    ],
+    "tags": [
+      "chronology",
+      "regulation"
     ]
   },
   {
@@ -102,6 +149,10 @@
     "reference_answer": "Basel III is a global regulatory framework for banks, which includes FRTB.",
     "ground_truth_contexts": [
       "as part of Basel III"
+    ],
+    "tags": [
+      "regulation",
+      "definition"
     ]
   },
   {
@@ -110,6 +161,10 @@
     "reference_answer": "Trading book contains assets held for trading, while banking book contains assets held to maturity. This distinction is important for FRTB.",
     "ground_truth_contexts": [
       "Common concepts used in interviews and systems: Trading book vs banking book"
+    ],
+    "tags": [
+      "compare",
+      "definition"
     ]
   },
   {
@@ -118,6 +173,10 @@
     "reference_answer": "PnL attribution is a process to explain the drivers of profit and loss, required by FRTB.",
     "ground_truth_contexts": [
       "Common concepts used in interviews and systems: ... PnL attribution"
+    ],
+    "tags": [
+      "procedure",
+      "definition"
     ]
   },
   {
@@ -126,6 +185,10 @@
     "reference_answer": "Backtesting compares model predictions with actual outcomes to validate model accuracy, required by FRTB.",
     "ground_truth_contexts": [
       "Common concepts used in interviews and systems: ... Backtesting"
+    ],
+    "tags": [
+      "procedure",
+      "definition"
     ]
   },
   {
@@ -134,37 +197,55 @@
     "reference_answer": "Risk factor eligibility defines which risk factors can be used for capital calculation under FRTB.",
     "ground_truth_contexts": [
       "Common concepts used in interviews and systems: Risk factor eligibility"
+    ],
+    "tags": [
+      "definition"
     ]
   },
   {
     "id": "q18",
     "question": "What is DVA?",
     "reference_answer": "DVA (Debt Valuation Adjustment) is the valuation adjustment for own credit risk.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "definition"
+    ]
   },
   {
     "id": "q19",
     "question": "What is FVA?",
     "reference_answer": "FVA (Funding Valuation Adjustment) is the valuation adjustment for funding costs.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "definition"
+    ]
   },
   {
     "id": "q20",
     "question": "What is KVA?",
     "reference_answer": "KVA (Capital Valuation Adjustment) is the valuation adjustment for capital costs.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "definition"
+    ]
   },
   {
     "id": "q21",
     "question": "What is MVA?",
     "reference_answer": "MVA (Margin Valuation Adjustment) is the valuation adjustment for margin costs.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "definition"
+    ]
   },
   {
     "id": "q22",
     "question": "What is ColVA?",
     "reference_answer": "ColVA (Collateral Valuation Adjustment) is the valuation adjustment for collateral.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "definition"
+    ]
   },
   {
     "id": "q23",
@@ -172,6 +253,11 @@
     "reference_answer": "Default probability is the probability that a counterparty will default, a key input to CVA calculation.",
     "ground_truth_contexts": [
       "The formula for calculating CVA is written with terms including ... default probability"
+    ],
+    "tags": [
+      "regulation",
+      "numeric",
+      "definition"
     ]
   },
   {
@@ -180,6 +266,10 @@
     "reference_answer": "LGD is the loss incurred if a counterparty defaults, a key input to CVA calculation.",
     "ground_truth_contexts": [
       "The formula for calculating CVA is written with terms including ... loss given default"
+    ],
+    "tags": [
+      "numeric",
+      "definition"
     ]
   },
   {
@@ -188,6 +278,10 @@
     "reference_answer": "EAD is the exposure to a counterparty at default, a key input to CVA calculation.",
     "ground_truth_contexts": [
       "The formula for calculating CVA is written with terms including ... exposure over time"
+    ],
+    "tags": [
+      "numeric",
+      "definition"
     ]
   },
   {
@@ -196,6 +290,11 @@
     "reference_answer": "Discount factors are used to present-value future cash flows in CVA calculation.",
     "ground_truth_contexts": [
       "The formula for calculating CVA is written with terms including maturity, discount factors"
+    ],
+    "tags": [
+      "regulation",
+      "numeric",
+      "definition"
     ]
   },
   {
@@ -204,6 +303,10 @@
     "reference_answer": "CRR II (Capital Requirements Regulation II) is the EU implementation of FRTB.",
     "ground_truth_contexts": [
       "In the EU, FRTB is being implemented as part of the Revised Capital Requirements Regulation (CRR II)"
+    ],
+    "tags": [
+      "regulation",
+      "definition"
     ]
   },
   {
@@ -212,6 +315,11 @@
     "reference_answer": "FRTB addresses shortcomings in Basel II.5 and introduces stricter requirements for market risk capital.",
     "ground_truth_contexts": [
       "it aims to address a number of identified shortcomings in the existing Basel II.5 framework"
+    ],
+    "tags": [
+      "compare",
+      "regulation",
+      "definition"
     ]
   },
   {
@@ -220,6 +328,10 @@
     "reference_answer": "While not intended to increase capital costs beyond Basel II.5, FRTB is expected to lead to significant increases in banks' cost of capital for trading activities.",
     "ground_truth_contexts": [
       "While FRTB was not intended to increase banks' capital costs beyond those imposed by Basel II.5, it is clear ... that banks will see significant increases in their cost of capital, in particular to support their trading activities."
+    ],
+    "tags": [
+      "regulation",
+      "numeric"
     ]
   },
   {
@@ -228,126 +340,203 @@
     "reference_answer": "BCBS stands for Basel Committee on Banking Supervision.",
     "ground_truth_contexts": [
       "developed by the Basel Committee on Banking Supervision (BCBS)"
+    ],
+    "tags": [
+      "regulation",
+      "definition"
     ]
   },
   {
     "id": "q31",
     "question": "What is Theta in Greeks?",
     "reference_answer": "Theta is the sensitivity of a derivative's value to the passage of time.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "greek",
+      "definition"
+    ]
   },
   {
     "id": "q32",
     "question": "What is Rho in Greeks?",
     "reference_answer": "Rho is the sensitivity of a derivative's value to changes in interest rates.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "greek",
+      "definition"
+    ]
   },
   {
     "id": "q33",
     "question": "What is Volga?",
     "reference_answer": "Volga is the sensitivity of Vega to changes in implied volatility (second-order Greek).",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "greek",
+      "definition"
+    ]
   },
   {
     "id": "q34",
     "question": "What is Vanna?",
     "reference_answer": "Vanna is the sensitivity of Delta to changes in implied volatility, or sensitivity of Vega to changes in underlying price.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "greek",
+      "definition"
+    ]
   },
   {
     "id": "q35",
     "question": "What is Charm?",
     "reference_answer": "Charm is the sensitivity of Delta to the passage of time.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "greek",
+      "definition"
+    ]
   },
   {
     "id": "q36",
     "question": "What is the difference between implied and historical volatility?",
     "reference_answer": "Historical volatility is based on past price movements, while implied volatility is the market's expectation of future volatility, derived from option prices.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "compare",
+      "definition"
+    ]
   },
   {
     "id": "q37",
     "question": "What is a delta-neutral portfolio?",
     "reference_answer": "A delta-neutral portfolio has a total delta of zero, meaning it is insensitive to small changes in the underlying price.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "greek",
+      "definition"
+    ]
   },
   {
     "id": "q38",
     "question": "What is gamma hedging?",
     "reference_answer": "Gamma hedging adjusts a portfolio to reduce gamma, making it more stable to larger moves in the underlying.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "greek",
+      "procedure",
+      "definition"
+    ]
   },
   {
     "id": "q39",
     "question": "What is volatility skew?",
     "reference_answer": "Volatility skew is the pattern where implied volatility varies across strike prices, typically with lower strikes having higher volatility.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "definition"
+    ]
   },
   {
     "id": "q40",
     "question": "What is volatility smile?",
     "reference_answer": "Volatility smile is a pattern where both out-of-the-money and in-the-money options have higher implied volatility than at-the-money options.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "definition"
+    ]
   },
   {
     "id": "q41",
     "question": "What is a risk factor?",
     "reference_answer": "A risk factor is a market variable (e.g., interest rate, equity price, FX rate) that drives the value of a portfolio.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "definition"
+    ]
   },
   {
     "id": "q42",
     "question": "What is model risk?",
     "reference_answer": "Model risk is the risk that a valuation or risk model produces incorrect results, which FRTB aims to address through governance.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "definition"
+    ]
   },
   {
     "id": "q43",
     "question": "What is counterparty credit risk?",
     "reference_answer": "Counterparty credit risk is the risk that a counterparty will default on its obligations, which is addressed by CVA.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "definition"
+    ]
   },
   {
     "id": "q44",
     "question": "What is wrong-way risk?",
     "reference_answer": "Wrong-way risk occurs when exposure to a counterparty increases as the counterparty's credit quality deteriorates.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "definition"
+    ]
   },
   {
     "id": "q45",
     "question": "What is right-way risk?",
     "reference_answer": "Right-way risk occurs when exposure to a counterparty decreases as the counterparty's credit quality deteriorates.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "definition"
+    ]
   },
   {
     "id": "q46",
     "question": "What is a credit support annex (CSA)?",
     "reference_answer": "A CSA is a legal document that governs collateral arrangements between counterparties to mitigate counterparty risk.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "definition"
+    ]
   },
   {
     "id": "q47",
     "question": "What is initial margin?",
     "reference_answer": "Initial margin is collateral posted upfront to cover potential future exposure.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "numeric",
+      "definition"
+    ]
   },
   {
     "id": "q48",
     "question": "What is variation margin?",
     "reference_answer": "Variation margin is collateral exchanged daily to mark-to-market current exposure.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "numeric",
+      "definition"
+    ]
   },
   {
     "id": "q49",
     "question": "What is value at risk (VaR)?",
     "reference_answer": "VaR is a measure of potential loss over a given horizon at a given confidence level.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "numeric",
+      "definition"
+    ]
   },
   {
     "id": "q50",
     "question": "What is expected shortfall (ES)?",
     "reference_answer": "Expected shortfall is the expected loss given that VaR is exceeded, a more conservative measure than VaR.",
-    "ground_truth_contexts": []
+    "ground_truth_contexts": [],
+    "tags": [
+      "numeric",
+      "definition"
+    ]
   }
 ]

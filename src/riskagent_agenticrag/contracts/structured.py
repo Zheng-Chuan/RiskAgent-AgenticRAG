@@ -110,10 +110,11 @@ class StructuredResponse(_StrictBaseModel):
     # 中文注释: 结构化输出.
     request_id: str
     report: str
-    breaches: list[dict[str, Any]]
+    breaches: list[dict[str, Any]] = Field(default_factory=list)
     evidence_set: list[Evidence]
     claims: list[Claim]
-    tool_traces: list[ToolTrace]
+    # 中文注释: 保留 legacy 字段兼容旧 artifacts, 纯 RAG 主路径默认不写入.
+    tool_traces: list[ToolTrace] = Field(default_factory=list)
     decision_log: list[Decision]
     status: RunStatus
     failure_reason: Optional[FailureReason] = None

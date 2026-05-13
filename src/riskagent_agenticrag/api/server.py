@@ -129,7 +129,6 @@ def _make_response(*, request_id: str, out: dict[str, Any]) -> AskResponse:
         claims=list(out.get("claims") or []),
         evidence_set=list(out.get("evidence_set") or []),
         decision_log=list(out.get("decision_log") or []),
-        tool_traces=list(out.get("tool_traces") or []),
         failure_reason=out.get("failure_reason"),
         debug=dict(out.get("debug") or {}),
         error=None,
@@ -138,7 +137,7 @@ def _make_response(*, request_id: str, out: dict[str, Any]) -> AskResponse:
 
 _EMPTY_ASK = dict(
     status="error", answer="", citations=[], claims=[], evidence_set=[],
-    decision_log=[], tool_traces=[], failure_reason=None, debug={},
+    decision_log=[], failure_reason=None, debug={},
 )
 
 

@@ -32,7 +32,7 @@ def _extract_numbers(text: str) -> list[float]:
     
     # 移除章节编号模式 (如 "1)", "2.", "3)", "1.1", "2.2." 等)
     # 匹配: 行首或空白字符后的 数字 + ) 或 .
-    t = re.sub(r"(^|\s)\d+(?:\.\d+)*[.)]", " ", t)
+    t = re.sub(r"(^|\n)\s*\d+(?:\.\d+)*[.)](?=\s)", " ", t)
     
     matches = re.findall(r"-?\d+(?:,\d{3})*(?:\.\d+)?%?", t)
     out: list[float] = []
@@ -110,6 +110,8 @@ def try_compute_domain_consistency(*, samples: list[dict[str, Any]], tolerance: 
     numeric_scores: list[float] = []
     glossary_scores: list[float] = []
     per_sample: list[dict[str, Any]] = []
+    numeric_failures: list[dict[str, Any]] = []
+    glossary_violations: list[dict[str, Any]] = []
 
     try:
         for s in samples:
@@ -124,10 +126,32 @@ def try_compute_domain_consistency(*, samples: list[dict[str, Any]], tolerance: 
             numeric_scores.append(float(num["score"]))
             glossary_scores.append(float(glo["score"]))
             per_sample.append({"id": sid, "numeric": num, "glossary": glo})
+            if num.get("unmatched_values"):
+                numeric_failures.append(
+                    {
+                        "id": sid,
+                        "unmatched_values": list(num.get("unmatched_values") or []),
+                        "matched_numbers": int(num.get("matched_numbers", 0)),
+                        "total_numbers": int(num.get("total_numbers", 0)),
+                    }
+                )
+            if glo.get("violations"):
+                glossary_violations.append(
+                    {
+                        "id": sid,
+                        "violations": list(glo.get("violations") or []),
+                        "checked_terms": int(glo.get("checked_terms", 0)),
+                    }
+                )
 
         n = len(samples) if samples else 0
         if n <= 0:
-            return DomainConsistencyResult(enabled=True, ok=True, metrics={}, details={"samples": []})
+            return DomainConsistencyResult(
+                enabled=True,
+                ok=True,
+                metrics={},
+                details={"samples": [], "numeric_failures": [], "glossary_violations": []},
+            )
 
         numeric_mean = sum(numeric_scores) / n
         glossary_mean = sum(glossary_scores) / n
@@ -136,6 +160,25 @@ def try_compute_domain_consistency(*, samples: list[dict[str, Any]], tolerance: 
             "glossary_consistency_score": float(glossary_mean),
             "domain_consistency_score": float((numeric_mean + glossary_mean) / 2.0),
         }
-        return DomainConsistencyResult(enabled=True, ok=True, metrics=metrics, details={"samples": per_sample})
+        return DomainConsistencyResult(
+            enabled=True,
+            ok=True,
+            metrics=metrics,
+            details={
+                "samples": per_sample,
+                "numeric_failures": numeric_failures,
+                "glossary_violations": glossary_violations,
+            },
+        )
     except Exception as e:
-        return DomainConsistencyResult(enabled=True, ok=False, metrics={}, details={"samples": per_sample}, error=str(e))
+        return DomainConsistencyResult(
+            enabled=True,
+            ok=False,
+            metrics={},
+            details={
+                "samples": per_sample,
+                "numeric_failures": numeric_failures,
+                "glossary_violations": glossary_violations,
+            },
+            error=str(e),
+        )

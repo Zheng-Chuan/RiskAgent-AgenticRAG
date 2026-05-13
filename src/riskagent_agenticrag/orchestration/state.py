@@ -22,12 +22,6 @@ class AgenticState(TypedDict, total=False):
     critique_reason: str
     should_continue: bool
 
-    should_call_tool: bool
-    tool_args: dict[str, Any]
-    tool_reason: str
-    tool_output: Optional[dict[str, Any]]
-    tool_traces: list[dict[str, Any]]
-
     answer: str
     citations: list[dict[str, str]]
     claims: list[dict[str, Any]]

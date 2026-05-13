@@ -19,8 +19,10 @@ class Week6CitationPrecisionQualityTest(unittest.TestCase):
             }
         ]
 
-        with self.assertRaises(ValueError):
-            _ = try_compute_citation_precision(samples=samples, mode="heuristic")
+        out = try_compute_citation_precision(samples=samples, mode="heuristic")
+        self.assertTrue(out.ok)
+        self.assertGreaterEqual(float(out.metrics.get("citation_precision", 0.0)), 0.99)
+        self.assertEqual(out.details[0]["unsupported_sentences"], [])
 
     def test_heuristic_hallucination_rate(self) -> None:
         from riskagent_agenticrag.evaluation.citation_precision import try_compute_citation_precision
@@ -42,5 +44,9 @@ class Week6CitationPrecisionQualityTest(unittest.TestCase):
             },
         ]
 
-        with self.assertRaises(ValueError):
-            _ = try_compute_citation_precision(samples=samples, mode="heuristic")
+        out = try_compute_citation_precision(samples=samples, mode="heuristic")
+        self.assertTrue(out.ok)
+        self.assertGreater(float(out.metrics.get("hallucination_rate_in_citations", 0.0)), 0.0)
+        self.assertGreater(float(out.metrics.get("unsupported_sentence_rate", 0.0)), 0.0)
+        unsupported = [row for row in out.details if row["id"] == "unsupported"][0]
+        self.assertTrue(unsupported["unsupported_sentences"])

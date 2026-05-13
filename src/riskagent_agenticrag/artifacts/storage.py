@@ -21,7 +21,7 @@ def save_artifact(
     参数:
         request_id: 请求唯一标识
         request_data: 请求数据, 包含 question, max_rounds 等
-        response_data: 响应数据, 包含 answer, citations, decision_log, tool_traces 等
+        response_data: 响应数据, 包含 answer, citations, decision_log, claims 等
         artifacts_dir: 存储目录, 默认 .artifacts
 
     返回:

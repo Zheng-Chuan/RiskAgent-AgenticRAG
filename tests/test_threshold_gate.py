@@ -31,11 +31,23 @@ class Week15ThresholdGateTest(unittest.TestCase):
 
     def test_gate_fail_on_regression(self) -> None:
         report = {"metrics": {"citations_coverage": 0.9}}
-        diff = {"citations_coverage": {"regression": True, "delta": -0.1, "current": 0.9, "baseline": 1.0}}
+        diff = {
+            "comparisons": {
+                "citations_coverage": {
+                    "baseline_regression": True,
+                    "threshold_failure": False,
+                    "regression": True,
+                    "delta": -0.1,
+                    "current": 0.9,
+                    "baseline": 1.0,
+                }
+            }
+        }
         cfg = {"fail_on_regression": True, "metrics": {}}
         out = evaluate_threshold_gate(report=report, baseline_diff=diff, config=cfg)
         self.assertEqual(out["verdict"], "fail")
-        self.assertTrue(any(x["reason"] == "baseline_regression" for x in out["failures"]))
+        self.assertEqual(out["failures"], [])
+        self.assertTrue(any(x["reason"] == "baseline_regression" for x in out["regressions"]))
 
     def test_gate_warning_when_metric_missing(self) -> None:
         report = {"metrics": {}}

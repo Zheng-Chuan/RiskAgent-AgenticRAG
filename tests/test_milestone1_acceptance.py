@@ -4,26 +4,34 @@ import unittest
 
 
 class ContractMilestone1AcceptanceTest(unittest.TestCase):
-    def test_contract_and_tool_traces_schema(self) -> None:
-        from riskagent_agenticrag.agents.data_agent import run_data_agent
-        from riskagent_agenticrag.contracts.structured import StructuredRequest
+    def test_langgraph_mainline_is_pure_rag(self) -> None:
+        from riskagent_agenticrag.orchestration.langgraph_runner import visualize_graph_mermaid
 
-        request = StructuredRequest(
-            request_id="test-request-id",
-            query="monitor desk exposure",
-            as_of="2026-01-12",
-            desk="Equity Derivatives",
-            abs_delta_limit=1000000,
+        mermaid = visualize_graph_mermaid()
+
+        self.assertIn("rewrite", mermaid)
+        self.assertIn("retrieve", mermaid)
+        self.assertIn("synthesize", mermaid)
+        self.assertIn("validate", mermaid)
+        self.assertNotIn("decide_tool", mermaid)
+        self.assertNotIn("call_tool", mermaid)
+
+    def test_structured_response_accepts_pure_rag_payload(self) -> None:
+        from riskagent_agenticrag.contracts.structured import parse_structured_response
+
+        payload = parse_structured_response(
+            {
+                "request_id": "r1",
+                "report": "answer",
+                "evidence_set": [],
+                "claims": [],
+                "decision_log": [],
+                "status": "ok",
+                "failure_reason": None,
+            }
         )
 
-        tool_output, trace, _failure_reason = run_data_agent(request)
-
-        self.assertIsNotNone(trace)
-        self.assertEqual(trace.tool_name, "monitor_desk_exposure")
-        self.assertIsInstance(trace.tool_input, dict)
-        self.assertIsInstance(trace.tool_output, dict)
-        self.assertTrue(trace.started_at, "trace missing started_at")
-        self.assertTrue(trace.finished_at, "trace missing finished_at")
-
-        self.assertIsInstance(tool_output, dict)
-        self.assertIn("exposure", tool_output)
+        self.assertEqual(payload.request_id, "r1")
+        self.assertEqual(payload.report, "answer")
+        self.assertEqual(payload.tool_traces, [])
+        self.assertEqual(payload.breaches, [])

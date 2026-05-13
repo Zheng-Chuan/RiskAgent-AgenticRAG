@@ -1,4 +1,4 @@
-# 系统核心流程
+# 系统 Query 流程
 ```text
 [用户]
     | 发起 query
@@ -10,6 +10,7 @@
 [RiskAgentSystem.chat]
     | 检查索引是否存在, 根据模式初始化 retriever
     | retriever_mode = step1 / step2 / step3 / step4
+    | 主路径固定为纯 RAG, 不再进入 tool decision / call_tool 分支
     v
 [LangGraph 工作流]
     |
@@ -82,34 +83,33 @@
     |       | YES -> revise_query -> 回到 Step 2, 最多循环 max_rounds
     |       | NO  -> 继续 Step 4
     |       v
-    +-> [Step 4] 条件判断: need_tool?
-    |       | 依据 Step 2.7 的判断
-    |       | 这是当前代码的真实路径, 未来 PRD 会收敛为纯 RAG
-    |       | YES -> 调用外部工具 (如计算器/数据库查询)
-    |       |       | 工具返回后回到 synthesize 阶段
-    |       | NO  -> 继续 Step 5
-    |       v
-    +-> [Step 5] synthesize_answer
+    +-> [Step 4] synthesize_answer
     |       | 基于 Step 2 筛选后的 docs 生成答案
+    |       | 这是纯 RAG 生成阶段, 只允许使用检索上下文
     |       | 从 docs 中抽取 citations, 再把 citations 挂到答案段落
     |       | 后续 validate_and_save 会基于 answer 构建 claims
     |       v
-    +-> [Step 6] validate_and_save
+    +-> [Step 5] validate_and_save
             |
-            +-> [6.1] Gate 校验
+            +-> [5.1] Gate 校验
             |       | refusal gate: 检测是否需要拒答
             |       | evidence gate: 验证答案有足够证据
             |       | numeric gate: 检查数值类答案的准确性
             |       | 当前实现里失败后还可能进入 LLM appeal
             |       v
-            +-> [6.2] 结构化输出
-            |       | 按照 API schema 组装
+            +-> [5.2] 结构化输出
+            |       | 按照 API schema 组装纯 RAG 输出
             |       | answer + citations + claims + evidence_set + decision_log + debug
             |       v
-            +-> [6.3] 落盘 artifacts
+            +-> [5.3] 落盘 artifacts
                     | 写入 request / response / structured payload / trace
                     v
 [API 返回]
     v
 [用户]
 ```
+
+# 系统 Index 流程
+
+
+# 系统 Evaluation 流程

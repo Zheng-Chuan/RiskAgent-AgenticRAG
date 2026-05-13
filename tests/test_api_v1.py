@@ -73,8 +73,6 @@ class TestWeek12ApiV1Acceptance(unittest.TestCase):
                 return {"query": "frtb definition"}
             if "Schema" in p and "\"sufficient\"" in p:
                 return {"sufficient": True, "improved_query": "", "reason": "ok"}
-            if "Schema" in p and "\"should_call_tool\"" in p:
-                return {"should_call_tool": False, "args": {}, "reason": "not needed"}
             return {}
 
         def _fake_llm_text(prompt: str, temperature: float = 0.0):
@@ -95,12 +93,12 @@ class TestWeek12ApiV1Acceptance(unittest.TestCase):
                 "claims",
                 "evidence_set",
                 "decision_log",
-                "tool_traces",
                 "failure_reason",
                 "debug",
                 "error",
             ):
                 self.assertIn(k, body)
+            self.assertNotIn("tool_traces", body)
 
             self.assertTrue(str(body.get("request_id") or "").strip())
             self.assertIn(body.get("status"), ("ok", "failed", "error"))
@@ -118,8 +116,6 @@ class TestWeek12ApiV1Acceptance(unittest.TestCase):
                 return {"query": "frtb basel"}
             if "Schema" in p and "\"sufficient\"" in p:
                 return {"sufficient": True, "improved_query": "", "reason": "ok"}
-            if "Schema" in p and "\"should_call_tool\"" in p:
-                return {"should_call_tool": False, "args": {}, "reason": "not needed"}
             return {}
 
         def _fake_llm_text(prompt: str, temperature: float = 0.0):
@@ -147,4 +143,3 @@ class TestWeek12ApiV1Acceptance(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-

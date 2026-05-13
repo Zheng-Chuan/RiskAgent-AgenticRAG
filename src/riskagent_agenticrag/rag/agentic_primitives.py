@@ -8,7 +8,6 @@
 
 from __future__ import annotations
 
-import datetime
 import json
 import re
 from typing import Any, Optional
@@ -88,11 +87,6 @@ def try_parse_json(text: str) -> Optional[dict[str, Any]]:
     return None
 
 
-def utc_today_date() -> str:
-    # 中文注释: tool use 的默认 as_of
-    return datetime.datetime.utcnow().date().isoformat()
-
-
 def rewrite_query(question: str) -> str:
     prompt = (
         "You are a retrieval query rewriting assistant for finance risk and derivatives. "
@@ -132,37 +126,7 @@ def critique_retrieval(question: str, docs: list[Document]) -> tuple[bool, str, 
     return sufficient, improved_query, reason
 
 
-def decide_tool_use(question: str) -> tuple[bool, dict[str, Any], str]:
-    prompt = (
-        "You are a strict tool-use planner for a risk monitoring assistant. "
-        "Decide whether to call the desk exposure monitoring tool. "
-        "Only call the tool when the user asks about desk exposure, delta limit, breach, or intraday monitoring. "
-        "Return JSON only.\n"
-        "Schema: {\"should_call_tool\": true|false, \"args\": {\"desk\": \"...\", \"as_of\": \"YYYY-MM-DD\", \"abs_delta_limit\": 1000000}, \"reason\": \"...\"}\n\n"
-        "Rules:\n"
-        "- desk is required when should_call_tool is true\n"
-        "- as_of defaults to today's UTC date if missing\n"
-        "- abs_delta_limit defaults to 1000000 if missing\n\n"
-        f"User question: {question}\n"
-    )
-    data = call_llm_json(prompt, temperature=0.0)
-
-    should_call = bool(data.get("should_call_tool", False))
-    raw_args = data.get("args")
-    args: dict[str, Any] = {}
-    if isinstance(raw_args, dict):
-        for k, v in raw_args.items():
-            args[str(k)] = v
-    reason = str(data.get("reason", "")).strip()
-    return should_call, args, reason
-
-
-def synthesize_answer_with_tool(
-    *,
-    question: str,
-    docs: list[Document],
-    tool_output: dict[str, Any] | None,
-) -> str:
+def synthesize_answer(*, question: str, docs: list[Document]) -> str:
     if not docs:
         return build_refusal_report(question)
     if not any(
@@ -170,56 +134,7 @@ def synthesize_answer_with_tool(
         for d in docs
     ):
         return build_refusal_report(question)
-    if not tool_output:
-        return generate_answer(question, docs)
-
-    from riskagent_agenticrag.llm import generate as llm_generate
-
-    context = llm_generate._format_context(docs)  # type: ignore[attr-defined]
-    tool_json = json.dumps(tool_output, ensure_ascii=False, indent=2)
-    
-    template = (
-        "Use the following markdown structure. Each statement must be grounded in context or tool output:\n\n"
-        "1) TLDR (2-4 bullets, each grounded in context or tool output)\n"
-        "2) Key Facts (only facts explicitly stated in context or tool output)\n"
-        "3) Data / Numbers (only from tool output, cite exact values)\n"
-        "Do NOT include sections for which context provides no information.\n"
-        "Do NOT generate examples unless context contains one.\n\n"
-    )
-    
-    # 强化 Faithfulness 的 Compliance 要求
-    compliance = (
-        "STRICT COMPLIANCE RULES:\n"
-        "- ONLY use facts from the provided retrieval context and tool output.\n"
-        "- NEVER make up, infer, or hallucinate information not explicitly stated in context.\n"
-        "- If context lacks information for a section, explicitly state: 'Based on available context, this information is not provided.'\n"
-        "- Every specific number, name, or technical detail must match the context exactly.\n"
-        "- Do not paraphrase technical terms; use exact terms from context.\n"
-        "- Do not output secrets, credentials, or personal data.\n"
-        "- Do not provide trading or investment advice.\n"
-        "- If information is insufficient, say: 'I cannot answer this question based on the available context. I would need additional information about [specific missing info].'\n"
-    )
-    
-    # 添加引用生成指引
-    citation_guide = (
-        "\nCITATION REQUIREMENTS:\n"
-        "- Each factual statement should implicitly reference the source.\n"
-        "- For numbers: cite the exact location in tool output or context.\n"
-        "- For definitions: cite the concept section in context.\n"
-    )
-    
-    prompt = (
-        "You are a precise risk monitoring assistant. "
-        "Your answers must be STRICTLY GROUNDED in the provided retrieval context and tool output. "
-        "Faithfulness to the source material is your highest priority.\n\n"
-        f"{compliance}\n"
-        f"{template}\n"
-        f"{citation_guide}\n"
-        f"Question: {question}\n\n"
-        f"Retrieval context (BASE ALL ANSWERS ON THIS):\n{context}\n\n"
-        f"Tool output JSON (REFERENCE FOR NUMBERS/DATA):\n{tool_json}\n"
-    )
-    return call_llm_text(prompt, temperature=0.0)
+    return generate_answer(question, docs)
 
 
 def _paragraph_tokens(text: str) -> set[str]:

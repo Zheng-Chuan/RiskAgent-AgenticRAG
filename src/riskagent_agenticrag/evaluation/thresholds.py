@@ -53,6 +53,7 @@ def evaluate_threshold_gate(
     fail_on_regression = bool(config.get("fail_on_regression", True))
 
     failures: list[dict[str, Any]] = []
+    regressions: list[dict[str, Any]] = []
     warnings: list[dict[str, Any]] = []
 
     for name, rule in metric_rules.items():
@@ -97,12 +98,16 @@ def evaluate_threshold_gate(
                 }
             )
 
-    if fail_on_regression and isinstance(baseline_diff, dict):
-        for name, payload in baseline_diff.items():
+    baseline_comparisons = baseline_diff
+    if isinstance(baseline_diff, dict) and isinstance(baseline_diff.get("comparisons"), dict):
+        baseline_comparisons = baseline_diff.get("comparisons")
+
+    if fail_on_regression and isinstance(baseline_comparisons, dict):
+        for name, payload in baseline_comparisons.items():
             if not isinstance(payload, dict):
                 continue
-            if bool(payload.get("regression", False)):
-                failures.append(
+            if bool(payload.get("baseline_regression", payload.get("regression", False))):
+                regressions.append(
                     {
                         "metric": str(name),
                         "reason": "baseline_regression",
@@ -113,7 +118,7 @@ def evaluate_threshold_gate(
                 )
 
     verdict = "pass"
-    if failures:
+    if failures or regressions:
         verdict = "fail"
     elif warnings:
         verdict = "warning"
@@ -121,6 +126,7 @@ def evaluate_threshold_gate(
     return {
         "verdict": verdict,
         "failures": failures,
+        "regressions": regressions,
         "warnings": warnings,
         "checked_metrics": sorted([k for k, v in metric_rules.items() if isinstance(v, dict)]),
         "fail_on_regression": fail_on_regression,

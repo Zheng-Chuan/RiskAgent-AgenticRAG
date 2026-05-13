@@ -37,7 +37,6 @@ class AskResponse(BaseModel):
     claims: list[dict[str, Any]] = Field(default_factory=list)
     evidence_set: list[dict[str, Any]] = Field(default_factory=list)
     decision_log: list[dict[str, Any]] = Field(default_factory=list)
-    tool_traces: list[dict[str, Any]] = Field(default_factory=list)
     failure_reason: Optional[dict[str, Any]] = None
     debug: dict[str, Any] = Field(default_factory=dict)
     error: Optional[ApiError] = None
@@ -50,4 +49,3 @@ class HealthResponse(BaseModel):
 class ReadyResponse(BaseModel):
     status: Literal["ready", "not_ready"]
     details: dict[str, Any] = Field(default_factory=dict)
-

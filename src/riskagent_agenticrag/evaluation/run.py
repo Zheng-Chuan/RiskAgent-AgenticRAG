@@ -17,6 +17,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 import argparse
 import json
+import subprocess
 import time
 from datetime import datetime
 from pathlib import Path
@@ -27,6 +28,8 @@ from riskagent_agenticrag.evaluation.advanced_metrics import (
     compute_reliability_cost_metrics,
     compute_retrieval_metrics,
 )
+from riskagent_agenticrag.evaluation.answer_eval import build_answer_eval
+from riskagent_agenticrag.evaluation.citation_precision import try_compute_citation_precision
 from riskagent_agenticrag.evaluation.citations import compute_citations_coverage, is_valid_citation
 from riskagent_agenticrag.evaluation.dataset import load_dataset
 from riskagent_agenticrag.evaluation.domain_consistency import try_compute_domain_consistency
@@ -42,6 +45,21 @@ from riskagent_agenticrag.rag.retriever_factory import build_retriever
 
 def _utc_now_iso() -> str:
     return datetime.utcnow().replace(microsecond=0).isoformat() + "Z"
+
+
+def _git_commit() -> str:
+    try:
+        return subprocess.check_output(["git", "rev-parse", "HEAD"], text=True, stderr=subprocess.DEVNULL).strip()
+    except Exception:
+        return ""
+
+
+def _answer_eval_thresholds() -> dict[str, float]:
+    return {
+        "citation_coverage": float(os.getenv("EVAL_THRESHOLD_CITATION_COVERAGE", "0.8")),
+        "faithfulness": float(os.getenv("EVAL_THRESHOLD_FAITHFULNESS", "0.75")),
+        "answer_relevancy": float(os.getenv("EVAL_THRESHOLD_ANSWER_RELEVANCY", "0.7")),
+    }
 
 
 def _stage_plan(stage: str) -> dict[str, Any]:
@@ -233,6 +251,15 @@ def run_evaluation(
             text = getattr(d, "page_content", "")
             contexts.append(str(text)[:500])
         retrieved_docs = [_doc_eval_row(d) for d in docs]
+        for idx, d in enumerate(docs[: len(retrieved_docs)]):
+            text = str(getattr(d, "page_content", "") or "")
+            meta = getattr(d, "metadata", {}) or {}
+            if not isinstance(meta, dict):
+                meta = {}
+            retrieved_docs[idx]["content"] = text[:2000]
+            expanded_text = str(meta.get("expanded_text") or "").strip()
+            if expanded_text:
+                retrieved_docs[idx]["expanded_text"] = expanded_text[:2000]
 
         debug = out.get("debug")
         if not isinstance(debug, dict):
@@ -247,6 +274,17 @@ def run_evaluation(
                 "reference_answer": item.reference_answer,
                 "ground_truth_contexts": item.ground_truth_contexts,
                 "reference_contexts": item.reference_contexts,  # For RAGAS context_precision
+                "tags": item.tags,
+                "qrels": [{"qrel_id": q.qrel_id, "text": q.text, "relevance": q.relevance} for q in item.qrels],
+                "gate_label": (
+                    {
+                        "should_block": item.gate_label.should_block,
+                        "label_source": item.gate_label.label_source,
+                        "reason": item.gate_label.reason,
+                    }
+                    if item.gate_label is not None
+                    else None
+                ),
                 "answer": answer,
                 "answer_len": len(answer),
                 "citation_count": len(citations),
@@ -260,12 +298,20 @@ def run_evaluation(
                 "latency_ms": latency_ms,
                 "node_latencies": node_latencies,
                 "decision_log": out.get("decision_log"),
-                "tool_traces": out.get("tool_traces"),
             }
         )
 
     cov = compute_citations_coverage(samples)
-    
+    citation_mode = os.getenv("EVAL_CITATION_JUDGE_MODE", "auto")
+    citation_precision_out = try_compute_citation_precision(samples=samples, mode=citation_mode)
+    citation_precision_result = {
+        "enabled": citation_precision_out.enabled,
+        "ok": citation_precision_out.ok,
+        "metrics": citation_precision_out.metrics,
+        "details": citation_precision_out.details,
+        "error": citation_precision_out.error,
+    }
+
     # RAGAS metrics - Full metrics evaluation
     ragas_result = None
     if enable_ragas:
@@ -298,12 +344,43 @@ def run_evaluation(
         "error": out.error,
         "details": out.details,
     }
+    answer_eval_out = build_answer_eval(
+        samples=samples,
+        citation_coverage=cov.coverage,
+        citation_precision_result=citation_precision_result,
+        ragas_result=ragas_result,
+        thresholds=_answer_eval_thresholds(),
+    )
+    answer_eval = {
+        "enabled": answer_eval_out.enabled,
+        "ok": answer_eval_out.ok,
+        "metrics": answer_eval_out.metrics,
+        "thresholds": answer_eval_out.thresholds,
+        "details": answer_eval_out.details,
+        "error": answer_eval_out.error,
+    }
+
+    sentence_support_by_id: dict[str, dict[str, Any]] = {}
+    for detail in citation_precision_result.get("details", []):
+        if isinstance(detail, dict):
+            sentence_support_by_id[str(detail.get("id", ""))] = detail
+    domain_by_id: dict[str, dict[str, Any]] = {}
+    for detail in (out.details or {}).get("samples", []):
+        if isinstance(detail, dict):
+            domain_by_id[str(detail.get("id", ""))] = detail
+    for sample in samples:
+        sid = str(sample.get("id", ""))
+        if sid in sentence_support_by_id:
+            sample["sentence_support"] = sentence_support_by_id[sid]
+        if sid in domain_by_id:
+            sample["domain_consistency"] = domain_by_id[sid]
 
     report: dict[str, Any] = {
         "generated_at": _utc_now_iso(),
         "inputs": {
             "corpus_dir": str(corpus_dir),
             "dataset_path": str(dataset_path),
+            "dataset_version": str(dataset_path.name),
             "persist_dir": str(persist_dir),
             "k": 4,
             "milvus_uri": os.getenv("MILVUS_URI"),
@@ -311,6 +388,8 @@ def run_evaluation(
             "milvus_port": os.getenv("MILVUS_PORT"),
             "retriever_mode": os.getenv("RISKAGENT_RETRIEVER_MODE", "step4"),
             "reranker_model": os.getenv("RISKAGENT_RERANKER_MODEL", ""),
+            "prompt_version": os.getenv("RISKAGENT_PROMPT_VERSION", "v1"),
+            "git_commit": _git_commit(),
             "profile": str(profile or "all"),
             "retrieval_ks": retrieval_ks,
             "include_cost": bool(include_cost),
@@ -325,6 +404,14 @@ def run_evaluation(
         },
         "samples": samples,
     }
+    report["answer_eval"] = answer_eval
+    report["citation_precision"] = citation_precision_result
+    if answer_eval.get("ok") and isinstance(answer_eval.get("metrics"), dict):
+        for k, v in answer_eval["metrics"].items():
+            try:
+                report["metrics"][k] = float(v)
+            except (TypeError, ValueError):
+                pass
 
     # Merge RAGAS metrics into main metrics (RAGAS replaces citation_precision)
     if ragas_result is not None and ragas_result.get("ok"):
@@ -364,7 +451,15 @@ def run_evaluation(
         flags["gate"] = True
     if flags["retrieval"]:
         retrieval = compute_retrieval_metrics(samples=samples, ks=retrieval_ks)
-        report["retrieval_metrics"] = retrieval.metrics
+        report["retrieval_metrics"] = {
+            "gold_metrics": retrieval.metrics,
+            "slice_metrics": retrieval.slice_metrics,
+            "citation_diagnostics": {
+                "citations_total": cov.total,
+                "citations_passed": cov.passed,
+                "citations_coverage": cov.coverage,
+            },
+        }
         report["metrics"].update(retrieval.metrics)
     if flags["gate"]:
         gate = compute_gate_metrics(samples=samples)
@@ -406,7 +501,7 @@ def main() -> None:
     parser.add_argument("--include-latency", action="store_true")
     parser.add_argument("--with-gate", action="store_true")
     parser.add_argument("--enforce-thresholds", action="store_true")
-    parser.add_argument("--thresholds", default="docs/eval_thresholds.yaml")
+    parser.add_argument("--thresholds", default="config/eval_thresholds.json")
     parser.add_argument("--enable-ragas", action="store_true", help="Enable RAGAS metrics (faithfulness, answer_relevancy, context_precision, etc.)")
     parser.add_argument("--enable-citation-judge", action="store_true", help="Enable citation judge for verifying answer citations")
     parser.add_argument("--numeric-tolerance", type=float, default=float(os.getenv("EVAL_NUMERIC_TOLERANCE", "0.01")))

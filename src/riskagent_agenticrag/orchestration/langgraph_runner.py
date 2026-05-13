@@ -6,14 +6,11 @@ import uuid
 from typing import Any
 
 from riskagent_agenticrag.orchestration.nodes import (
-    node_call_tool,
-    node_decide_tool_use,
     node_retrieve_and_critique,
     node_revise_query,
     node_rewrite,
     node_synthesize_answer,
     node_validate_and_save,
-    should_call_tool,
     should_continue_retrieval,
 )
 from riskagent_agenticrag.orchestration.state import AgenticState
@@ -31,11 +28,8 @@ graph TD
     START([开始]) --> rewrite[查询改写]
     rewrite --> retrieve[检索与评估]
     retrieve --> |需要改进| revise[修订查询]
-    retrieve --> |质量足够| decide_tool[决策工具调用]
+    retrieve --> |质量足够| synthesize[合成答案]
     revise --> retrieve
-    decide_tool --> |需要调用| call_tool[调用工具]
-    decide_tool --> |不需要| synthesize[合成答案]
-    call_tool --> synthesize
     synthesize --> validate[验证与落盘]
     validate --> END([结束])
 """
@@ -53,8 +47,6 @@ def build_langgraph_agentic_loop() -> Any:
     workflow.add_node("rewrite", node_rewrite)
     workflow.add_node("retrieve_and_critique", node_retrieve_and_critique)
     workflow.add_node("revise_query", node_revise_query)
-    workflow.add_node("decide_tool_use", node_decide_tool_use)
-    workflow.add_node("call_tool", node_call_tool)
     workflow.add_node("synthesize_answer", node_synthesize_answer)
     workflow.add_node("validate_and_save", node_validate_and_save)
 
@@ -65,19 +57,10 @@ def build_langgraph_agentic_loop() -> Any:
         should_continue_retrieval,
         {
             "revise_query": "revise_query",
-            "decide_tool_use": "decide_tool_use",
-        },
-    )
-    workflow.add_edge("revise_query", "retrieve_and_critique")
-    workflow.add_conditional_edges(
-        "decide_tool_use",
-        should_call_tool,
-        {
-            "call_tool": "call_tool",
             "synthesize_answer": "synthesize_answer",
         },
     )
-    workflow.add_edge("call_tool", "synthesize_answer")
+    workflow.add_edge("revise_query", "retrieve_and_critique")
     workflow.add_edge("synthesize_answer", "validate_and_save")
     workflow.add_edge("validate_and_save", END)
 
@@ -115,11 +98,6 @@ def run_langgraph_agentic_chat(
         "docs": [],
         "critique_reason": "",
         "should_continue": False,
-        "should_call_tool": False,
-        "tool_args": {},
-        "tool_reason": "",
-        "tool_output": None,
-        "tool_traces": [],
         "answer": "",
         "citations": [],
         "decision_log": [],
@@ -142,7 +120,6 @@ def run_langgraph_agentic_chat(
             include_text=False,
         ),
         "decision_log": final_state["decision_log"],
-        "tool_traces": final_state["tool_traces"],
         "status": final_state["status"],
         "failure_reason": final_state["failure_reason"],
         "debug": final_state["debug"],

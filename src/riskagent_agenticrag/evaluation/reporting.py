@@ -9,13 +9,13 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any, Optional
 
 
 def _utc_timestamp() -> str:
-    return datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    return datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
 
 
 def _sanitize_label(label: str) -> str:
@@ -64,7 +64,8 @@ def find_latest_report(*, artifacts_dir: str = ".artifacts") -> Optional[str]:
 
 @dataclass(frozen=True)
 class RegressionCheck:
-    regression: bool
+    baseline_regression: bool
+    threshold_failure: bool
     delta: float
     current: float
     baseline: float
@@ -81,14 +82,14 @@ def _compare_metric(
 ) -> RegressionCheck:
     delta = current - baseline
     if lower_is_better:
-        threshold = current > maximum if maximum is not None else False
-        drift = delta > abs(tolerance)
+        threshold_failure = current > maximum if maximum is not None else False
+        baseline_regression = delta > abs(tolerance)
     else:
-        threshold = current < minimum if minimum is not None else False
-        drift = delta < -abs(tolerance)
-    regression = threshold or drift
+        threshold_failure = current < minimum if minimum is not None else False
+        baseline_regression = delta < -abs(tolerance)
     return RegressionCheck(
-        regression=regression,
+        baseline_regression=baseline_regression,
+        threshold_failure=threshold_failure,
         delta=delta,
         current=current,
         baseline=baseline,
@@ -143,6 +144,8 @@ def compare_reports(
         "ragas_contradiction_score",
     }
     out: dict[str, Any] = {}
+    baseline_regression_metrics: list[str] = []
+    threshold_failure_metrics: list[str] = []
 
     common_metrics = sorted(set(current_metrics.keys()).intersection(set(baseline_metrics.keys())))
     for metric in common_metrics:
@@ -171,12 +174,18 @@ def compare_reports(
                 "current": check.current,
                 "baseline": check.baseline,
                 "delta": check.delta,
-                "regression": check.regression,
+                "baseline_regression": check.baseline_regression,
+                "threshold_failure": check.threshold_failure,
+                "regression": bool(check.baseline_regression or check.threshold_failure),
                 "tolerance": tolerance,
             }
             if metric == "hallucination_rate_in_citations":
                 payload["maximum"] = hallucination_maximum
             out[metric] = payload
+            if check.baseline_regression:
+                baseline_regression_metrics.append(metric)
+            if check.threshold_failure:
+                threshold_failure_metrics.append(metric)
             continue
 
         check = _compare_metric(
@@ -189,9 +198,20 @@ def compare_reports(
             "current": check.current,
             "baseline": check.baseline,
             "delta": check.delta,
-            "regression": check.regression,
+            "baseline_regression": check.baseline_regression,
+            "threshold_failure": check.threshold_failure,
+            "regression": bool(check.baseline_regression or check.threshold_failure),
             "tolerance": tolerance,
             "minimum": minimum,
         }
-
-    return out
+        if check.baseline_regression:
+            baseline_regression_metrics.append(metric)
+        if check.threshold_failure:
+            threshold_failure_metrics.append(metric)
+    return {
+        "comparisons": out,
+        "summary": {
+            "baseline_regression_metrics": sorted(baseline_regression_metrics),
+            "threshold_failure_metrics": sorted(threshold_failure_metrics),
+        },
+    }

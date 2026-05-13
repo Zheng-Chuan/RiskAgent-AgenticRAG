@@ -24,20 +24,47 @@ class EvaluationDatasetTest(unittest.TestCase):
     def test_load_eval_set_with_optional_fields(self) -> None:
         with tempfile.TemporaryDirectory() as td:
             path = Path(td) / "eval_set.json"
+            qrels_path = Path(td) / "qrels.json"
+            gate_labels_path = Path(td) / "gate_labels.json"
             payload = [
                 {
                     "id": "s1",
                     "question": "what is frtb",
                     "reference_answer": "x",
                     "ground_truth_contexts": ["c1", "c2"],
+                    "tags": ["definition", "regulation"],
+                }
+            ]
+            qrels = [
+                {
+                    "id": "s1",
+                    "qrels": [
+                        {"qrel_id": "s1_r1", "text": "c1", "relevance": 2},
+                        {"qrel_id": "s1_r2", "text": "c2", "relevance": 1},
+                    ],
+                }
+            ]
+            gate_labels = [
+                {
+                    "id": "s1",
+                    "should_block": False,
+                    "label_source": "manual",
+                    "reason": "should answer",
                 }
             ]
             path.write_text(json.dumps(payload), encoding="utf-8")
+            qrels_path.write_text(json.dumps(qrels), encoding="utf-8")
+            gate_labels_path.write_text(json.dumps(gate_labels), encoding="utf-8")
             items = load_dataset(path)
             self.assertEqual(len(items), 1)
             self.assertEqual(items[0].item_id, "s1")
             self.assertEqual(items[0].reference_answer, "x")
             self.assertEqual(items[0].ground_truth_contexts, ["c1", "c2"])
+            self.assertEqual(items[0].tags, ["definition", "regulation"])
+            self.assertEqual(len(items[0].qrels), 2)
+            self.assertEqual(items[0].qrels[0].qrel_id, "s1_r1")
+            self.assertEqual(items[0].qrels[0].relevance, 2)
+            self.assertFalse(items[0].gate_label.should_block)
 
 
 if __name__ == "__main__":

@@ -2,16 +2,13 @@
 
 from __future__ import annotations
 
-import json
 import os
 import uuid
 from pathlib import Path
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
-from riskagent_agenticrag.agents.data_agent import run_data_agent
 from riskagent_agenticrag.artifacts.storage import save_artifact
 from riskagent_agenticrag.config.settings import settings
-from riskagent_agenticrag.contracts.structured import StructuredRequest
 from riskagent_agenticrag.orchestration.state import AgenticState
 from riskagent_agenticrag.orchestration.trace import (
     _doc_trace_row,
@@ -185,116 +182,18 @@ def node_revise_query(state: AgenticState) -> AgenticState:
 
 
 # ---------------------------------------------------------------------------
-# Node: decide_tool_use
-# ---------------------------------------------------------------------------
-
-def node_decide_tool_use(state: AgenticState) -> AgenticState:
-    """Node: decide whether to call tool."""
-    start_ms = _trace_node_start(state, "decide_tool_use", {"question": state.get("question", "")})
-    question = state["question"]
-    should_call, tool_args, tool_reason = agentic_primitives.decide_tool_use(question)
-
-    state["should_call_tool"] = should_call
-    state["tool_args"] = tool_args
-    state["tool_reason"] = tool_reason
-    state["tool_traces"] = state.get("tool_traces", [])
-
-    decision_log = state.get("decision_log", [])
-    decision_log.append({
-        "step_id": "tool_decision",
-        "agent": "AgenticLoop",
-        "rationale": tool_reason or "decide tool use",
-        "chosen": "call" if should_call else "skip",
-        "alternatives": [json.dumps(tool_args, ensure_ascii=False)],
-    })
-    state["decision_log"] = decision_log
-
-    _trace_node_end(
-        state,
-        "decide_tool_use",
-        start_ms,
-        {"should_call_tool": bool(should_call), "tool_args": tool_args, "tool_reason": str(tool_reason)},
-    )
-    return state
-
-
-# ---------------------------------------------------------------------------
-# Node: call_tool
-# ---------------------------------------------------------------------------
-
-def node_call_tool(state: AgenticState) -> AgenticState:
-    """Node: call tool and collect traces."""
-    start_ms = _trace_node_start(state, "call_tool", {"tool_args": state.get("tool_args", {})})
-    question = state["question"]
-    tool_args = state["tool_args"]
-
-    desk = str(tool_args.get("desk", "")).strip()
-    as_of = str(tool_args.get("as_of", "")).strip() or agentic_primitives.utc_today_date()
-    abs_delta_limit_raw = tool_args.get("abs_delta_limit", 1000000)
-    try:
-        abs_delta_limit = float(abs_delta_limit_raw)
-    except Exception:
-        abs_delta_limit = 1000000.0
-
-    tool_output: Optional[dict[str, Any]] = None
-    tool_traces = state.get("tool_traces", [])
-
-    if desk:
-        request = StructuredRequest(
-            request_id=str(uuid.uuid4()),
-            query=question,
-            as_of=as_of,
-            desk=desk,
-            abs_delta_limit=abs_delta_limit,
-        )
-        tool_output, trace, _failure = run_data_agent(request)
-        if hasattr(trace, "model_dump"):
-            tool_traces.append(trace.model_dump())  # type: ignore[attr-defined]
-        else:
-            tool_traces.append(trace.dict())
-    else:
-        decision_log = state.get("decision_log", [])
-        decision_log.append({
-            "step_id": "tool_skip_missing_desk",
-            "agent": "AgenticLoop",
-            "rationale": "tool args missing desk",
-            "chosen": "skip",
-            "alternatives": [json.dumps(tool_args, ensure_ascii=False)],
-        })
-        state["decision_log"] = decision_log
-
-    state["tool_output"] = tool_output
-    state["tool_traces"] = tool_traces
-
-    breach_count = 0
-    if isinstance(tool_output, dict):
-        raw_breaches = tool_output.get("breaches")
-        if isinstance(raw_breaches, list):
-            breach_count = len(raw_breaches)
-    _trace_node_end(
-        state,
-        "call_tool",
-        start_ms,
-        {"has_output": bool(tool_output), "tool_traces_count": len(tool_traces), "breach_count": breach_count},
-    )
-    return state
-
-
-# ---------------------------------------------------------------------------
 # Node: synthesize_answer
 # ---------------------------------------------------------------------------
 
 def node_synthesize_answer(state: AgenticState) -> AgenticState:
-    """Node: synthesize final answer with citations."""
+    """Node: synthesize final pure-RAG answer with citations."""
     start_ms = _trace_node_start(state, "synthesize_answer", {"docs_count": len(state.get("docs") or [])})
     question = state["question"]
     docs = state["docs"]
-    tool_output = state.get("tool_output")
 
-    answer = agentic_primitives.synthesize_answer_with_tool(
+    answer = agentic_primitives.synthesize_answer(
         question=question,
         docs=docs,
-        tool_output=tool_output,
     )
     citations = extract_citations(docs)
     answer_with_citations = agentic_primitives.attach_citations_to_each_paragraph(answer, citations)
@@ -358,6 +257,11 @@ def _llm_appeal_failure(
         return {"is_false_positive": False, "reason": "LLM appeal failed", "suggested_fix": None}
 
 
+def _appeal_enabled() -> bool:
+    # 中文注释: 正式评测默认关闭 appeal, 只允许显式配置开启.
+    return os.getenv("RISKAGENT_ENABLE_LLM_APPEAL", "false").lower().strip() in {"true", "1", "yes"}
+
+
 # ---------------------------------------------------------------------------
 # Node: validate_and_save (含 LLM 申诉 + Self-RAG 生成评分 + artifact 落盘)
 # ---------------------------------------------------------------------------
@@ -367,8 +271,6 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
     start_ms = _trace_node_start(state, "validate_and_save", {"request_id": state.get("request_id", "")})
     answer = state["answer"]
     docs = state["docs"]
-    tool_traces = state.get("tool_traces", [])
-    tool_output = state.get("tool_output")
 
     evidence_set = agentic_primitives.build_evidence_set_from_docs(docs, include_text=True)
     claims = agentic_primitives.build_claims_from_answer(
@@ -380,16 +282,17 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
         report=answer,
         claims=claims,
         evidence_set=evidence_set,
-        tool_traces=tool_traces,
+        tool_traces=[],
         docs=docs,
         require_numeric_backing=should_require_numeric_backing(
             question=state.get("question", ""),
-            should_call_tool=bool(state.get("should_call_tool", False)),
         ),
     )
 
-    # LLM 申诉机制: 如果验证失败, 让 LLM 判断是否为误判
-    if failure_reason is not None:
+    appeal_enabled = _appeal_enabled()
+
+    # 中文注释: 只有显式开启时才允许 appeal 修改 gate 结果.
+    if failure_reason is not None and appeal_enabled:
         appeal_result = _llm_appeal_failure(
             question=state.get("question", ""),
             answer=answer,
@@ -417,8 +320,8 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
     debug_info: dict[str, Any] = {
         "final_query": state["current_query"],
         "critique_reason": state.get("critique_reason", ""),
-        "tool_args": state.get("tool_args", {}),
-        "tool_should_call": state.get("should_call_tool", False),
+        "pipeline_mode": "pure_rag",
+        "llm_appeal_enabled": appeal_enabled,
     }
     self_rag_enabled = os.getenv("RISKAGENT_SELF_RAG", "true").lower().strip() in {"true", "1", "yes"}
     if self_rag_enabled:
@@ -452,27 +355,18 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
         "claims": claims,
         "evidence_set": evidence_set,
         "decision_log": state.get("decision_log", []),
-        "tool_traces": tool_traces,
         "status": status,
         "failure_reason": failure_reason,
         "debug": debug_info,
     }
-
-    breaches: list[dict[str, Any]] = []
-    if isinstance(tool_output, dict):
-        raw_breaches = tool_output.get("breaches")
-        if isinstance(raw_breaches, list):
-            breaches = raw_breaches
 
     structured_evidence_set = agentic_primitives.build_evidence_set_from_docs(docs, include_text=False)
 
     structured_payload: dict[str, Any] = {
         "request_id": request_id,
         "report": answer,
-        "breaches": breaches,
         "evidence_set": structured_evidence_set,
         "claims": claims,
-        "tool_traces": tool_traces,
         "decision_log": state.get("decision_log", []),
         "status": status,
         "failure_reason": failure_reason,
@@ -526,15 +420,8 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
 # 条件边 (conditional edges)
 # ---------------------------------------------------------------------------
 
-def should_continue_retrieval(state: AgenticState) -> Literal["revise_query", "decide_tool_use"]:
-    """Conditional edge: should continue retrieval or move to tool decision."""
+def should_continue_retrieval(state: AgenticState) -> Literal["revise_query", "synthesize_answer"]:
+    """Conditional edge: should continue retrieval or directly synthesize answer."""
     if state.get("should_continue", False):
         return "revise_query"
-    return "decide_tool_use"
-
-
-def should_call_tool(state: AgenticState) -> Literal["call_tool", "synthesize_answer"]:
-    """Conditional edge: should call tool or directly synthesize answer."""
-    if state.get("should_call_tool", False):
-        return "call_tool"
     return "synthesize_answer"

@@ -32,7 +32,6 @@ class TestIntegrationFRTBRealMiddlewareArtifact(unittest.TestCase):
 
         self._env_backup = {k: os.environ.get(k) for k in self._env_keys()}
         os.environ["EMBEDDINGS_PROVIDER"] = "hf"
-        os.environ["RISKAGENT_RETRIEVER_MODE"] = "step4"
         os.environ["RISKAGENT_SELF_RAG"] = "true"
         os.environ["RISKAGENT_CORPUS_DIR"] = str(self.corpus_dir)
         os.environ["RISKAGENT_PERSIST_DIR"] = str(self.persist_dir)
@@ -62,7 +61,6 @@ class TestIntegrationFRTBRealMiddlewareArtifact(unittest.TestCase):
     def _env_keys() -> list[str]:
         return [
             "EMBEDDINGS_PROVIDER",
-            "RISKAGENT_RETRIEVER_MODE",
             "RISKAGENT_SELF_RAG",
             "RISKAGENT_CORPUS_DIR",
             "RISKAGENT_PERSIST_DIR",

@@ -7,6 +7,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Literal
 
+from riskagent_agenticrag.agents.data_agent import extract_structured_request, run_data_agent, tool_output_to_document
 from riskagent_agenticrag.artifacts.storage import save_artifact
 from riskagent_agenticrag.config.settings import settings
 from riskagent_agenticrag.orchestration.state import AgenticState
@@ -69,6 +70,37 @@ def node_retrieve_and_critique(state: AgenticState) -> AgenticState:
     current_round = state.get("current_round", 0)
 
     docs = retriever.invoke(current_query)
+    tool_traces = list(state.get("tool_traces") or [])
+    tool_request = extract_structured_request(
+        question=question,
+        request_id=str(state.get("request_id") or state.get("run_id") or str(uuid.uuid4())),
+    )
+    if tool_request is not None:
+        tool_output, tool_trace, tool_failure = run_data_agent(tool_request)
+        tool_traces.append(tool_trace.model_dump() if hasattr(tool_trace, "model_dump") else tool_trace.dict())
+        if tool_failure is None:
+            docs = list(docs) + [tool_output_to_document(tool_output=tool_output, tool_trace=tool_trace)]
+        debug = state.get("debug") or {}
+        debug["numeric_tool"] = {
+            "invoked": True,
+            "request": tool_request.model_dump() if hasattr(tool_request, "model_dump") else tool_request.dict(),
+            "failure": (
+                tool_failure.model_dump() if hasattr(tool_failure, "model_dump") else tool_failure.dict()
+            ) if tool_failure is not None else None,
+        }
+        state["debug"] = debug
+        decision_log = state.get("decision_log", [])
+        decision_log.append(
+            {
+                "step_id": f"numeric_tool_round_{int(current_round + 1)}",
+                "agent": "RiskTool",
+                "rationale": "numeric risk question matched structured desk exposure pattern",
+                "chosen": str(getattr(tool_trace, "tool_name", "monitor_desk_exposure")),
+                "alternatives": [str(tool_request.desk)],
+            }
+        )
+        state["decision_log"] = decision_log
+    state["tool_traces"] = tool_traces
 
     self_rag_enabled = os.getenv("RISKAGENT_SELF_RAG", "true").lower().strip() in {"true", "1", "yes"}
     self_sufficient = False
@@ -282,7 +314,7 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
         report=answer,
         claims=claims,
         evidence_set=evidence_set,
-        tool_traces=[],
+        tool_traces=list(state.get("tool_traces") or []),
         docs=docs,
         require_numeric_backing=should_require_numeric_backing(
             question=state.get("question", ""),
@@ -317,11 +349,16 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
     state["claims"] = claims
     state["evidence_set"] = evidence_set
 
+    prior_debug = state.get("debug") or {}
+    if not isinstance(prior_debug, dict):
+        prior_debug = {}
     debug_info: dict[str, Any] = {
+        **prior_debug,
         "final_query": state["current_query"],
         "critique_reason": state.get("critique_reason", ""),
-        "pipeline_mode": "pure_rag",
+        "pipeline_mode": "rag_with_risk_tools",
         "llm_appeal_enabled": appeal_enabled,
+        "tool_traces_count": len(state.get("tool_traces") or []),
     }
     self_rag_enabled = os.getenv("RISKAGENT_SELF_RAG", "true").lower().strip() in {"true", "1", "yes"}
     if self_rag_enabled:
@@ -367,6 +404,7 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
         "report": answer,
         "evidence_set": structured_evidence_set,
         "claims": claims,
+        "tool_traces": list(state.get("tool_traces") or []),
         "decision_log": state.get("decision_log", []),
         "status": status,
         "failure_reason": failure_reason,
@@ -374,7 +412,7 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
 
     try:
         retriever_version = {
-            "mode": os.getenv("RISKAGENT_RETRIEVER_MODE", ""),
+            "pipeline": "hybrid_query_intel_advanced_index",
             "reranker_model": os.getenv("RISKAGENT_RERANKER_MODEL", ""),
             "dense_k": os.getenv("RISKAGENT_DENSE_K", ""),
             "sparse_k": os.getenv("RISKAGENT_SPARSE_K", ""),

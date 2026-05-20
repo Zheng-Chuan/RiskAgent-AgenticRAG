@@ -70,7 +70,7 @@ api:  ## 启动 API 服务器
 	conda run -n LangChain python -m riskagent_agenticrag.api.server
 
 eval:  ## 运行评测
-	conda run -n LangChain python -m riskagent_agenticrag.evaluation.run --stage step4 --label step4
+	conda run -n LangChain python -m riskagent_agenticrag.evaluation.run --label unified_pipeline
 
 offline-regression:  ## 运行纯离线回归
 	bash scripts/run_offline_regression.sh

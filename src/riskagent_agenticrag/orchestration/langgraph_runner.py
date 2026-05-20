@@ -100,6 +100,7 @@ def run_langgraph_agentic_chat(
         "should_continue": False,
         "answer": "",
         "citations": [],
+        "tool_traces": [],
         "decision_log": [],
         "status": "ok",
         "failure_reason": None,

@@ -54,6 +54,8 @@ class ContractArtifactsValidatorTest(unittest.TestCase):
                 "evidence_id": "ev_0",
                 "source": "test.md",
                 "chunk_id": "chunk_0",
+                "start_index": 0,
+                "snippet": "Delta is positive",
                 "text": "Delta is positive",
             }
         ]
@@ -75,6 +77,8 @@ class ContractArtifactsValidatorTest(unittest.TestCase):
                 "evidence_id": "ev_0",
                 "source": "test.md",
                 "chunk_id": "chunk_0",
+                "start_index": 0,
+                "snippet": "Delta is positive",
                 "text": "Delta is positive",
             }
         ]
@@ -97,6 +101,8 @@ class ContractArtifactsValidatorTest(unittest.TestCase):
                 "evidence_id": "ev_0",
                 "source": "test.md",
                 "chunk_id": "chunk_0",
+                "start_index": 0,
+                "snippet": "Delta is positive",
                 "text": "Delta is positive",
             }
         ]
@@ -131,10 +137,33 @@ class ContractArtifactsValidatorTest(unittest.TestCase):
         report = "The delta equals 1000 calculated."
         claims = [{"statement": "Delta equals 1000"}]
         tool_traces = []
-        evidence_set = [{"evidence_id": "ev_0", "chunk_id": "c0", "snippet": "delta 1000"}]
+        evidence_set = [{"evidence_id": "ev_0", "source": "corpus/test.md", "chunk_id": "c0", "start_index": 0, "snippet": "delta 1000"}]
 
         failure = numeric_consistency_gate(report, claims, tool_traces, evidence_set)
         self.assertIsNone(failure)
+
+    def test_evidence_gate_fail_numeric_mismatch(self):
+        """测试 evidence gate 失败场景: claim 数字和证据片段对不上."""
+        claims = [
+            {
+                "claim_id": "c1",
+                "statement": "Total delta equals 1000",
+                "evidence_ids": ["ev_0"],
+            }
+        ]
+        evidence_set = [
+            {
+                "evidence_id": "ev_0",
+                "source": "tool://monitor_desk_exposure",
+                "chunk_id": "tool:monitor_desk_exposure:D1:2026-01-01",
+                "start_index": 0,
+                "snippet": "Total delta equals 900 and breach is yes",
+            }
+        ]
+
+        failure = evidence_gate(claims, evidence_set)
+        self.assertIsNotNone(failure)
+        self.assertEqual(failure["category"], "evidence_numeric_mismatch")
 
     def test_numeric_consistency_gate_fail_mismatch(self):
         """测试 numeric consistency gate 失败场景: 数字与 tool 输出不一致."""

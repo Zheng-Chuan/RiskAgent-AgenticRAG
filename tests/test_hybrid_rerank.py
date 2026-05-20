@@ -21,7 +21,6 @@ class TestWeek8HybridRerankAcceptance(unittest.TestCase):
             os.environ.pop("MILVUS_PORT", None)
             os.environ["MILVUS_WAIT_READY"] = "false"
 
-        os.environ["RISKAGENT_RETRIEVER_MODE"] = "hybrid_rerank"
         os.environ.setdefault("RISKAGENT_RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
         os.environ.setdefault("RISKAGENT_DENSE_K", "20")
         os.environ.setdefault("RISKAGENT_SPARSE_K", "20")

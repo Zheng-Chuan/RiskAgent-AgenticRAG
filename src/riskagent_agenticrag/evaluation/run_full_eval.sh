@@ -15,8 +15,7 @@ export TOKENIZERS_PARALLELISM=false
 # 运行全量评估并记录日志
 echo "Starting full evaluation at $(date)"
 nohup python -m riskagent_agenticrag.evaluation.run \
-  --stage step4 \
-  --label final_v1 \
+  --label unified_pipeline_final_v1 \
   --enable-ragas \
   --profile all \
   --retrieval-k 1,3,5,10 \

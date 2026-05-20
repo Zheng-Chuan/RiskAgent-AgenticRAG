@@ -11,13 +11,16 @@ class FailureTaxonomyCoverageTest(unittest.TestCase):
         from riskagent_agenticrag.validators.gates import evidence_gate, numeric_consistency_gate, refusal_gate
 
         # evidence_missing
-        f = evidence_gate(claims=[{"claim_id": "c1", "statement": "x", "evidence_ids": []}], evidence_set=[{"evidence_id": "ev_0", "chunk_id": "c"}])
+        f = evidence_gate(
+            claims=[{"claim_id": "c1", "statement": "x", "evidence_ids": []}],
+            evidence_set=[{"evidence_id": "ev_0", "source": "test.md", "chunk_id": "c", "start_index": 0, "snippet": "x"}],
+        )
         self.assertEqual(f["category"], "evidence_missing")
 
         # evidence_not_found
         f = evidence_gate(
             claims=[{"claim_id": "c1", "statement": "x", "evidence_ids": ["ev_999"]}],
-            evidence_set=[{"evidence_id": "ev_0", "chunk_id": "c"}],
+            evidence_set=[{"evidence_id": "ev_0", "source": "test.md", "chunk_id": "c", "start_index": 0, "snippet": "x"}],
         )
         self.assertEqual(f["category"], "evidence_not_found")
 
@@ -31,7 +34,7 @@ class FailureTaxonomyCoverageTest(unittest.TestCase):
         # evidence_not_supporting
         f = evidence_gate(
             claims=[{"claim_id": "c1", "statement": "totally unrelated", "evidence_ids": ["ev_0"]}],
-            evidence_set=[{"evidence_id": "ev_0", "chunk_id": "chunk_0", "snippet": "abc def"}],
+            evidence_set=[{"evidence_id": "ev_0", "source": "test.md", "chunk_id": "chunk_0", "start_index": 0, "snippet": "abc def"}],
         )
         self.assertEqual(f["category"], "evidence_not_supporting")
 
@@ -80,4 +83,3 @@ class FailureTaxonomyCoverageTest(unittest.TestCase):
         _parsed, failure = try_parse_structured_response({"not": "a structured response"})
         self.assertIsNotNone(failure)
         self.assertEqual(failure.category, "parse_error")
-

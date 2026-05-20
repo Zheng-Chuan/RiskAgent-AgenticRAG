@@ -64,58 +64,17 @@ def _answer_eval_thresholds() -> dict[str, float]:
 
 def _stage_plan(stage: str) -> dict[str, Any]:
     stage = str(stage or "").lower().strip()
-    plans: dict[str, dict[str, Any]] = {
-        "step1": {
-            "title": "step1 retrieval rerank and hybrid",
+    if stage:
+        return {
+            "stage": stage,
+            "title": stage.replace("_", " "),
             "done": [
-                "cross encoder reranking",
-                "hybrid search bm25 and vector",
-            ],
-            "todo": [
-                "query expansion and step back prompting",
-                "sub question decomposition and semantic router",
-                "advanced indexing parent child summary hyde",
-                "self rag grading and adaptive retrieval",
-            ],
-        },
-        "step2": {
-            "title": "step2 query intelligence and routing",
-            "done": [
-                "query expansion",
-                "step back prompting",
-                "sub question decomposition",
-                "semantic router",
-            ],
-            "todo": [
-                "advanced indexing parent child summary hyde",
-                "self rag grading and adaptive retrieval",
-            ],
-        },
-        "step3": {
-            "title": "step3 advanced indexing",
-            "done": [
-                "parent child indexing small to big",
-                "summary indexing",
-                "hyde indexing",
-            ],
-            "todo": [
-                "self rag grading and adaptive retrieval",
-            ],
-        },
-        "step4": {
-            "title": "step4 self rag",
-            "done": [
-                "adaptive retrieval",
-                "self reflection scoring isrel issup isuse",
-                "grade docs and grade generation loop",
+                "unified retrieval pipeline",
+                "adaptive retrieval and self rag grading",
+                "evidence gate and numeric tool validation",
             ],
             "todo": [],
-        },
-    }
-    if stage in plans:
-        return {"stage": stage, **plans[stage]}
-    if stage:
-        return {"stage": stage, "title": stage, "done": [], "todo": []}
+        }
     return {}
 
 
@@ -386,7 +345,7 @@ def run_evaluation(
             "milvus_uri": os.getenv("MILVUS_URI"),
             "milvus_host": os.getenv("MILVUS_HOST"),
             "milvus_port": os.getenv("MILVUS_PORT"),
-            "retriever_mode": os.getenv("RISKAGENT_RETRIEVER_MODE", "step4"),
+            "retrieval_pipeline": "hybrid_query_intel_advanced_index",
             "reranker_model": os.getenv("RISKAGENT_RERANKER_MODEL", ""),
             "prompt_version": os.getenv("RISKAGENT_PROMPT_VERSION", "v1"),
             "git_commit": _git_commit(),
@@ -520,10 +479,7 @@ def main() -> None:
 
     enable_ragas = bool(args.enable_ragas) or _env_bool("EVAL_ENABLE_RAGAS")
     stage = str(args.stage).lower().strip()
-    allowed_stages = {"step1", "step2", "step3", "step4"}
-    if stage in allowed_stages and not os.getenv("RISKAGENT_RETRIEVER_MODE"):
-        os.environ["RISKAGENT_RETRIEVER_MODE"] = stage
-    if stage in allowed_stages and not os.getenv("RISKAGENT_RERANKER_MODEL"):
+    if not os.getenv("RISKAGENT_RERANKER_MODEL"):
         os.environ["RISKAGENT_RERANKER_MODEL"] = "cross-encoder/ms-marco-MiniLM-L-6-v2"
     if bool(args.enable_citation_judge):
         os.environ["EVAL_ENABLE_CITATION_JUDGE"] = "true"

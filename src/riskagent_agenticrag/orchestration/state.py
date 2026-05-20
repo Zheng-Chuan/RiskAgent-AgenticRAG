@@ -26,6 +26,7 @@ class AgenticState(TypedDict, total=False):
     citations: list[dict[str, str]]
     claims: list[dict[str, Any]]
     evidence_set: list[dict[str, Any]]
+    tool_traces: list[dict[str, Any]]
     decision_log: list[dict[str, Any]]
 
     status: str

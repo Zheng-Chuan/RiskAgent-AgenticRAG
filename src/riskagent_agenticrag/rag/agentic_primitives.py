@@ -209,6 +209,12 @@ def build_evidence_set_from_docs(
             "start_index": start_index,
             "snippet": (doc.page_content or "")[:200],
         }
+        if doc.metadata.get("tool_name"):
+            item["tool_name"] = str(doc.metadata.get("tool_name"))
+        if doc.metadata.get("evidence_kind"):
+            item["evidence_kind"] = str(doc.metadata.get("evidence_kind"))
+        if doc.metadata.get("numeric_payload") is not None:
+            item["numeric_payload"] = doc.metadata.get("numeric_payload")
         if doc.metadata.get("section_path"):
             item["section_path"] = str(doc.metadata.get("section_path"))
         if doc.metadata.get("start_line") is not None:

@@ -120,7 +120,7 @@ class FeatureConfig(BaseSettings):
     use_langgraph: bool = Field(default=False, alias="USE_LANGGRAPH")
     self_rag_enabled: bool = True
     query_intel_enabled: bool = True
-    retriever_mode: str = "step2"
+    retrieval_pipeline: str = "hybrid_query_intel_advanced_index"
     prompt_version: str = "v1"
     trace_snippet_chars: int = 240
 

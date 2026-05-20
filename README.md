@@ -20,6 +20,7 @@ conda run -n LangChain python -m riskagent_agenticrag.cli ask --question "what i
 | --- | --- |
 | [ARCHITECTURE](docs/ARCHITECTURE.md) | 系统概览 模块边界 数据流 LangGraph 流程 |
 | [PRD](docs/PRD.md) | 当前现状 顶尖 RAG 改进方案 与可验收 checklist |
+| [INTERVIEW](docs/INTERVIEW.md) | 面向资深面试官的项目专属 RAG 拷打题库 与追问方向 |
 
 ## 常用命令
 
@@ -31,7 +32,7 @@ conda run -n LangChain python -m riskagent_agenticrag.cli index --corpus-dir cor
 conda run -n LangChain python -m riskagent_agenticrag.cli ask --question "what is FRTB"
 
 # 运行评测
-conda run -n LangChain python -m riskagent_agenticrag.evaluation.run --stage step4 --label step4
+conda run -n LangChain python -m riskagent_agenticrag.evaluation.run --label unified_pipeline
 
 # 启动 API
 conda run -n LangChain python -m riskagent_agenticrag.server

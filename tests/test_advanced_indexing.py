@@ -22,7 +22,6 @@ class TestWeek10AdvancedIndexingAcceptance(unittest.TestCase):
             os.environ.pop("MILVUS_PORT", None)
             os.environ["MILVUS_WAIT_READY"] = "false"
 
-        os.environ["RISKAGENT_RETRIEVER_MODE"] = "step3"
         os.environ.setdefault("RISKAGENT_RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
         os.environ.setdefault("RISKAGENT_DENSE_K", "24")
         os.environ.setdefault("RISKAGENT_SPARSE_K", "24")
@@ -55,7 +54,7 @@ class TestWeek10AdvancedIndexingAcceptance(unittest.TestCase):
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(src, dst)
 
-    def test_step3_builds_advanced_indices_and_expands_parent_context(self) -> None:
+    def test_unified_pipeline_builds_advanced_indices_and_expands_parent_context(self) -> None:
         incremental_index(corpus_dir=self.corpus_dir, persist_dir=self.persist_dir, include_paths=None)
         stats = advanced_index_stats(persist_dir=self.persist_dir)
         self.assertGreater(stats.get("parents", 0), 0)

@@ -106,8 +106,8 @@
   - 验收证据: `.artifacts/reports/rag_eval_baseline_sample.json` 与 `.artifacts/reports/rag_eval_baseline_sample.md` 已提交
 
 - [x] 把版本元信息写入每份报告
-  - 验收标准: 报告包含 dataset version prompt version retriever mode reranker model git commit
-  - 验收证据: `src/riskagent_agenticrag/evaluation/run.py` 已写入 `dataset_version` `prompt_version` `retriever_mode` `reranker_model` `git_commit`. 样例报告字段完整
+  - 验收标准: 报告包含 dataset version prompt version retrieval pipeline reranker model git commit
+  - 验收证据: `src/riskagent_agenticrag/evaluation/run.py` 已写入 `dataset_version` `prompt_version` `retrieval_pipeline` `reranker_model` `git_commit`. 样例报告字段完整
 
 - [x] 建立数字引用规范
   - 验收标准: README docs RESUME 中的关键数字都能映射到具体报告文件

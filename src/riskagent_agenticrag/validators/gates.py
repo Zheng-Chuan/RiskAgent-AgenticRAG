@@ -5,7 +5,11 @@ from typing import Any, Optional
 
 
 def _extract_numbers(text: str) -> list[float]:
-    matches = re.findall(r"-?\d+(?:\.\d+)?%?", str(text or ""))
+    raw_text = str(text or "")
+    raw_text = re.sub(r"\[source=[^\]]*?chunk_id=[^\]]*?\]", " ", raw_text, flags=re.IGNORECASE)
+    raw_text = re.sub(r"\bchunk[_:-]?\d+\b", " ", raw_text, flags=re.IGNORECASE)
+    raw_text = re.sub(r"\b(page|doc|document|section|chapter)\s*#?\s*\d+(?:\.\d+)?", " ", raw_text, flags=re.IGNORECASE)
+    matches = re.findall(r"-?\d+(?:\.\d+)?%?", raw_text)
     out: list[float] = []
     for m in matches:
         try:
@@ -43,6 +47,66 @@ def _token_overlap(a: str, b: str) -> int:
     return len(at & bt)
 
 
+def _token_set(text: str) -> set[str]:
+    return set(re.findall(r"[A-Za-z0-9]+|[\u4e00-\u9fff]+", str(text or "").lower()))
+
+
+def _coverage_ratio(statement: str, evidence_text: str) -> float:
+    st = _token_set(statement)
+    if not st:
+        return 0.0
+    et = _token_set(evidence_text)
+    if not et:
+        return 0.0
+    return float(len(st & et)) / float(len(st))
+
+
+def _evidence_anchor_complete(evidence: dict[str, Any]) -> bool:
+    if not str(evidence.get("source") or "").strip():
+        return False
+    if not str(evidence.get("chunk_id") or "").strip():
+        return False
+    if not str(evidence.get("snippet") or evidence.get("text") or "").strip():
+        return False
+    if evidence.get("start_index") is not None:
+        try:
+            return int(evidence.get("start_index")) >= 0
+        except Exception:
+            return False
+    if evidence.get("start_line") is not None:
+        try:
+            return int(evidence.get("start_line")) >= 0
+        except Exception:
+            return False
+    if evidence.get("page") is not None:
+        try:
+            return int(evidence.get("page")) >= 0
+        except Exception:
+            return False
+    return False
+
+
+def _numbers_supported(statement: str, evidence_text: str) -> bool:
+    statement_numbers = _extract_numbers(statement)
+    if not statement_numbers:
+        return True
+    evidence_numbers = _extract_numbers(evidence_text)
+    if not evidence_numbers:
+        return False
+    for value in statement_numbers:
+        matched = False
+        for candidate in evidence_numbers:
+            if abs(value - candidate) <= 1e-6:
+                matched = True
+                break
+            if abs(candidate) > 1e-9 and abs((value - candidate) / candidate) <= 0.01:
+                matched = True
+                break
+        if not matched:
+            return False
+    return True
+
+
 def evidence_gate(
     claims: list[dict[str, Any]],
     evidence_set: list[dict[str, Any]],
@@ -76,10 +140,10 @@ def evidence_gate(
         evidence_text_by_id[str(eid)] = str(e.get("snippet") or e.get("text") or "")
 
     for evidence in evidence_set:
-        if not evidence.get("chunk_id"):
+        if not _evidence_anchor_complete(evidence):
             return {
                 "category": "evidence_incomplete",
-                "message": "Evidence missing chunk_id",
+                "message": "Evidence must include source chunk anchor and snippet",
                 "details": {"evidence_id": evidence.get("evidence_id")},
             }
 
@@ -104,14 +168,28 @@ def evidence_gate(
         statement = str(claim.get("statement", "")).strip()
         if statement and claim_evidence_ids:
             best = 0
+            best_ratio = 0.0
+            numeric_supported = False
             for eid in claim_evidence_ids:
                 text = evidence_text_by_id.get(str(eid), "")
                 best = max(best, _token_overlap(statement, text))
-            if best < 2:
+                best_ratio = max(best_ratio, _coverage_ratio(statement, text))
+                numeric_supported = numeric_supported or _numbers_supported(statement, text)
+            if best < 3 or best_ratio < 0.25:
                 return {
                     "category": "evidence_not_supporting",
                     "message": "Claim does not appear supported by linked evidence snippets",
-                    "details": {"claim_id": claim.get("claim_id"), "best_token_overlap": best},
+                    "details": {
+                        "claim_id": claim.get("claim_id"),
+                        "best_token_overlap": best,
+                        "best_coverage_ratio": round(best_ratio, 4),
+                    },
+                }
+            if not numeric_supported:
+                return {
+                    "category": "evidence_numeric_mismatch",
+                    "message": "Claim numbers are not supported by linked evidence snippets",
+                    "details": {"claim_id": claim.get("claim_id")},
                 }
 
     return None

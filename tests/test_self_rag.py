@@ -24,7 +24,6 @@ class TestWeek11SelfRagAcceptance(unittest.TestCase):
             os.environ.pop("MILVUS_PORT", None)
             os.environ["MILVUS_WAIT_READY"] = "false"
 
-        os.environ["RISKAGENT_RETRIEVER_MODE"] = "step4"
         os.environ["RISKAGENT_SELF_RAG"] = "true"
         os.environ.setdefault("RISKAGENT_RERANKER_MODEL", "cross-encoder/ms-marco-MiniLM-L-6-v2")
         os.environ.setdefault("RISKAGENT_DENSE_K", "24")
@@ -59,7 +58,7 @@ class TestWeek11SelfRagAcceptance(unittest.TestCase):
             dst.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(src, dst)
 
-    def test_step4_self_rag_emits_grades_and_returns_ok(self) -> None:
+    def test_self_rag_emits_grades_and_returns_ok(self) -> None:
         incremental_index(corpus_dir=self.corpus_dir, persist_dir=self.persist_dir, include_paths=None)
         retriever = build_retriever(persist_dir=self.persist_dir, final_k=4)
 

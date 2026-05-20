@@ -113,7 +113,7 @@ class StructuredResponse(_StrictBaseModel):
     breaches: list[dict[str, Any]] = Field(default_factory=list)
     evidence_set: list[Evidence]
     claims: list[Claim]
-    # 中文注释: 保留 legacy 字段兼容旧 artifacts, 纯 RAG 主路径默认不写入.
+    # 中文注释: 保留 legacy 字段兼容旧 artifacts, 仅在命中数值型风险工具时写入.
     tool_traces: list[ToolTrace] = Field(default_factory=list)
     decision_log: list[Decision]
     status: RunStatus

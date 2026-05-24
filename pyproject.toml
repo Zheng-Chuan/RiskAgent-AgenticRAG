@@ -60,6 +60,9 @@ python_files = ["test_*.py"]
 python_classes = ["Test*"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short"
+markers = [
+    "integration: mark test as integration test (requires Docker + real LLM)",
+]
 filterwarnings = [
     "error",
     # LangChain 弃用 (pydantic_v1 / class-validator / HuggingFaceEmbeddings)
@@ -74,6 +77,8 @@ filterwarnings = [
     "ignore:.*created with version.*:UserWarning",
     # cryptography ARC4 弃用 (pypdf 内部)
     "ignore:.*ARC4 has been moved.*:cryptography.utils.CryptographyDeprecationWarning",
+    # 集成测试中真实 HTTP/SSL 连接的 ResourceWarning (unclosed socket)
+    "ignore::ResourceWarning",
 ]
 
 [tool.mypy]

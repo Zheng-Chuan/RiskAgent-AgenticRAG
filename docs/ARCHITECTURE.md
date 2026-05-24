@@ -12,8 +12,9 @@
 [RiskAgentSystem.chat]
     | 检查索引 manifest 是否存在
     | 根据 persist_dir 初始化或复用 retriever
-    | 主路径固定为纯 RAG
-    | 不再进入 decide_tool_use / call_tool
+    | 主路径固定为统一检索链路
+    | 默认走 LangGraph
+    | docs 只在图内流转 对外返回前会移除
     v
 [LangGraph 工作流]
     |
@@ -28,6 +29,7 @@
     |       |       | -> QueryIntelligentRetriever
     |       |       | -> AdvancedIndexRetriever
     |       |       | 运行时不再切 mode
+    |       |       | dense_k sparse_k rerank_k 等只调参数不换主链
     |       |       v
     |       +-> [2.2] query intelligence 默认发生
     |       |       | a. keywordize: 压缩 query 保留高信息量 token
@@ -50,10 +52,16 @@
     |       |       | b. HyDE index 补 query-doc 表达差异
     |       |       | c. parent expand 用 parent_id 找回更长上下文
     |       |       | d. base_score + summary_score + hyde_score 融合
-    |       |       | e. 对 desk exposure / delta limit 问题
-    |       |       |    追加轻量级风险工具输出作为结构化证据
+    |       |       | e. 最终按 final_k 收口返回 docs
     |       |       v
-    |       +-> [2.5] critique
+    |       +-> [2.5] 数值型风险工具按需追加
+    |       |       | 识别 desk exposure / delta limit / breach 问题
+    |       |       | 解析 desk as_of abs delta limit
+    |       |       | 调 run_data_agent
+    |       |       | tool_output 转成 Document 追加到 docs
+    |       |       | tool_trace 写入 state.tool_traces 与 debug.numeric_tool
+    |       |       v
+    |       +-> [2.6] critique
     |               | LLM 判断当前 docs 是否足够回答问题
     |               | Self-RAG doc grade 也会参与 stop / continue 判断
     |               | 产出 sufficient / critique_reason / improved_query
@@ -65,7 +73,7 @@
     |       | 受 max_rounds 限制 防止死循环
     |       v
     +-> [Step 4] synthesize_answer
-    |       | 严格基于检索上下文生成答案
+    |       | 严格基于 docs 生成答案
     |       | 若前一步命中数值型风险工具
     |       | 工具输出会以一类可引用上下文参与生成
     |       | 从 docs 中抽取 citations
@@ -78,18 +86,22 @@
     |       |       | numeric gate
     |       |       | 若存在 tool_traces
     |       |       | 则把计算型数字和工具输出做一致性比对
+    |       |       | question 命中 numeric backing 条件时要求更硬证据
     |       |       | appeal 默认关闭
     |       |       | 只有显式设置 RISKAGENT_ENABLE_LLM_APPEAL=true 才会启用
     |       |       v
     |       +-> [5.2] 结构化结果
     |       |       | answer + citations + claims + evidence_set
-    |       |       | decision_log + debug + failure_reason
+    |       |       | decision_log + debug + failure_reason + tool_traces
     |       |       v
     |       +-> [5.3] 落盘 artifacts
     |               | 单文件 artifact
     |               | bundle 目录下 request response structured_response trace
+    |               | trace 写 retriever_version prompt_version model_id
     |               v
 [API 返回]
+    | 返回 answer citations claims evidence_set decision_log status
+    | docs 不对外暴露
     v
 [用户]
 ```
@@ -108,16 +120,33 @@
     | 形成 parent 和 chunk 两层语料
     v
 [embeddings]
-    | 正常运行默认 hf embeddings
+    | 默认 provider = hf
+    | 默认模型来自 settings.embeddings.model_name
+    | 优先尝试项目本地 models/embeddings/<model>
+    | 否则按模型名离线加载 HuggingFace 缓存
+    | local_files_only = true
     | 离线回归可切到 hash embeddings
     v
 [incremental_index]
     |
+    +-> 先 build_embeddings
+    |    用 embed_query("dim_probe") 计算向量维度
+    |
+    +-> build_milvus_client
+    |    若设 MILVUS_URI 或 host/port 则连外部 Milvus
+    |    否则默认写 .milvus/milvus.db
+    |
     +-> 计算源文件 sha1
     |    与 manifest 比较 决定 indexed / skipped
     |
-    +-> 写 Milvus Lite dense index
+    +-> ensure_collection
     |    collection 维度由 embeddings 实测决定
+    |
+    +-> 对每个发生变化的 source
+    |    先 delete_by_source 再重建该 source 的全部索引产物
+    |
+    +-> 写 dense rows 到 Milvus
+    |    chunk_id vector text source parent_id section_path 等一起入库
     |
     +-> 写 sparse_corpus.jsonl
     |    给 BM25 / sparse 检索使用
@@ -132,7 +161,7 @@
     |    给 advanced index 使用
     |
     +-> 更新 index_manifest.json
-         记录 provider model dim 和每个 source 的索引摘要
+         记录 provider model dim 和每个 source 的 chunks parents summaries hydes
 ```
 
 # 系统 Evaluation 流程
@@ -148,11 +177,20 @@
 [evaluation.run]
     | 始终复用统一主链
     | retrieval_pipeline = hybrid_query_intel_advanced_index
+    | 先设置 EMBEDDINGS_PROVIDER = hf
+    | 若未显式设置 reranker_model 则补默认 cross-encoder
     | stage 仅作为阶段性说明与报告标签
+    v
+[评测前准备]
+    | 先执行 incremental_index
+    | 然后 build_retriever
+    | 这一步会真实依赖 embedding 模型
+    | manifest 已存在也仍会先做增量索引检查
     v
 [执行评测]
     | 对每个样本跑 LangGraph 主链
     | 输出 answer citations claims evidence_set decision_log
+    | 保留 retrieved_docs contexts status failure_reason latency
     v
 [指标计算]
     |
@@ -166,8 +204,8 @@
     |
     +-> answer_eval
     |    | citation_coverage
-    |    | faithfulness
-    |    | answer_relevancy
+    |    | faithfulness / answer_relevancy 优先吃 RAGAS 结果
+    |    | 未启用 RAGAS 时走本地 answer_eval 口径
     |
     +-> domain_consistency
     |    | numeric_consistency_score
@@ -186,8 +224,10 @@
     | 写 JSON report
     | 写 Markdown report
     | 写 dataset_version prompt_version retrieval_pipeline reranker_model git_commit
+    | inputs 里同时记录 milvus_uri host port profile retrieval_ks
     v
 [baseline compare]
     | comparisons + summary
     | 可做离线回归与发布验收
+    | enforce_thresholds 时失败返回 exit code 2
 ```

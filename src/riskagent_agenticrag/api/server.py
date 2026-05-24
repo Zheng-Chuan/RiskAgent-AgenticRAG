@@ -39,6 +39,7 @@ from riskagent_agenticrag.constants import (
 from riskagent_agenticrag.exceptions import AuthenticationError
 from riskagent_agenticrag.indexing.indexer import MANIFEST_FILENAME
 from riskagent_agenticrag.indexing.milvus_store import build_milvus_client
+from riskagent_agenticrag.llm.token_tracker import get_token_tracker
 from riskagent_agenticrag.rag.embeddings import build_embeddings
 
 # ---- Prometheus 指标 ----
@@ -287,6 +288,13 @@ def readyz(response: Response) -> ReadyResponse:
 def metrics() -> Response:
     """Prometheus 指标端点."""
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+
+@app.get("/v1/llm/usage")
+async def llm_usage():
+    """Get LLM token usage statistics and alert status."""
+    tracker = get_token_tracker()
+    return tracker.get_usage()
 
 
 @app.post("/v1/ask", response_model=AskResponse, dependencies=[Depends(auth_dep)])

@@ -6,14 +6,19 @@ import os
 import pathlib
 from typing import Annotated, Literal
 
+from dotenv import load_dotenv
 from pydantic import Field, SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+# 在创建 Settings 单例之前加载 .env 文件，override=True 确保项目 .env 覆盖旧的 OS 环境变量
+_env_path = pathlib.Path(__file__).resolve().parents[3] / ".env"
+load_dotenv(_env_path, override=True)
 
 
 class MilvusConfig(BaseSettings):
     """Milvus 向量数据库配置."""
 
-    model_config = SettingsConfigDict(env_prefix="MILVUS_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="MILVUS_", env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     uri: str | None = None
     host: str = "localhost"
@@ -36,7 +41,7 @@ class MilvusConfig(BaseSettings):
 class RedisConfig(BaseSettings):
     """Redis 缓存配置."""
 
-    model_config = SettingsConfigDict(env_prefix="REDIS_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="REDIS_", env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     host: str = "localhost"
     port: int = 6379
@@ -58,7 +63,7 @@ class RedisConfig(BaseSettings):
 class EmbeddingsConfig(BaseSettings):
     """Embedding 模型配置."""
 
-    model_config = SettingsConfigDict(env_prefix="EMBEDDINGS_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="EMBEDDINGS_", env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     provider: Literal["hf", "openai", "hash"] = "hf"
     model_name: str = "BAAI/bge-large-zh-v1.5"
@@ -67,12 +72,12 @@ class EmbeddingsConfig(BaseSettings):
 class LLMConfig(BaseSettings):
     """LLM 服务配置."""
 
-    model_config = SettingsConfigDict(env_prefix="LLM_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="LLM_", env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     api_key: SecretStr | None = Field(default=None, alias="LLM_API_KEY")
     openai_api_key: SecretStr | None = Field(default=None, alias="OPENAI_API_KEY")
-    base_url: str = "https://api.n1n.ai/v1"
-    model: str = "qwen3-8b"
+    base_url: str = "https://ark.cn-beijing.volces.com/api/coding/v3"
+    model: str = "ark-code-latest"
     provider: str = "openai_compatible"
 
     @property
@@ -88,7 +93,7 @@ class LLMConfig(BaseSettings):
 class PathConfig(BaseSettings):
     """项目路径配置."""
 
-    model_config = SettingsConfigDict(env_prefix="RISKAGENT_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="RISKAGENT_", env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     project_root: pathlib.Path = Field(
         default_factory=lambda: pathlib.Path(__file__).resolve().parents[3]
@@ -115,7 +120,7 @@ class PathConfig(BaseSettings):
 class FeatureConfig(BaseSettings):
     """功能开关配置."""
 
-    model_config = SettingsConfigDict(env_prefix="RISKAGENT_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="RISKAGENT_", env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     use_langgraph: bool = Field(default=False, alias="USE_LANGGRAPH")
     self_rag_enabled: bool = True
@@ -128,17 +133,49 @@ class FeatureConfig(BaseSettings):
 class RateLimitConfig(BaseSettings):
     """速率限制配置."""
 
-    model_config = SettingsConfigDict(env_prefix="RATE_LIMIT_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="RATE_LIMIT_", env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     enabled: bool = True
     per_minute: int = 60
     per_hour: int = 1000
 
 
+class LLMGovernanceConfig(BaseSettings):
+    """LLM traffic management and governance configuration."""
+
+    model_config = SettingsConfigDict(env_prefix="LLM_GOVERNANCE_", env_file=".env", env_file_encoding="utf-8", extra="ignore")
+
+    # Token Bucket rate limiting
+    rate_limit_tokens_per_min: int = 60000
+    rate_limit_tokens_per_min_non_critical: int = 8000
+    burst_tokens: int = 0  # 0 means use per_min value
+    burst_tokens_non_critical: int = 0
+
+    # Token alert thresholds
+    token_alert_hourly: int = 100000
+    token_alert_daily: int = 2000000
+
+    # Retry configuration
+    max_retries: int = 3
+    retry_backoff_base: float = 1.0
+
+    # Timeout configuration (seconds)
+    timeout_total: int = 120
+    timeout_connect: int = 10
+    timeout_read: int = 90
+
+    # Cache
+    cache_enabled: bool = True
+    cache_max_size: int = 1000
+
+    # Concurrency limit
+    max_concurrent_requests: int = 10
+
+
 class APIAuthConfig(BaseSettings):
     """API 认证配置."""
 
-    model_config = SettingsConfigDict(env_prefix="API_KEY_", extra="ignore")
+    model_config = SettingsConfigDict(env_prefix="API_KEY_", env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     enabled: bool = True
     secret: SecretStr = SecretStr("change-me-in-production")
@@ -162,8 +199,14 @@ class Settings(BaseSettings):
     paths: PathConfig = Field(default_factory=PathConfig)
     features: FeatureConfig = Field(default_factory=FeatureConfig)
     rate_limit: RateLimitConfig = Field(default_factory=RateLimitConfig)
+    llm_governance: LLMGovernanceConfig = Field(default_factory=LLMGovernanceConfig)
     api_auth: APIAuthConfig = Field(default_factory=APIAuthConfig)
 
 
 # 单例实例
 settings = Settings()
+
+
+def get_settings() -> Settings:
+    """获取全局配置单例."""
+    return settings

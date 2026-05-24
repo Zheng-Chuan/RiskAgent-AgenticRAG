@@ -1,4 +1,4 @@
-.PHONY: install install-dev lock-env test lint typecheck format clean docs help offline-regression accept-release
+.PHONY: install install-dev lock-env test lint typecheck format clean docs help offline-regression accept-release test-unit test-smoke test-scenario test-perf test-all test-coverage
 
 # 定义默认目标
 .DEFAULT_GOAL := help
@@ -28,6 +28,25 @@ test-cov:  ## 运行测试并生成覆盖率报告
 
 test-watch:  ## 监听文件变化并自动运行测试
 	ptw tests/
+
+# ─── Test Targets ─────────────────────────────────────────
+test-unit:  ## 运行单元测试
+	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/unit/ -v --cov=src/riskagent_agenticrag --cov-report=term-missing -m unit
+
+test-smoke:  ## 运行冒烟测试
+	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/smoke/ -v -m smoke
+
+test-scenario:  ## 运行场景测试
+	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/scenario/ -v -s -m scenario
+
+test-perf:  ## 运行性能测试
+	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/performance/ -v -s -m performance
+
+test-all:  ## 运行所有测试
+	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/ -v --cov=src/riskagent_agenticrag --cov-report=html --cov-report=term-missing
+
+test-coverage:  ## 运行测试覆盖率检查
+	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/unit/ tests/smoke/ -v --cov=src/riskagent_agenticrag --cov-report=html --cov-report=term-missing --cov-fail-under=90
 
 lint:  ## 运行代码检查
 	ruff check src/ tests/

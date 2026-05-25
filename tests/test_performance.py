@@ -7,6 +7,8 @@ import uuid
 
 import pytest
 
+pytest.importorskip("pytest_benchmark")
+
 
 class TestPerformanceBaseline:
     """性能基准测试."""

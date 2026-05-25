@@ -66,6 +66,8 @@ markers = [
     "scenario: end-to-end scenario tests (requires Docker + real LLM)",
     "performance: load and concurrency tests (requires Docker + real LLM)",
     "unit: isolated unit tests (no external deps)",
+    "benchmark: performance benchmark tests (requires pytest-benchmark)",
+    "requires_hf: tests requiring HuggingFace embedding models",
 ]
 filterwarnings = [
     "error",

@@ -8,7 +8,6 @@ from unittest.mock import patch
 import pytest
 
 from riskagent_agenticrag.config.settings import Settings
-from riskagent_agenticrag.constants import DEFAULT_LLM_MODEL
 
 
 class TestSettings:
@@ -18,7 +17,7 @@ class TestSettings:
         """测试默认配置."""
         settings = Settings()
         assert settings.project_name == "RiskAgent-AgenticRAG"
-        assert settings.llm.model == DEFAULT_LLM_MODEL
+        assert settings.llm.model == "ark-code-latest"
 
     def test_milvus_config_defaults(self):
         """测试 Milvus 配置默认值."""

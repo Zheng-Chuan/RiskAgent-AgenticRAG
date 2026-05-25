@@ -14,6 +14,10 @@ import uuid
 
 import pytest
 
+from tests.conftest import HF_AVAILABLE
+
+pytestmark = pytest.mark.skipif(not HF_AVAILABLE, reason="Embedding models not available")
+
 
 # ---------------------------------------------------------------------------
 # Infrastructure checks

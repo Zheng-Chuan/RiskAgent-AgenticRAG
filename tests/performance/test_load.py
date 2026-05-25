@@ -11,6 +11,7 @@ import pytest
 
 from riskagent_agenticrag.llm.generate import call_llm_text
 from riskagent_agenticrag.llm.governance import LLMGovernanceError
+import riskagent_agenticrag.llm.governance as _gov_mod
 
 # ---------------------------------------------------------------------------
 # Infrastructure check
@@ -31,6 +32,19 @@ def _llm_available() -> bool:
 skip_no_llm = pytest.mark.skipif(not _llm_available(), reason="LLM API not reachable")
 
 _PROMPT = "What is credit risk? Answer in one sentence."
+
+
+def _reset_governor():
+    """Reset the LLM governor singleton so each test starts with a fresh token bucket."""
+    _gov_mod._governor = None
+
+
+@pytest.fixture(autouse=True)
+def _fresh_governor():
+    """Reset governor before and after every test in this module."""
+    _reset_governor()
+    yield
+    _reset_governor()
 
 
 # ---------------------------------------------------------------------------

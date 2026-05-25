@@ -7,6 +7,12 @@ import tempfile
 import unittest
 from unittest.mock import patch
 
+import pytest
+
+from tests.conftest import HF_AVAILABLE
+
+pytestmark = pytest.mark.skipif(not HF_AVAILABLE, reason="Embedding models not available")
+
 from fastapi.testclient import TestClient
 
 from riskagent_agenticrag.api.server import app

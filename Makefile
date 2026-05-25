@@ -1,17 +1,24 @@
-.PHONY: install install-dev lock-env test lint typecheck format clean docs help offline-regression accept-release test-unit test-smoke test-scenario test-perf test-all test-coverage
+.PHONY: install install-dev lock-env test lint typecheck format clean docs help offline-regression accept-release test-unit test-smoke test-scenario test-perf test-all test-coverage test-cov test-watch check up down logs index ask api eval
 
 # 定义默认目标
 .DEFAULT_GOAL := help
+
+# 统一执行环境
+CONDA_ENV ?= agenticrag
+CONDA_RUN := conda run -n $(CONDA_ENV)
+PYTHON := $(CONDA_RUN) python
+PIP := $(CONDA_RUN) pip
+PYTEST := PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 $(PYTHON) -m pytest
 
 # ==========================================
 # 依赖管理
 # ==========================================
 
 install:  ## 安装项目依赖
-	pip install -e .
+	$(PIP) install -e .
 
 install-dev:  ## 安装项目依赖（含开发依赖）
-	pip install -e ".[dev]"
+	$(PIP) install -e ".[dev]"
 
 lock-env:  ## 生成可复现环境
 	conda env create -f environment.yml || conda env update -f environment.yml --prune
@@ -21,44 +28,44 @@ lock-env:  ## 生成可复现环境
 # ==========================================
 
 test:  ## 运行测试
-	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/ -v --tb=short
+	$(PYTEST) tests/ -v --tb=short
 
 test-cov:  ## 运行测试并生成覆盖率报告
-	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest -p pytest_cov tests/ -v --cov=src --cov-report=html --cov-report=term
+	$(PYTEST) -p pytest_cov tests/ -v --cov=src --cov-report=html --cov-report=term
 
 test-watch:  ## 监听文件变化并自动运行测试
-	ptw tests/
+	$(CONDA_RUN) ptw tests/
 
 # ─── Test Targets ─────────────────────────────────────────
 test-unit:  ## 运行单元测试
-	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/unit/ -v --cov=src/riskagent_agenticrag --cov-report=term-missing -m unit
+	$(PYTEST) tests/unit/ -v --cov=src/riskagent_agenticrag --cov-report=term-missing -m unit
 
 test-smoke:  ## 运行冒烟测试
-	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/smoke/ -v -m smoke
+	$(PYTEST) tests/smoke/ -v -m smoke
 
 test-scenario:  ## 运行场景测试
-	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/scenario/ -v -s -m scenario
+	$(PYTEST) tests/scenario/ -v -s -m scenario
 
 test-perf:  ## 运行性能测试
-	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/performance/ -v -s -m performance
+	$(PYTEST) tests/performance/ -v -s -m performance
 
 test-all:  ## 运行所有测试
-	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/ -v --cov=src/riskagent_agenticrag --cov-report=html --cov-report=term-missing
+	$(PYTEST) tests/ -v --cov=src/riskagent_agenticrag --cov-report=html --cov-report=term-missing
 
 test-coverage:  ## 运行测试覆盖率检查
-	PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 python -m pytest tests/unit/ tests/smoke/ -v --cov=src/riskagent_agenticrag --cov-report=html --cov-report=term-missing --cov-fail-under=90
+	$(PYTEST) tests/unit/ tests/smoke/ -v --cov=src/riskagent_agenticrag --cov-report=html --cov-report=term-missing --cov-fail-under=90
 
 lint:  ## 运行代码检查
-	ruff check src/ tests/
-	ruff format --check src/ tests/
+	$(CONDA_RUN) ruff check src/ tests/
+	$(CONDA_RUN) ruff format --check src/ tests/
 
 format:  ## 格式化代码
-	ruff format src/ tests/
-	isort src/ tests/
+	$(CONDA_RUN) ruff format src/ tests/
+	$(CONDA_RUN) isort src/ tests/
 
 typecheck:  ## 运行类型检查
-	mypy src/
-	pyright src/
+	$(CONDA_RUN) mypy src/
+	$(CONDA_RUN) pyright src/
 
 check: lint typecheck test  ## 运行所有检查（lint + typecheck + test）
 
@@ -80,16 +87,16 @@ logs:  ## 查看 Docker 服务日志
 # ==========================================
 
 index:  ## 构建索引
-	conda run -n LangChain python -m riskagent_agenticrag.cli index --corpus-dir corpus --persist-dir .milvus
+	$(PYTHON) -m riskagent_agenticrag.cli index --corpus-dir corpus --persist-dir .milvus
 
 ask:  ## CLI 提问（使用示例问题）
-	conda run -n LangChain python -m riskagent_agenticrag.cli ask --question "what is FRTB"
+	$(PYTHON) -m riskagent_agenticrag.cli ask --question "what is FRTB"
 
 api:  ## 启动 API 服务器
-	conda run -n LangChain python -m riskagent_agenticrag.api.server
+	$(PYTHON) -m riskagent_agenticrag.api.server
 
 eval:  ## 运行评测
-	conda run -n LangChain python -m riskagent_agenticrag.evaluation.run --label unified_pipeline
+	$(PYTHON) -m riskagent_agenticrag.evaluation.run --label unified_pipeline
 
 offline-regression:  ## 运行纯离线回归
 	bash scripts/run_offline_regression.sh

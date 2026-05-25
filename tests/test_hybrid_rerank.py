@@ -6,6 +6,12 @@ import shutil
 import tempfile
 import unittest
 
+import pytest
+
+from tests.conftest import HF_AVAILABLE
+
+pytestmark = pytest.mark.skipif(not HF_AVAILABLE, reason="Embedding models not available")
+
 from riskagent_agenticrag.indexing.indexer import incremental_index
 from riskagent_agenticrag.rag.retriever_factory import build_retriever
 

@@ -15,6 +15,10 @@ from unittest.mock import patch
 
 import pytest
 
+from tests.conftest import HF_AVAILABLE
+
+pytestmark = pytest.mark.skipif(not HF_AVAILABLE, reason="Embedding models not available")
+
 
 # ---------------------------------------------------------------------------
 # Infrastructure checks
@@ -176,6 +180,7 @@ class TestScenarioErrors:
         # Set extremely low rate limit (1 token per minute)
         os.environ["LLM_GOVERNANCE_RATE_LIMIT_TOKENS_PER_MIN"] = "1"
 
+        gov_mod = None
         try:
             from riskagent_agenticrag.indexing.indexer import incremental_index
 
@@ -203,10 +208,11 @@ class TestScenarioErrors:
 
         finally:
             # Reset governor
-            if hasattr(gov_mod, "_governor_instance"):
-                gov_mod._governor_instance = None
-            if hasattr(gov_mod, "_llm_cost_governor"):
-                gov_mod._llm_cost_governor = None
+            if gov_mod is not None:
+                if hasattr(gov_mod, "_governor_instance"):
+                    gov_mod._governor_instance = None
+                if hasattr(gov_mod, "_llm_cost_governor"):
+                    gov_mod._llm_cost_governor = None
             _restore_env(backup)
             tmp.cleanup()
 

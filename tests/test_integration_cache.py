@@ -70,6 +70,11 @@ class TestCachedDecorator:
 
     def test_cached_decorator(self):
         """测试缓存装饰器."""
+        # 清除单例缓存以避免其他测试污染
+        mgr = CacheManager()
+        backend = mgr.get_backend()
+        backend.clear()
+
         call_count = 0
 
         @cached(ttl=3600)

@@ -44,6 +44,20 @@ from pathlib import Path
 from unittest.mock import patch, MagicMock
 
 
+# ---- HuggingFace / Embedding 模型可用性检查 ----
+def _embeddings_available() -> bool:
+    """Check if HuggingFace BAAI/bge-large-zh-v1.5 model is accessible (cached or network)."""
+    try:
+        from sentence_transformers import SentenceTransformer
+        SentenceTransformer("BAAI/bge-large-zh-v1.5")
+        return True
+    except Exception:
+        return False
+
+
+HF_AVAILABLE = _embeddings_available()
+
+
 @pytest.fixture
 def llm_mock():
     """Standardized LLM mock that patches both call_llm_text and call_llm_json."""

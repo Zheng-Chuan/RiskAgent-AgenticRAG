@@ -19,26 +19,32 @@ class ContractArtifactsValidatorTest(unittest.TestCase):
     def test_artifacts_save_and_load(self):
         """测试 artifacts 落盘和加载功能."""
         with tempfile.TemporaryDirectory() as tmpdir:
-            request_id = "test_req_001"
-            request_data = {"question": "What is delta?", "max_rounds": 2}
-            response_data = {
-                "answer": "Delta is a risk metric.",
-                "citations": [{"source": "test.md", "chunk_id": "chunk_0"}],
-                "status": "ok",
-                "failure_reason": None,
-            }
+            # 清除环境变量以确保 save_artifact 使用传入的 artifacts_dir
+            old_val = os.environ.pop("RISKAGENT_ARTIFACTS_DIR", None)
+            try:
+                request_id = "test_req_001"
+                request_data = {"question": "What is delta?", "max_rounds": 2}
+                response_data = {
+                    "answer": "Delta is a risk metric.",
+                    "citations": [{"source": "test.md", "chunk_id": "chunk_0"}],
+                    "status": "ok",
+                    "failure_reason": None,
+                }
 
-            filepath = save_artifact(request_id, request_data, response_data, artifacts_dir=tmpdir)
-            self.assertTrue(os.path.exists(filepath))
+                filepath = save_artifact(request_id, request_data, response_data, artifacts_dir=tmpdir)
+                self.assertTrue(os.path.exists(filepath))
 
-            loaded = load_artifact(filepath)
-            self.assertEqual(loaded["request_id"], request_id)
-            self.assertEqual(loaded["request"]["question"], "What is delta?")
-            self.assertEqual(loaded["response"]["status"], "ok")
+                loaded = load_artifact(filepath)
+                self.assertEqual(loaded["request_id"], request_id)
+                self.assertEqual(loaded["request"]["question"], "What is delta?")
+                self.assertEqual(loaded["response"]["status"], "ok")
 
-            artifacts = list_artifacts(artifacts_dir=tmpdir)
-            self.assertEqual(len(artifacts), 1)
-            self.assertIn(request_id, artifacts[0])
+                artifacts = list_artifacts(artifacts_dir=tmpdir)
+                self.assertEqual(len(artifacts), 1)
+                self.assertIn(request_id, artifacts[0])
+            finally:
+                if old_val is not None:
+                    os.environ["RISKAGENT_ARTIFACTS_DIR"] = old_val
 
     def test_evidence_gate_pass(self):
         """测试 evidence gate 通过场景."""

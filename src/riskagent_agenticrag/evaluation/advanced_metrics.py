@@ -50,6 +50,10 @@ def _normalize_text(text: str) -> str:
     return " ".join(str(text or "").lower().split())
 
 
+def _normalize_id(value: Any) -> str:
+    return str(value or "").strip()
+
+
 def _sample_qrels(sample: dict[str, Any]) -> list[dict[str, Any]]:
     raw = sample.get("qrels")
     if not isinstance(raw, list):
@@ -72,20 +76,60 @@ def _retrieved_rows(sample: dict[str, Any]) -> list[dict[str, Any]]:
     return out
 
 
-def _is_row_relevant(row: dict[str, Any], qrels: list[dict[str, Any]]) -> bool:
+def _row_haystacks(row: dict[str, Any]) -> list[str]:
     content = _normalize_text(str(row.get("content") or row.get("text") or row.get("snippet") or ""))
     expanded = _normalize_text(str(row.get("expanded_text") or ""))
-    haystacks = [text for text in (content, expanded) if text]
+    return [text for text in (content, expanded) if text]
+
+
+def _row_matches_qrel(row: dict[str, Any], qrel: dict[str, Any]) -> bool:
+    row_chunk_id = _normalize_id(row.get("chunk_id"))
+    qrel_chunk_id = _normalize_id(qrel.get("chunk_id"))
+    if qrel_chunk_id:
+        return bool(row_chunk_id) and row_chunk_id == qrel_chunk_id
+
+    row_source = _normalize_id(row.get("source"))
+    qrel_source = _normalize_id(qrel.get("source"))
+    row_section_path = _normalize_id(row.get("section_path"))
+    qrel_section_path = _normalize_id(qrel.get("section_path"))
+    row_parent_id = _normalize_id(row.get("parent_id"))
+    qrel_parent_id = _normalize_id(qrel.get("parent_id"))
+    haystacks = _row_haystacks(row)
+    target = _normalize_text(str(qrel.get("text") or ""))
+
+    if qrel_source and row_source and qrel_source == row_source:
+        if qrel_section_path and row_section_path and qrel_section_path == row_section_path:
+            return True
+        if qrel_parent_id and row_parent_id and qrel_parent_id == row_parent_id:
+            return True
+        if target:
+            for haystack in haystacks:
+                if target in haystack or haystack in target:
+                    return True
+
     if not haystacks:
         return False
-    for qrel in qrels:
-        target = _normalize_text(str(qrel.get("text") or ""))
-        if not target:
-            continue
-        for haystack in haystacks:
-            if target in haystack or haystack in target:
-                return True
+    if not target:
+        return False
+    for haystack in haystacks:
+        if target in haystack or haystack in target:
+            return True
     return False
+
+
+def _matched_qrel_ids(row: dict[str, Any], qrels: list[dict[str, Any]]) -> list[str]:
+    matches: list[str] = []
+    for index, qrel in enumerate(qrels, start=1):
+        if not _row_matches_qrel(row, qrel):
+            continue
+        qrel_id = _normalize_id(qrel.get("qrel_id")) or f"qrel_{index}"
+        if qrel_id not in matches:
+            matches.append(qrel_id)
+    return matches
+
+
+def _is_row_relevant(row: dict[str, Any], qrels: list[dict[str, Any]]) -> bool:
+    return bool(_matched_qrel_ids(row, qrels))
 
 
 def _compute_single_retrieval_metrics(sample: dict[str, Any], ks: list[int]) -> dict[str, float]:
@@ -98,6 +142,11 @@ def _compute_single_retrieval_metrics(sample: dict[str, Any], ks: list[int]) -> 
             metrics[f"retrieval_ndcg_at_{k}"] = 0.0
         return metrics
 
+    qrel_relevance = {
+        (_normalize_id(qrel.get("qrel_id")) or f"qrel_{index}"): max(1, int(qrel.get("relevance", 1)))
+        for index, qrel in enumerate(qrels, start=1)
+    }
+    matched_qrels: dict[str, int] = {}
     matched_relevance: dict[int, int] = {}
     first_rank = 0
     has_dense = False
@@ -107,14 +156,19 @@ def _compute_single_retrieval_metrics(sample: dict[str, Any], ks: list[int]) -> 
             has_dense = True
         if row.get("sparse_rank") is not None:
             has_sparse = True
-        if not _is_row_relevant(row, qrels):
+        row_qrel_ids = _matched_qrel_ids(row, qrels)
+        if not row_qrel_ids:
             continue
-        if idx not in matched_relevance:
-            matched_relevance[idx] = max(int(q.get("relevance", 1)) for q in qrels)
-            if first_rank == 0:
-                first_rank = idx
+        if first_rank == 0:
+            first_rank = idx
+        matched_relevance[idx] = max(
+            int(matched_relevance.get(idx, 0)),
+            max(qrel_relevance.get(qrel_id, 1) for qrel_id in row_qrel_ids),
+        )
+        for qrel_id in row_qrel_ids:
+            matched_qrels.setdefault(qrel_id, idx)
 
-    total_relevant = len(qrels)
+    total_relevant = len(qrel_relevance)
     metrics: dict[str, float] = {
         "retrieval_mrr": 1.0 / float(first_rank) if first_rank > 0 else 0.0,
         "retrieval_dense_hit_rate": 1.0 if has_dense else 0.0,
@@ -131,7 +185,7 @@ def _compute_single_retrieval_metrics(sample: dict[str, Any], ks: list[int]) -> 
         metrics["retrieval_rerank_uplift"] = float(rrf_best - rerank_best)
 
     for k in ks:
-        hits = sum(1 for position in matched_relevance if position <= k)
+        hits = sum(1 for position in matched_qrels.values() if position <= k)
         metrics[f"retrieval_recall_at_{k}"] = float(hits) / float(max(1, total_relevant))
 
         dcg = 0.0

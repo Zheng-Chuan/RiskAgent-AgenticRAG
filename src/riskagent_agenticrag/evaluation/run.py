@@ -234,7 +234,18 @@ def run_evaluation(
                 "ground_truth_contexts": item.ground_truth_contexts,
                 "reference_contexts": item.reference_contexts,  # For RAGAS context_precision
                 "tags": item.tags,
-                "qrels": [{"qrel_id": q.qrel_id, "text": q.text, "relevance": q.relevance} for q in item.qrels],
+                "qrels": [
+                    {
+                        "qrel_id": q.qrel_id,
+                        "text": q.text or "",
+                        "relevance": q.relevance,
+                        "chunk_id": q.chunk_id or "",
+                        "source": q.source or "",
+                        "section_path": q.section_path or "",
+                        "parent_id": q.parent_id or "",
+                    }
+                    for q in item.qrels
+                ],
                 "gate_label": (
                     {
                         "should_block": item.gate_label.should_block,

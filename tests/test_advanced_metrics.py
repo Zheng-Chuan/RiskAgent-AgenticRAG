@@ -17,7 +17,7 @@ class Week14AdvancedMetricsTest(unittest.TestCase):
         samples = [
             {
                 "tags": ["definition"],
-                "qrels": [{"qrel_id": "q1_r1", "text": "delta definition", "relevance": 2}],
+                "qrels": [{"qrel_id": "q1_r1", "chunk_id": "a1", "text": "delta definition", "relevance": 2}],
                 "retrieved_docs": [
                     {"source": "corpus/a.md", "chunk_id": "a1", "content": "delta definition and examples", "dense_rank": 1, "rrf_score": 0.2, "rerank_score": 0.9},
                     {"source": "corpus/b.md", "chunk_id": "b1", "content": "other text", "sparse_rank": 1, "rrf_score": 0.9, "rerank_score": 0.1},
@@ -44,6 +44,21 @@ class Week14AdvancedMetricsTest(unittest.TestCase):
         self.assertIn("definition", retrieval.slice_metrics)
         self.assertIn("compare", retrieval.slice_metrics)
         self.assertGreater(float(out["retrieval_mrr"]), 0.0)
+
+    def test_retrieval_metrics_prefer_chunk_id_match_over_text_match(self) -> None:
+        samples = [
+            {
+                "tags": ["definition"],
+                "qrels": [{"qrel_id": "q1_r1", "chunk_id": "gold-1", "text": "canonical answer", "relevance": 2}],
+                "retrieved_docs": [
+                    {"source": "corpus/a.md", "chunk_id": "gold-1", "content": "different wording entirely", "dense_rank": 1},
+                    {"source": "corpus/b.md", "chunk_id": "other-1", "content": "canonical answer", "dense_rank": 2},
+                ],
+            }
+        ]
+        retrieval = compute_retrieval_metrics(samples=samples, ks=[1, 2])
+        self.assertEqual(float(retrieval.metrics["retrieval_recall_at_1"]), 1.0)
+        self.assertEqual(float(retrieval.metrics["retrieval_mrr"]), 1.0)
 
     def test_gate_and_reliability_metrics(self) -> None:
         samples = [

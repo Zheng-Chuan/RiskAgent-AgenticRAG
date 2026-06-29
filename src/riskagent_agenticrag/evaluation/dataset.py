@@ -16,8 +16,12 @@ from typing import Optional
 @dataclass(frozen=True)
 class EvalQrel:
     qrel_id: str
-    text: str
+    text: Optional[str]
     relevance: int
+    chunk_id: Optional[str] = None
+    source: Optional[str] = None
+    section_path: Optional[str] = None
+    parent_id: Optional[str] = None
 
 
 @dataclass(frozen=True)
@@ -62,15 +66,30 @@ def load_dataset(path: Path) -> list[EvalItem]:
                 for index, qrel in enumerate(raw_qrels):
                     if not isinstance(qrel, dict):
                         continue
-                    text = str(qrel.get("text", "")).strip()
-                    if not text:
+                    text_raw = str(qrel.get("text", "")).strip()
+                    text = text_raw or None
+                    chunk_id = str(qrel.get("chunk_id", "")).strip() or None
+                    source = str(qrel.get("source", "")).strip() or None
+                    section_path = str(qrel.get("section_path", "")).strip() or None
+                    parent_id = str(qrel.get("parent_id", "")).strip() or None
+                    if not any([text, chunk_id, source, section_path, parent_id]):
                         continue
                     qrel_id = str(qrel.get("qrel_id", "")).strip() or f"{item_id}_r{index + 1}"
                     try:
                         relevance = int(qrel.get("relevance", 1))
                     except (TypeError, ValueError):
                         relevance = 1
-                    parsed_qrels.append(EvalQrel(qrel_id=qrel_id, text=text, relevance=max(1, relevance)))
+                    parsed_qrels.append(
+                        EvalQrel(
+                            qrel_id=qrel_id,
+                            text=text,
+                            relevance=max(1, relevance),
+                            chunk_id=chunk_id,
+                            source=source,
+                            section_path=section_path,
+                            parent_id=parent_id,
+                        )
+                    )
             qrels_by_id[item_id] = parsed_qrels
 
     gate_labels_by_id: dict[str, EvalGateLabel] = {}

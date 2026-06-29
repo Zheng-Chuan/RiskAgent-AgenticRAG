@@ -33,7 +33,7 @@ class ContractMilestone2AcceptanceTest(unittest.TestCase):
                     [
                         {
                             "id": "q1",
-                            "qrels": [{"qrel_id": "q1_r1", "text": "ctx-1", "relevance": 2}],
+                            "qrels": [{"qrel_id": "q1_r1", "text": "ctx-1", "chunk_id": "ctx-1-chunk", "source": "corpus/a.md", "relevance": 2}],
                         }
                     ]
                 ),
@@ -42,6 +42,7 @@ class ContractMilestone2AcceptanceTest(unittest.TestCase):
             items = load_dataset(dataset_path)
         self.assertEqual(items[0].tags, ["definition", "regulation"])
         self.assertEqual(items[0].qrels[0].qrel_id, "q1_r1")
+        self.assertEqual(items[0].qrels[0].chunk_id, "ctx-1-chunk")
 
     def test_retrieval_metrics_use_qrels_and_emit_slice_metrics(self) -> None:
         samples = [

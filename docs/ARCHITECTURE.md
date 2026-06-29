@@ -19,19 +19,25 @@
 [LangGraph 工作流]
     |
     +-> [Step 1] rewrite
-    |       | 用 LLM 把原始问题改写成更适合检索的 current_query
+    |       | 用 LLM 把原始问题压缩成单个主检索 query
+    |       | 目标是短 小 关键词化 偏领域术语 且尽量控制在 20 tokens 内
+    |       | 输出写入 state.current_query 作为后续统一检索主链的 base query
     |       | 记录 decision_log 与 trace
     |       v
     +-> [Step 2] retrieve_and_critique
     |       |
     |       +-> [2.1] 统一检索主链
-    |       |       | HybridRetriever
+    |       |       | 构建时固定返回一条包装式检索链
+    |       |       | AdvancedIndexRetriever
     |       |       | -> QueryIntelligentRetriever
-    |       |       | -> AdvancedIndexRetriever
-    |       |       | 运行时不再切 mode
-    |       |       | dense_k sparse_k rerank_k 等只调参数不换主链
+    |       |       | -> HybridRetriever
+    |       |       | 运行时不再切 dense only / hybrid / summary mode
+    |       |       | 只是调 dense_k sparse_k candidate_k rerank_k summary_k hyde_k 等参数
+    |       |       | 调用顺序是 Advanced 先接 query 然后把 query 传给 QueryIntel 再由 QueryIntel 调 Hybrid
     |       |       v
     |       +-> [2.2] query intelligence 默认发生
+    |       |       | 这一层不是再产出新的全局 current_query
+    |       |       | 而是围绕 current_query 生成多个检索 variants 并融合结果
     |       |       | a. keywordize: 压缩 query 保留高信息量 token
     |       |       | b. acronym expansion: 展开缩写
     |       |       | c. route 识别: compare / background / procedure / default
@@ -43,15 +49,23 @@
     |       +-> [2.3] hybrid retrieval 主体
     |       |       | dense 向量召回
     |       |       | sparse BM25 召回
-    |       |       | 两路候选合并后做 coarse ranking
-    |       |       | 再用 cross-encoder rerank
-    |       |       | 最后做 diversity select 控同 source / section 重复
+    |       |       | 两路先做 RRF 融合并合并成统一候选集
+    |       |       | 每个候选会补 dense_rank sparse_rank rrf_score bm25_score bm25_rank retrieval_sources
+    |       |       | metadata_boost 来自 query token 与 source / section_path 的命中数
+    |       |       | 每命中 1 个 token 加 0.05 最多记 3 次 上限 0.15
+    |       |       | 低质量 chunk 会先过滤 例如过短 非文本 目录页 噪声页
+    |       |       | coarse ranking 公式是 rrf_score + 0.5 * bm25_score + metadata_boost
+    |       |       | 先按 rrf_score 截 candidate_k 再按 coarse_score 排序取 rerank_pool
+    |       |       | rerank 用 cross-encoder 对 query 和 chunk 正文成对打分 写入 rerank_score
+    |       |       | 若未配置 reranker 则直接用 coarse 结果进入 diversity select
+    |       |       | diversity select 限制同 source 和同 section 的重复数量 再补齐 final_k
     |       |       v
     |       +-> [2.4] advanced index 默认发生
-    |       |       | a. summary index 补主题级信号
-    |       |       | b. HyDE index 补 query-doc 表达差异
-    |       |       | c. parent expand 用 parent_id 找回更长上下文
-    |       |       | d. base_score + summary_score + hyde_score 融合
+    |       |       | 这一层发生在 2.3 之后 不是并列分支 而是对 base docs 的二次补分与扩展
+    |       |       | a. summary index: 对 parent summary 语料做 BM25 检索 补主题级信号
+    |       |       | b. HyDE index: 对 hyde 语料做 BM25 检索 补 query-doc 表达差异
+    |       |       | c. parent expand: 用 parent_id 找回更长上下文 写入 expanded_text
+    |       |       | d. advanced_index_score = base_score + summary_weight * summary_score + hyde_weight * hyde_score
     |       |       | e. 最终按 final_k 收口返回 docs
     |       |       v
     |       +-> [2.5] 数值型风险工具按需追加

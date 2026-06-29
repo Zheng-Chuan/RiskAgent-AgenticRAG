@@ -39,8 +39,8 @@ class EvaluationDatasetTest(unittest.TestCase):
                 {
                     "id": "s1",
                     "qrels": [
-                        {"qrel_id": "s1_r1", "text": "c1", "relevance": 2},
-                        {"qrel_id": "s1_r2", "text": "c2", "relevance": 1},
+                        {"qrel_id": "s1_r1", "text": "c1", "chunk_id": "chunk-1", "source": "corpus/a.md", "relevance": 2},
+                        {"qrel_id": "s1_r2", "text": "c2", "section_path": "sec/b", "parent_id": "parent-2", "relevance": 1},
                     ],
                 }
             ]
@@ -64,6 +64,10 @@ class EvaluationDatasetTest(unittest.TestCase):
             self.assertEqual(len(items[0].qrels), 2)
             self.assertEqual(items[0].qrels[0].qrel_id, "s1_r1")
             self.assertEqual(items[0].qrels[0].relevance, 2)
+            self.assertEqual(items[0].qrels[0].chunk_id, "chunk-1")
+            self.assertEqual(items[0].qrels[0].source, "corpus/a.md")
+            self.assertEqual(items[0].qrels[1].section_path, "sec/b")
+            self.assertEqual(items[0].qrels[1].parent_id, "parent-2")
             self.assertFalse(items[0].gate_label.should_block)
 
 

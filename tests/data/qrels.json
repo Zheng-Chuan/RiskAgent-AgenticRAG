@@ -4,6 +4,9 @@
     "qrels": [
       {
         "qrel_id": "q01_r1",
+        "chunk_id": "Background.md:52ecd236d3e8",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 4. FRTB overview",
         "text": "FRTB stands for Fundamental Review of the Trading Book. High level goals: Improve market risk capital framework after 2008. Increase risk sensitivity and model risk governance.",
         "relevance": 2
       }
@@ -14,11 +17,17 @@
     "qrels": [
       {
         "qrel_id": "q02_r1",
+        "chunk_id": "Background.md:a87505a01dca",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Delta: sensitivity to the underlying price level.",
         "relevance": 2
       },
       {
         "qrel_id": "q02_r2",
+        "chunk_id": "Background.md:a87505a01dca",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Greeks are sensitivities of a derivative value to small changes in risk factors.",
         "relevance": 1
       }
@@ -29,11 +38,17 @@
     "qrels": [
       {
         "qrel_id": "q03_r1",
+        "chunk_id": "Background.md:a87505a01dca",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Gamma: sensitivity of Delta to the underlying price.",
         "relevance": 2
       },
       {
         "qrel_id": "q03_r2",
+        "chunk_id": "Background.md:a87505a01dca",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Delta: sensitivity to the underlying price level.",
         "relevance": 1
       }
@@ -44,11 +59,17 @@
     "qrels": [
       {
         "qrel_id": "q04_r1",
+        "chunk_id": "Background.md:a87505a01dca",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Vega: sensitivity to volatility.",
         "relevance": 2
       },
       {
         "qrel_id": "q04_r2",
+        "chunk_id": "Background.md:a87505a01dca",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Greeks are sensitivities of a derivative value to small changes in risk factors.",
         "relevance": 1
       }
@@ -59,6 +80,9 @@
     "qrels": [
       {
         "qrel_id": "q05_r1",
+        "chunk_id": "Background.md:df5b209ec049",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 5. Counterparty risk and CVA",
         "text": "CVA stands for Credit Valuation Adjustment.",
         "relevance": 2
       }
@@ -69,6 +93,9 @@
     "qrels": [
       {
         "qrel_id": "q06_r1",
+        "chunk_id": "Background.md:52ecd236d3e8",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 4. FRTB overview",
         "text": "FRTB stands for Fundamental Review of the Trading Book.",
         "relevance": 2
       }
@@ -79,6 +106,9 @@
     "qrels": [
       {
         "qrel_id": "q07_r1",
+        "chunk_id": "Background.md:52ecd236d3e8",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 4. FRTB overview",
         "text": "High level goals: Improve market risk capital framework after 2008. Increase risk sensitivity and model risk governance.",
         "relevance": 2
       }
@@ -89,6 +119,9 @@
     "qrels": [
       {
         "qrel_id": "q08_r1",
+        "chunk_id": "cva_cfi.md:a1f51bafb979",
+        "source": "corpus/acceptance/cva_cfi.md",
+        "section_path": "CVA overview(CFI)",
         "text": "Credit Valuation Adjustment (CVA) is the price that an investor would pay to hedge the counterparty credit risk of a derivative instrument.",
         "relevance": 2
       }
@@ -99,6 +132,9 @@
     "qrels": [
       {
         "qrel_id": "q09_r1",
+        "chunk_id": "cva_cfi.md:a1f51bafb979",
+        "source": "corpus/acceptance/cva_cfi.md",
+        "section_path": "CVA overview(CFI)",
         "text": "CVA was introduced as a new requirement for fair value accounting during the 2007/08 Global Financial Crisis.",
         "relevance": 2
       }
@@ -109,6 +145,9 @@
     "qrels": [
       {
         "qrel_id": "q10_r1",
+        "chunk_id": "wikipedia_xva.md:6ee4b73ebca4",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
         "text": "XVA is an umbrella term for valuation adjustments including CVA, DVA, FVA, etc.",
         "relevance": 2
       }
@@ -119,6 +158,9 @@
     "qrels": [
       {
         "qrel_id": "q11_r1",
+        "chunk_id": "frtb_icma.md:006c0294481c",
+        "source": "corpus/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
         "text": "The Fundamental Review of the Trading Book (FRTB) is a comprehensive suite of capital rules developed by the Basel Committee on Banking Supervision (BCBS).",
         "relevance": 2
       }
@@ -129,6 +171,9 @@
     "qrels": [
       {
         "qrel_id": "q12_r1",
+        "chunk_id": "frtb_icma.md:006c0294481c",
+        "source": "corpus/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
         "text": "Finalised in January 2016 as the Minimum Capital Requirements for Market Risk.",
         "relevance": 2
       }
@@ -139,6 +184,9 @@
     "qrels": [
       {
         "qrel_id": "q13_r1",
+        "chunk_id": "frtb_icma.md:006c0294481c",
+        "source": "corpus/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
         "text": "as part of Basel III",
         "relevance": 2
       }
@@ -149,6 +197,9 @@
     "qrels": [
       {
         "qrel_id": "q14_r1",
+        "chunk_id": "Background.md:52ecd236d3e8",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 4. FRTB overview",
         "text": "Common concepts used in interviews and systems: Trading book vs banking book",
         "relevance": 2
       }
@@ -159,6 +210,9 @@
     "qrels": [
       {
         "qrel_id": "q15_r1",
+        "chunk_id": "Background.md:52ecd236d3e8",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 4. FRTB overview",
         "text": "Common concepts used in interviews and systems: ... PnL attribution",
         "relevance": 2
       }
@@ -169,6 +223,9 @@
     "qrels": [
       {
         "qrel_id": "q16_r1",
+        "chunk_id": "Background.md:52ecd236d3e8",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 4. FRTB overview",
         "text": "Common concepts used in interviews and systems: ... Backtesting",
         "relevance": 2
       }
@@ -179,6 +236,9 @@
     "qrels": [
       {
         "qrel_id": "q17_r1",
+        "chunk_id": "Background.md:52ecd236d3e8",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 4. FRTB overview",
         "text": "Common concepts used in interviews and systems: Risk factor eligibility",
         "relevance": 2
       }
@@ -189,6 +249,9 @@
     "qrels": [
       {
         "qrel_id": "q18_r1",
+        "chunk_id": "wikipedia_xva.md:e7cb1cf8fc74",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
         "text": "DVA (Debt Valuation Adjustment) is the valuation adjustment for own credit risk.",
         "relevance": 2
       }
@@ -199,6 +262,9 @@
     "qrels": [
       {
         "qrel_id": "q19_r1",
+        "chunk_id": "wikipedia_xva.md:e7cb1cf8fc74",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
         "text": "FVA (Funding Valuation Adjustment) is the valuation adjustment for funding costs.",
         "relevance": 2
       }
@@ -209,6 +275,9 @@
     "qrels": [
       {
         "qrel_id": "q20_r1",
+        "chunk_id": "wikipedia_xva.md:09651a61ad82",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
         "text": "KVA (Capital Valuation Adjustment) is the valuation adjustment for capital costs.",
         "relevance": 2
       }
@@ -219,6 +288,9 @@
     "qrels": [
       {
         "qrel_id": "q21_r1",
+        "chunk_id": "wikipedia_xva.md:09651a61ad82",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
         "text": "MVA (Margin Valuation Adjustment) is the valuation adjustment for margin costs.",
         "relevance": 2
       }
@@ -229,6 +301,9 @@
     "qrels": [
       {
         "qrel_id": "q22_r1",
+        "chunk_id": "wikipedia_xva.md:66013361c3a9",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
         "text": "ColVA (Collateral Valuation Adjustment) is the valuation adjustment for collateral.",
         "relevance": 2
       }
@@ -239,6 +314,9 @@
     "qrels": [
       {
         "qrel_id": "q23_r1",
+        "chunk_id": "cva_cfi.md:4ac08b62a0e8",
+        "source": "corpus/acceptance/cva_cfi.md",
+        "section_path": "CVA overview(CFI)",
         "text": "The formula for calculating CVA is written with terms including ... default probability",
         "relevance": 2
       }
@@ -249,6 +327,9 @@
     "qrels": [
       {
         "qrel_id": "q24_r1",
+        "chunk_id": "cva_cfi.md:4ac08b62a0e8",
+        "source": "corpus/acceptance/cva_cfi.md",
+        "section_path": "CVA overview(CFI)",
         "text": "The formula for calculating CVA is written with terms including ... loss given default",
         "relevance": 2
       }
@@ -259,6 +340,9 @@
     "qrels": [
       {
         "qrel_id": "q25_r1",
+        "chunk_id": "cva_cfi.md:4ac08b62a0e8",
+        "source": "corpus/acceptance/cva_cfi.md",
+        "section_path": "CVA overview(CFI)",
         "text": "The formula for calculating CVA is written with terms including ... exposure over time",
         "relevance": 2
       }
@@ -269,6 +353,9 @@
     "qrels": [
       {
         "qrel_id": "q26_r1",
+        "chunk_id": "cva_cfi.md:4ac08b62a0e8",
+        "source": "corpus/acceptance/cva_cfi.md",
+        "section_path": "CVA overview(CFI)",
         "text": "The formula for calculating CVA is written with terms including maturity, discount factors",
         "relevance": 2
       }
@@ -279,6 +366,9 @@
     "qrels": [
       {
         "qrel_id": "q27_r1",
+        "chunk_id": "frtb_icma.md:acc70e825c4e",
+        "source": "corpus/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
         "text": "In the EU, FRTB is being implemented as part of the Revised Capital Requirements Regulation (CRR II)",
         "relevance": 2
       }
@@ -289,6 +379,9 @@
     "qrels": [
       {
         "qrel_id": "q28_r1",
+        "chunk_id": "frtb_icma.md:acc70e825c4e",
+        "source": "corpus/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
         "text": "it aims to address a number of identified shortcomings in the existing Basel II.5 framework",
         "relevance": 2
       }
@@ -299,6 +392,9 @@
     "qrels": [
       {
         "qrel_id": "q29_r1",
+        "chunk_id": "frtb_icma.md:acc70e825c4e",
+        "source": "corpus/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
         "text": "While FRTB was not intended to increase banks' capital costs beyond those imposed by Basel II.5, it is clear ... that banks will see significant increases in their cost of capital, in particular to support their trading activities.",
         "relevance": 2
       }
@@ -309,6 +405,9 @@
     "qrels": [
       {
         "qrel_id": "q30_r1",
+        "chunk_id": "frtb_icma.md:006c0294481c",
+        "source": "corpus/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
         "text": "developed by the Basel Committee on Banking Supervision (BCBS)",
         "relevance": 2
       }
@@ -419,6 +518,9 @@
     "qrels": [
       {
         "qrel_id": "q41_r1",
+        "chunk_id": "Background.md:7921838e696d",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 1. Market risk basics",
         "text": "A risk factor is a market variable (e.g., interest rate, equity price, FX rate) that drives the value of a portfolio.",
         "relevance": 2
       }
@@ -429,6 +531,9 @@
     "qrels": [
       {
         "qrel_id": "q42_r1",
+        "chunk_id": "Background.md:52ecd236d3e8",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 4. FRTB overview",
         "text": "Model risk is the risk that a valuation or risk model produces incorrect results, which FRTB aims to address through governance.",
         "relevance": 2
       }
@@ -439,6 +544,9 @@
     "qrels": [
       {
         "qrel_id": "q43_r1",
+        "chunk_id": "Background.md:df5b209ec049",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 5. Counterparty risk and CVA",
         "text": "Counterparty credit risk is the risk that a counterparty will default on its obligations, which is addressed by CVA.",
         "relevance": 2
       }
@@ -449,6 +557,9 @@
     "qrels": [
       {
         "qrel_id": "q44_r1",
+        "chunk_id": "Background.md:df5b209ec049",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 5. Counterparty risk and CVA",
         "text": "Wrong-way risk occurs when exposure to a counterparty increases as the counterparty's credit quality deteriorates.",
         "relevance": 2
       }
@@ -469,6 +580,9 @@
     "qrels": [
       {
         "qrel_id": "q46_r1",
+        "chunk_id": "wikipedia_xva.md:e7cb1cf8fc74",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
         "text": "A CSA is a legal document that governs collateral arrangements between counterparties to mitigate counterparty risk.",
         "relevance": 2
       }
@@ -479,6 +593,8 @@
     "qrels": [
       {
         "qrel_id": "q47_r1",
+        "chunk_id": "cftc_2020_27736_margin_uncleared_swaps.pdf:8b05121133ed",
+        "source": "corpus/regulatory_seed/pdf/en/cftc_2020_27736_margin_uncleared_swaps.pdf",
         "text": "Initial margin is collateral posted upfront to cover potential future exposure.",
         "relevance": 2
       }
@@ -489,6 +605,8 @@
     "qrels": [
       {
         "qrel_id": "q48_r1",
+        "chunk_id": "cftc_2020_27736_margin_uncleared_swaps.pdf:8b05121133ed",
+        "source": "corpus/regulatory_seed/pdf/en/cftc_2020_27736_margin_uncleared_swaps.pdf",
         "text": "Variation margin is collateral exchanged daily to mark-to-market current exposure.",
         "relevance": 2
       }
@@ -499,6 +617,8 @@
     "qrels": [
       {
         "qrel_id": "q49_r1",
+        "chunk_id": "bis_bcbs_d457.pdf:6edb51caa992",
+        "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
         "text": "VaR is a measure of potential loss over a given horizon at a given confidence level.",
         "relevance": 2
       }
@@ -509,6 +629,8 @@
     "qrels": [
       {
         "qrel_id": "q50_r1",
+        "chunk_id": "bis_bcbs_d457.pdf:be87fa7d8ed2",
+        "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
         "text": "Expected shortfall is the expected loss given that VaR is exceeded, a more conservative measure than VaR.",
         "relevance": 2
       }

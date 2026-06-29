@@ -38,12 +38,12 @@
     |       +-> [2.2] query intelligence 默认发生
     |       |       | 这一层不是再产出新的全局 current_query
     |       |       | 而是围绕 current_query 生成多个检索 variants 并融合结果
-    |       |       | a. keywordize: 压缩 query 保留高信息量 token
-    |       |       | b. acronym expansion: 展开缩写
-    |       |       | c. route 识别: compare / background / procedure / default
-    |       |       | d. step back: 背景类和流程类问题补通用表述
-    |       |       | e. decomposition: compare 类问题拆子问题
-    |       |       | f. variant 去重后分别调用 hybrid retrieval
+    |       |       | a. route 识别: compare / background / procedure / default
+    |       |       | b. 按 route policy 决定 fanout 强度 不是每题都全套扩写
+    |       |       | c. default 默认只保留 base query 不盲目扩写
+    |       |       | d. background 和 procedure 可启用 keywordize acronym expansion step back
+    |       |       | e. compare 额外保留 decomposition 做子问题检索
+    |       |       | f. variant 去重并按 route budget 截断后分别调用 hybrid retrieval
     |       |       | g. variant 结果再做一层 RRF 融合
     |       |       v
     |       +-> [2.3] hybrid retrieval 主体
@@ -64,9 +64,11 @@
     |       |       | 这一层发生在 2.3 之后 不是并列分支 而是对 base docs 的二次补分与扩展
     |       |       | a. summary index: 对 parent summary 语料做 BM25 检索 补主题级信号
     |       |       | b. HyDE index: 对 hyde 语料做 BM25 检索 补 query-doc 表达差异
-    |       |       | c. parent expand: 用 parent_id 找回更长上下文 写入 expanded_text
+    |       |       | c. parent expand: 用 parent_id 找回更长上下文 但按 query route 和证据强度决定是否真的展开
     |       |       | d. advanced_index_score = base_score + summary_weight * summary_score + hyde_weight * hyde_score
-    |       |       | e. 最终按 final_k 收口返回 docs
+    |       |       | e. compare background procedure 更积极扩 parent default 和 numeric 更保守
+    |       |       | f. expand_reason expand_parent_signal expand_parent_route 会写入 metadata
+    |       |       | g. 最终按 final_k 收口返回 docs
     |       |       v
     |       +-> [2.5] 数值型风险工具按需追加
     |       |       | 识别 desk exposure / delta limit / breach 问题
@@ -77,7 +79,9 @@
     |       |       v
     |       +-> [2.6] critique
     |               | LLM 判断当前 docs 是否足够回答问题
-    |               | Self-RAG doc grade 也会参与 stop / continue 判断
+    |               | Self-RAG 先做题型感知 sufficiency scorer
+    |               | 至少区分 definition compare numeric procedure
+    |               | 结合 top_isrel query_coverage source_diversity parent_diversity numeric_evidence
     |               | 产出 sufficient / critique_reason / improved_query
     |               | insufficient 时进入 revise_query 循环
     |       v
@@ -151,7 +155,8 @@
     |    否则默认写 .milvus/milvus.db
     |
     +-> 计算源文件 sha1
-    |    与 manifest 比较 决定 indexed / skipped
+    |    先结合 manifest 里的 schema_fingerprint 判断是否需要全量重建
+    |    schema 未变化时再按 source sha1 决定 indexed / skipped
     |
     +-> ensure_collection
     |    collection 维度由 embeddings 实测决定
@@ -175,7 +180,9 @@
     |    给 advanced index 使用
     |
     +-> 更新 index_manifest.json
-         记录 provider model dim 和每个 source 的 chunks parents summaries hydes
+         记录 schema version schema_fingerprint
+         记录 embeddings milvus chunking advanced index features 等版本键
+         记录每个 source 的 sha1 和 chunks parents summaries hydes
 ```
 
 # 系统 Evaluation 流程
@@ -186,6 +193,7 @@
 [dataset loader]
     | 自动加载相邻 qrels.json 与 gate_labels.json
     | qrels = gold retrieval truth
+    | text only qrel 只允许来自显式 gap allowlist
     | gate_labels = gate 标注样本
     v
 [evaluation.run]
@@ -193,6 +201,7 @@
     | retrieval_pipeline = hybrid_query_intel_advanced_index
     | 先设置 EMBEDDINGS_PROVIDER = hf
     | 若未显式设置 reranker_model 则补默认 cross-encoder
+    | 若配置 reranker candidates 则按候选顺序离线尝试并记录实际命中的模型
     | stage 仅作为阶段性说明与报告标签
     v
 [评测前准备]

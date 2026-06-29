@@ -43,11 +43,31 @@ class EvalItem:
     gate_label: Optional[EvalGateLabel]
 
 
+def _load_qrel_gap_allowlist(path: Path) -> dict[str, str]:
+    allowlist_path = path.with_name("qrels_gap_allowlist.json")
+    if not allowlist_path.exists():
+        return {}
+    raw = json.loads(allowlist_path.read_text(encoding="utf-8"))
+    if not isinstance(raw, list):
+        raise ValueError("qrels gap allowlist file must be a list")
+    out: dict[str, str] = {}
+    for row in raw:
+        if not isinstance(row, dict):
+            continue
+        item_id = str(row.get("id", "")).strip()
+        if not item_id:
+            continue
+        reason = str(row.get("reason", "")).strip() or "approved_gap"
+        out[item_id] = reason
+    return out
+
+
 def load_dataset(path: Path) -> list[EvalItem]:
     raw = json.loads(path.read_text(encoding="utf-8"))
     if not isinstance(raw, list):
         raise ValueError("dataset file must be a list")
 
+    qrel_gap_allowlist = _load_qrel_gap_allowlist(path)
     qrels_by_id: dict[str, list[EvalQrel]] = {}
     qrels_path = path.with_name("qrels.json")
     if qrels_path.exists():
@@ -61,6 +81,7 @@ def load_dataset(path: Path) -> list[EvalItem]:
             if not item_id:
                 continue
             parsed_qrels: list[EvalQrel] = []
+            has_text_only_qrel = False
             raw_qrels = row.get("qrels")
             if isinstance(raw_qrels, list):
                 for index, qrel in enumerate(raw_qrels):
@@ -79,6 +100,8 @@ def load_dataset(path: Path) -> list[EvalItem]:
                         relevance = int(qrel.get("relevance", 1))
                     except (TypeError, ValueError):
                         relevance = 1
+                    if text and not any([chunk_id, source, section_path, parent_id]):
+                        has_text_only_qrel = True
                     parsed_qrels.append(
                         EvalQrel(
                             qrel_id=qrel_id,
@@ -90,6 +113,8 @@ def load_dataset(path: Path) -> list[EvalItem]:
                             parent_id=parent_id,
                         )
                     )
+            if has_text_only_qrel and item_id not in qrel_gap_allowlist:
+                raise ValueError(f"text-only qrels for {item_id} require qrels_gap_allowlist.json approval")
             qrels_by_id[item_id] = parsed_qrels
 
     gate_labels_by_id: dict[str, EvalGateLabel] = {}

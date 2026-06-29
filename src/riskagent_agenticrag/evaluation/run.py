@@ -124,6 +124,17 @@ def _load_node_latencies(debug: dict[str, Any]) -> dict[str, float]:
     return out
 
 
+def _nested_debug_value(debug: dict[str, Any], key: str) -> Any:
+    if key in debug:
+        return debug.get(key)
+    for value in debug.values():
+        if isinstance(value, dict):
+            found = _nested_debug_value(value, key)
+            if found is not None:
+                return found
+    return None
+
+
 def _parse_retrieval_ks(text: str) -> list[int]:
     values: list[int] = []
     for part in str(text or "").split(","):
@@ -191,6 +202,12 @@ def run_evaluation(
 
     incremental_index(corpus_dir=corpus_dir, persist_dir=persist_dir, include_paths=None)
     retriever = build_retriever(persist_dir=persist_dir, final_k=4)
+    retriever_debug = {}
+    if hasattr(retriever, "debug_stats"):
+        try:
+            retriever_debug = dict(retriever.debug_stats() or {})
+        except Exception:
+            retriever_debug = {}
 
     samples: list[dict[str, Any]] = []
     for item in items:
@@ -358,6 +375,9 @@ def run_evaluation(
             "milvus_port": os.getenv("MILVUS_PORT"),
             "retrieval_pipeline": "hybrid_query_intel_advanced_index",
             "reranker_model": os.getenv("RISKAGENT_RERANKER_MODEL", ""),
+            "reranker_candidates": os.getenv("RISKAGENT_RERANKER_CANDIDATES", ""),
+            "resolved_reranker_model": _nested_debug_value(retriever_debug, "active_reranker_model") or "",
+            "resolved_reranker_status": _nested_debug_value(retriever_debug, "reranker_status") or "",
             "prompt_version": os.getenv("RISKAGENT_PROMPT_VERSION", "v1"),
             "git_commit": _git_commit(),
             "profile": str(profile or "all"),
@@ -366,6 +386,7 @@ def run_evaluation(
             "include_latency": bool(include_latency),
             "with_gate": bool(with_gate),
             "enable_ragas": bool(enable_ragas),
+            "retriever_debug": retriever_debug,
         },
         "metrics": {
             "citations_total": cov.total,
@@ -472,6 +493,8 @@ def main() -> None:
     parser.add_argument("--with-gate", action="store_true")
     parser.add_argument("--enforce-thresholds", action="store_true")
     parser.add_argument("--thresholds", default="config/eval_thresholds.json")
+    parser.add_argument("--reranker-model", default="")
+    parser.add_argument("--reranker-candidates", default="")
     parser.add_argument("--enable-ragas", action="store_true", help="Enable RAGAS metrics (faithfulness, answer_relevancy, context_precision, etc.)")
     parser.add_argument("--enable-citation-judge", action="store_true", help="Enable citation judge for verifying answer citations")
     parser.add_argument("--numeric-tolerance", type=float, default=float(os.getenv("EVAL_NUMERIC_TOLERANCE", "0.01")))
@@ -490,6 +513,10 @@ def main() -> None:
 
     enable_ragas = bool(args.enable_ragas) or _env_bool("EVAL_ENABLE_RAGAS")
     stage = str(args.stage).lower().strip()
+    if str(args.reranker_model).strip():
+        os.environ["RISKAGENT_RERANKER_MODEL"] = str(args.reranker_model).strip()
+    if str(args.reranker_candidates).strip():
+        os.environ["RISKAGENT_RERANKER_CANDIDATES"] = str(args.reranker_candidates).strip()
     if not os.getenv("RISKAGENT_RERANKER_MODEL"):
         os.environ["RISKAGENT_RERANKER_MODEL"] = "cross-encoder/ms-marco-MiniLM-L-6-v2"
     if bool(args.enable_citation_judge):

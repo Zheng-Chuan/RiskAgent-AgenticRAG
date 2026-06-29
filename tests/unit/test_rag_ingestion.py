@@ -212,6 +212,93 @@ class TestQueryIntelligence:
         assert len(variants) >= 1
         assert "FRTB" in variants[0]
 
+    def test_generate_query_variants_default_keeps_base_only(self):
+        """Default route should avoid unnecessary fanout."""
+        from riskagent_agenticrag.rag.query_intelligence import (
+            QueryIntelConfig,
+            generate_query_variants,
+        )
+
+        config = QueryIntelConfig(expansion_n=3, max_variants=8)
+        variants = generate_query_variants(
+            question="FRTB desk requirements",
+            base_query="FRTB desk requirements",
+            config=config,
+        )
+        assert variants == ["FRTB desk requirements"]
+
+    def test_generate_query_variants_compare_keeps_step_back_and_decompose(self):
+        """Compare route should keep broader fanout signals."""
+        from riskagent_agenticrag.rag.query_intelligence import (
+            QueryIntelConfig,
+            generate_query_variants,
+        )
+
+        config = QueryIntelConfig(expansion_n=2, max_variants=8)
+        query = "Compare FRTB and Basel II.5 capital treatment"
+        variants = generate_query_variants(
+            question=query,
+            base_query=query,
+            config=config,
+        )
+        assert variants[0] == query
+        assert len(variants) >= 4
+        assert any("overview definition background" in v for v in variants)
+        assert any(v == "Compare FRTB" for v in variants)
+
+    def test_query_intelligent_retriever_default_route_calls_base_once(self):
+        """Default route should not fan out into extra retrieval calls."""
+        from riskagent_agenticrag.rag.query_intelligence import (
+            QueryIntelConfig,
+            QueryIntelligentRetriever,
+        )
+
+        doc = Document(page_content="desk requirements", metadata={"chunk_id": "c1", "source": "a.md"})
+        base = MagicMock(invoke=MagicMock(return_value=[doc]))
+        retriever = QueryIntelligentRetriever(
+            base_retriever=base,
+            config=QueryIntelConfig(expansion_n=3, per_query_k=4, final_k=2),
+        )
+
+        docs = retriever.invoke("FRTB desk requirements")
+
+        assert len(docs) == 1
+        base.invoke.assert_called_once_with("FRTB desk requirements")
+        assert docs[0].metadata["query_route"] == "default"
+        assert docs[0].metadata["query_variants"] == ["FRTB desk requirements"]
+
+    def test_query_intelligent_retriever_compare_route_calls_base_multiple_times(self):
+        """Compare route should keep multi-variant fusion."""
+        from riskagent_agenticrag.rag.query_intelligence import (
+            QueryIntelConfig,
+            QueryIntelligentRetriever,
+        )
+
+        def _fake_invoke(q: str) -> list[Document]:
+            return [
+                Document(
+                    page_content="shared compare content",
+                    metadata={"chunk_id": "shared", "source": "a.md"},
+                ),
+                Document(
+                    page_content=f"content for {q}",
+                    metadata={"chunk_id": f"chunk::{q}", "source": "b.md"},
+                )
+            ]
+
+        base = MagicMock(invoke=MagicMock(side_effect=_fake_invoke))
+        retriever = QueryIntelligentRetriever(
+            base_retriever=base,
+            config=QueryIntelConfig(expansion_n=2, per_query_k=4, final_k=6, max_variants=8),
+        )
+
+        docs = retriever.invoke("Compare FRTB and Basel II.5 capital treatment")
+
+        assert len(docs) >= 2
+        assert base.invoke.call_count >= 3
+        assert all(d.metadata["query_route"] == "compare" for d in docs)
+        assert any(len(d.metadata["query_variants"]) >= 2 for d in docs)
+
 
 # ---------------------------------------------------------------------------
 # self_rag: scoring structure
@@ -258,6 +345,55 @@ class TestSelfRag:
         assert hasattr(result, "top_isrel")
         assert hasattr(result, "avg_isrel")
         assert hasattr(result, "grades")
+        assert hasattr(result, "question_type")
+        assert hasattr(result, "query_coverage")
+        assert hasattr(result, "source_diversity")
+        assert hasattr(result, "parent_diversity")
+        assert hasattr(result, "numeric_evidence")
+
+    def test_grade_docs_compare_requires_broader_coverage(self):
+        """Compare questions should prefer broader evidence coverage."""
+        from riskagent_agenticrag.rag.self_rag import grade_docs
+
+        docs = [
+            Document(
+                page_content="FRTB replaces Basel II.5 with stricter market risk rules.",
+                metadata={"parent_id": "p1", "chunk_id": "c1", "source": "a.md"},
+            ),
+            Document(
+                page_content="Basel II.5 had weaker market risk treatment than FRTB.",
+                metadata={"parent_id": "p2", "chunk_id": "c2", "source": "b.md"},
+            ),
+        ]
+        result = grade_docs(question="What is the difference between FRTB and Basel II.5?", docs=docs)
+        assert result.question_type == "compare"
+        assert result.source_diversity >= 2
+        assert result.query_coverage > 0.0
+
+    def test_grade_docs_numeric_requires_numeric_backing(self):
+        """Numeric questions should require numeric evidence signals."""
+        from riskagent_agenticrag.rag.self_rag import grade_docs
+
+        weak_docs = [
+            Document(
+                page_content="Desk exposure limit governance framework overview.",
+                metadata={"parent_id": "p1", "chunk_id": "c1", "source": "a.md"},
+            )
+        ]
+        weak = grade_docs(question="What is the desk delta exposure limit breach?", docs=weak_docs)
+        assert weak.question_type == "numeric"
+        assert weak.numeric_evidence is False
+        assert weak.sufficient is False
+
+        strong_docs = [
+            Document(
+                page_content="Desk delta exposure is 125 and the limit is 100, so breach is true.",
+                metadata={"parent_id": "p1", "chunk_id": "c1", "source": "a.md"},
+            )
+        ]
+        strong = grade_docs(question="What is the desk delta exposure limit breach?", docs=strong_docs)
+        assert strong.numeric_evidence is True
+        assert strong.sufficient is True
 
     def test_grade_generation_ok(self):
         """grade_generation with no failure returns ok."""

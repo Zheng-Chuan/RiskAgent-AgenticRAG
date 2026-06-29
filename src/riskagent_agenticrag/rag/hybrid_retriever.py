@@ -33,6 +33,25 @@ def _resolve_hf_model_path(model_name: str) -> str:
     return str(max(dirs, key=lambda d: d.stat().st_mtime))
 
 
+def _merge_unique_strings(values: list[str]) -> list[str]:
+    out: list[str] = []
+    seen: set[str] = set()
+    for value in values:
+        item = str(value or "").strip()
+        if not item or item in seen:
+            continue
+        seen.add(item)
+        out.append(item)
+    return out
+
+
+def _candidate_models(*, primary: str, candidates: list[str]) -> list[str]:
+    merged = list(candidates)
+    if primary:
+        merged.insert(0, str(primary))
+    return _merge_unique_strings(merged)
+
+
 def _merge_sources(doc: Document, src: str) -> None:
     """向 Document metadata 追加检索来源标记."""
     meta = doc.metadata or {}
@@ -69,6 +88,7 @@ class HybridConfig:
     final_k: int = 4
     rrf_k: int = 60
     reranker_model: str = ""
+    reranker_candidates: tuple[str, ...] = ()
     min_chunk_chars: int = 80
     max_per_source: int = 2
     max_per_section: int = 1
@@ -90,15 +110,40 @@ class HybridRetriever:
         self._bm25 = None
         self._bm25_keys: list[str] = []
         self._reranker = None
+        self._requested_reranker_model = str(config.reranker_model or "").strip()
+        self._reranker_candidates = _candidate_models(
+            primary=self._requested_reranker_model,
+            candidates=[str(x) for x in config.reranker_candidates],
+        )
+        self._active_reranker_model = ""
+        self._reranker_status = "disabled"
+        self._reranker_init_errors: list[str] = []
 
         if sparse_docs:
             tokens = [tokenize(d.page_content or "") for d in sparse_docs]
             self._bm25 = BM25Okapi(tokens)
             self._bm25_keys = [doc_key(d) for d in sparse_docs]
 
-        if config.reranker_model:
-            local_path = _resolve_hf_model_path(config.reranker_model)
-            self._reranker = CrossEncoder(local_path, local_files_only=True, trust_remote_code=True)
+        if self._reranker_candidates:
+            self._init_reranker()
+
+    def _init_reranker(self) -> None:
+        last_error = ""
+        for idx, model_name in enumerate(self._reranker_candidates):
+            local_path = _resolve_hf_model_path(model_name)
+            try:
+                self._reranker = CrossEncoder(local_path, local_files_only=True, trust_remote_code=True)
+                self._active_reranker_model = model_name
+                if idx == 0:
+                    self._reranker_status = "enabled"
+                else:
+                    self._reranker_status = "fallback_enabled"
+                return
+            except Exception as exc:
+                last_error = f"{model_name}: {type(exc).__name__}"
+                self._reranker_init_errors.append(last_error)
+        self._reranker = None
+        self._reranker_status = "unavailable" if last_error else "disabled"
 
     # ---- 内部方法 ----
 
@@ -231,6 +276,7 @@ class HybridRetriever:
         ce_scores = self._reranker.predict(pairs)
         for s, d in zip(ce_scores, rerank_pool):
             d.metadata["rerank_score"] = float(s)
+            d.metadata["reranker_model"] = self._active_reranker_model
         rerank_pool.sort(key=lambda d: float(d.metadata.get("rerank_score", 0.0)), reverse=True)
         self._set_confidence_gap(rerank_pool, "rerank_score")
         return self._diversity_select(rerank_pool)
@@ -247,7 +293,11 @@ class HybridRetriever:
         return {
             "sparse_docs": len(self._sparse_docs),
             "has_bm25": self._bm25 is not None,
-            "reranker_model": self._cfg.reranker_model or "",
+            "reranker_model": self._requested_reranker_model,
+            "reranker_candidates": list(self._reranker_candidates),
+            "active_reranker_model": self._active_reranker_model,
+            "reranker_status": self._reranker_status,
+            "reranker_init_errors": list(self._reranker_init_errors),
             "dense_k": self._cfg.dense_k,
             "sparse_k": self._cfg.sparse_k,
             "candidate_k": self._cfg.candidate_k,

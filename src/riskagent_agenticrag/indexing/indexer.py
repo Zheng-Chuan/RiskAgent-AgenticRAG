@@ -9,8 +9,21 @@ from typing import Any, Iterable
 from langchain_core.documents import Document  # type: ignore[import-not-found]
 
 from riskagent_agenticrag.config.settings import settings
-from riskagent_agenticrag.indexing.milvus_store import MilvusStoreConfig, build_milvus_client, delete_by_source, ensure_collection, insert_chunks
-from riskagent_agenticrag.rag.advanced_index import build_hyde_docs, build_summary_docs
+from riskagent_agenticrag.indexing.milvus_store import (
+    MilvusStoreConfig,
+    build_milvus_client,
+    delete_by_source,
+    drop_collection,
+    ensure_collection,
+    insert_chunks,
+)
+from riskagent_agenticrag.rag.advanced_index import (
+    HYDE_CORPUS_FILENAME,
+    PARENT_CORPUS_FILENAME,
+    SUMMARY_CORPUS_FILENAME,
+    build_hyde_docs,
+    build_summary_docs,
+)
 from riskagent_agenticrag.rag.embeddings import build_embeddings
 from riskagent_agenticrag.rag.ingestion import build_parent_documents, split_documents
 from riskagent_agenticrag.rag.source_loader import load_sources
@@ -18,6 +31,19 @@ from riskagent_agenticrag.rag.sparse_index import SPARSE_CORPUS_FILENAME
 
 
 MANIFEST_FILENAME = "index_manifest.json"
+MANIFEST_VERSION = 2
+DEFAULT_CHUNKING_CONFIG = {
+    "use_llm_chunking": True,
+    "max_chunk_size": 800,
+    "overlap": 100,
+    "policy_version": "split_documents_v1",
+}
+DEFAULT_ADVANCED_INDEX_CONFIG = {
+    "summary_strategy": "extractive_head_or_sentence_v1",
+    "summary_max_chars": 900,
+    "hyde_strategy": "section_path_plus_summary_v1",
+    "parent_expand_source": "parent_corpus_v1",
+}
 
 
 @dataclass(frozen=True)
@@ -40,19 +66,101 @@ def _file_sha1(path: Path) -> str:
 
 
 def _load_manifest(*, persist_dir: Path) -> dict[str, Any]:
+    skeleton = {
+        "version": MANIFEST_VERSION,
+        "schema": {},
+        "schema_fingerprint": "",
+        "sources": {},
+        "embeddings": {},
+    }
     path = persist_dir / MANIFEST_FILENAME
     if not path.exists():
-        return {"version": 1, "sources": {}}
+        return skeleton
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        loaded = json.loads(path.read_text(encoding="utf-8"))
+        if not isinstance(loaded, dict):
+            return skeleton
+        merged = dict(skeleton)
+        merged.update(loaded)
+        if not isinstance(merged.get("sources"), dict):
+            merged["sources"] = {}
+        if not isinstance(merged.get("schema"), dict):
+            merged["schema"] = {}
+        if not isinstance(merged.get("embeddings"), dict):
+            merged["embeddings"] = {}
+        return merged
     except Exception:
-        return {"version": 1, "sources": {}}
+        return skeleton
 
 
 def _write_manifest(*, persist_dir: Path, data: dict[str, Any]) -> None:
     persist_dir.mkdir(parents=True, exist_ok=True)
     path = persist_dir / MANIFEST_FILENAME
     path.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+
+
+def _stable_json_dumps(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def _schema_fingerprint(schema: dict[str, Any]) -> str:
+    return hashlib.sha1(_stable_json_dumps(schema).encode("utf-8")).hexdigest()
+
+
+def _current_index_schema(*, dim: int, milvus_config: MilvusStoreConfig) -> dict[str, Any]:
+    return {
+        "schema_version": MANIFEST_VERSION,
+        "embeddings": {
+            "provider": str(settings.embeddings.provider),
+            "model": str(settings.embeddings.model_name),
+            "dim": int(dim),
+        },
+        "milvus": {
+            "collection_name": str(milvus_config.collection_name),
+            "metric_type": str(milvus_config.metric_type),
+            "index_type": str(milvus_config.index_type),
+            "nlist": int(milvus_config.nlist),
+            "nprobe": int(milvus_config.nprobe),
+        },
+        "chunking": dict(DEFAULT_CHUNKING_CONFIG),
+        "advanced_index": dict(DEFAULT_ADVANCED_INDEX_CONFIG),
+        "features": {
+            "retrieval_pipeline": str(settings.features.retrieval_pipeline),
+            "prompt_version": str(settings.features.prompt_version),
+            "query_intel_enabled": bool(settings.features.query_intel_enabled),
+            "self_rag_enabled": bool(settings.features.self_rag_enabled),
+        },
+        "source_loader": {
+            "loader_version": "load_sources_v1",
+            "parent_builder_version": "build_parent_documents_v1",
+        },
+    }
+
+
+def _manifest_has_schema_mismatch(*, manifest: dict[str, Any], schema: dict[str, Any]) -> bool:
+    current_fingerprint = _schema_fingerprint(schema)
+    previous_fingerprint = str(manifest.get("schema_fingerprint", "") or "").strip()
+    previous_version = int(manifest.get("version", 0) or 0)
+    if previous_version != MANIFEST_VERSION:
+        return True
+    if not previous_fingerprint:
+        return True
+    return previous_fingerprint != current_fingerprint
+
+
+def _reset_persisted_index_artifacts(*, persist_dir: Path, client: Any, milvus_config: MilvusStoreConfig) -> None:
+    dropped = drop_collection(client=client, config=milvus_config)
+    if not dropped:
+        raise RuntimeError("Failed to drop stale Milvus collection during schema migration")
+    for filename in (
+        SPARSE_CORPUS_FILENAME,
+        PARENT_CORPUS_FILENAME,
+        SUMMARY_CORPUS_FILENAME,
+        HYDE_CORPUS_FILENAME,
+    ):
+        path = persist_dir / filename
+        if path.exists():
+            path.unlink()
 
 
 def _upsert_jsonl(*, path: Path, source: str, docs: Iterable[Document]) -> None:
@@ -100,12 +208,6 @@ def incremental_index(
                 selected.append(src)
         sources = [d for d in sources if str((d.metadata or {}).get("source", "")) in selected]
 
-    manifest = _load_manifest(persist_dir=persist_dir)
-    src_map = manifest.get("sources")
-    if not isinstance(src_map, dict):
-        src_map = {}
-    manifest["sources"] = src_map
-
     embeddings = build_embeddings()
     dim = len(embeddings.embed_query("dim_probe"))
 
@@ -116,7 +218,21 @@ def incremental_index(
         nlist=settings.milvus.nlist,
         nprobe=settings.milvus.nprobe,
     )
+    manifest = _load_manifest(persist_dir=persist_dir)
+    current_schema = _current_index_schema(dim=int(dim), milvus_config=cfg)
+    schema_changed = _manifest_has_schema_mismatch(manifest=manifest, schema=current_schema)
+    src_map = manifest.get("sources")
+    if not isinstance(src_map, dict):
+        src_map = {}
+    manifest["sources"] = src_map
+
     client = build_milvus_client(persist_dir=persist_dir)
+    if schema_changed:
+        if include_paths:
+            raise ValueError("Index schema changed; rerun incremental_index without include_paths for a full rebuild")
+        _reset_persisted_index_artifacts(persist_dir=persist_dir, client=client, milvus_config=cfg)
+        src_map = {}
+        manifest["sources"] = src_map
     ensure_collection(client=client, config=cfg, dim=int(dim))
 
     indexed_sources: list[str] = []
@@ -135,7 +251,7 @@ def incremental_index(
         p = Path(src)
         digest = _file_sha1(p) if p.exists() else ""
         prev = src_map.get(src) if isinstance(src_map, dict) else None
-        if isinstance(prev, dict) and str(prev.get("sha1", "")) == digest and digest:
+        if (not schema_changed) and isinstance(prev, dict) and str(prev.get("sha1", "")) == digest and digest:
             skipped_sources.append(src)
             continue
 
@@ -171,15 +287,15 @@ def incremental_index(
         sparse_path = persist_dir / SPARSE_CORPUS_FILENAME
         _upsert_jsonl(path=sparse_path, source=src, docs=chunks)
 
-        parent_path = persist_dir / "parent_corpus.jsonl"
+        parent_path = persist_dir / PARENT_CORPUS_FILENAME
         _upsert_jsonl(path=parent_path, source=src, docs=parents)
 
         summary_docs = build_summary_docs(parents)
-        summary_path = persist_dir / "summary_corpus.jsonl"
+        summary_path = persist_dir / SUMMARY_CORPUS_FILENAME
         _upsert_jsonl(path=summary_path, source=src, docs=summary_docs)
 
         hyde_docs = build_hyde_docs(parents)
-        hyde_path = persist_dir / "hyde_corpus.jsonl"
+        hyde_path = persist_dir / HYDE_CORPUS_FILENAME
         _upsert_jsonl(path=hyde_path, source=src, docs=hyde_docs)
 
         src_map[src] = {
@@ -191,11 +307,10 @@ def incremental_index(
         }
         indexed_sources.append(src)
 
-    manifest["embeddings"] = {
-        "provider": str(settings.embeddings.provider),
-        "model": str(settings.embeddings.model_name),
-        "dim": int(dim),
-    }
+    manifest["version"] = MANIFEST_VERSION
+    manifest["schema"] = current_schema
+    manifest["schema_fingerprint"] = _schema_fingerprint(current_schema)
+    manifest["embeddings"] = dict(current_schema.get("embeddings") or {})
     _write_manifest(persist_dir=persist_dir, data=manifest)
 
     return IncrementalIndexResult(
@@ -204,4 +319,3 @@ def incremental_index(
         chunk_indexed=int(chunk_indexed),
         persist_dir=str(persist_dir),
     )
-

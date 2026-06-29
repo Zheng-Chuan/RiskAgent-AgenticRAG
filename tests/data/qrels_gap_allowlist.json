@@ -1,0 +1,46 @@
+[
+  {
+    "id": "q31",
+    "reason": "greeks_extension_gap_theta"
+  },
+  {
+    "id": "q32",
+    "reason": "greeks_extension_gap_rho"
+  },
+  {
+    "id": "q33",
+    "reason": "greeks_extension_gap_volga"
+  },
+  {
+    "id": "q34",
+    "reason": "greeks_extension_gap_vanna"
+  },
+  {
+    "id": "q35",
+    "reason": "greeks_extension_gap_charm"
+  },
+  {
+    "id": "q36",
+    "reason": "greeks_extension_gap_volatility_compare"
+  },
+  {
+    "id": "q37",
+    "reason": "greeks_extension_gap_delta_neutral"
+  },
+  {
+    "id": "q38",
+    "reason": "greeks_extension_gap_gamma_hedging"
+  },
+  {
+    "id": "q39",
+    "reason": "greeks_extension_gap_volatility_skew"
+  },
+  {
+    "id": "q40",
+    "reason": "greeks_extension_gap_volatility_smile"
+  },
+  {
+    "id": "q45",
+    "reason": "counterparty_gap_right_way_risk"
+  }
+]

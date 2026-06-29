@@ -10,6 +10,16 @@ from langchain_core.documents import Document
 from riskagent_agenticrag.rag.utils import doc_key, rrf_scores, tokenize
 
 
+@dataclass(frozen=True)
+class QueryRoutePolicy:
+    route: str
+    use_keywordize: bool
+    use_abbrev: bool
+    use_step_back: bool
+    use_decomposition: bool
+    max_extra_variants: int
+
+
 def _merge_lists_unique(xs: list[str]) -> list[str]:
     out: list[str] = []
     seen: set[str] = set()
@@ -123,32 +133,78 @@ def _route_name(q: str) -> str:
     return "default"
 
 
+def _route_policy(*, route: str, config: QueryIntelConfig) -> QueryRoutePolicy:
+    base_extra = max(0, int(config.expansion_n))
+    policies = {
+        "compare": QueryRoutePolicy(
+            route="compare",
+            use_keywordize=True,
+            use_abbrev=True,
+            use_step_back=bool(config.enable_step_back),
+            use_decomposition=bool(config.enable_decomposition),
+            max_extra_variants=max(3, base_extra + 2),
+        ),
+        "background": QueryRoutePolicy(
+            route="background",
+            use_keywordize=True,
+            use_abbrev=True,
+            use_step_back=bool(config.enable_step_back),
+            use_decomposition=False,
+            max_extra_variants=max(2, base_extra),
+        ),
+        "procedure": QueryRoutePolicy(
+            route="procedure",
+            use_keywordize=True,
+            use_abbrev=True,
+            use_step_back=bool(config.enable_step_back),
+            use_decomposition=False,
+            max_extra_variants=max(2, base_extra),
+        ),
+        "default": QueryRoutePolicy(
+            route="default",
+            use_keywordize=False,
+            use_abbrev=False,
+            use_step_back=False,
+            use_decomposition=False,
+            max_extra_variants=0,
+        ),
+    }
+    return policies.get(route, policies["default"])
+
+
 def generate_query_variants(*, question: str, base_query: str, config: QueryIntelConfig) -> list[str]:
-    variants: list[str] = []
     base = str(base_query or "").strip() or str(question or "").strip()
-    if base:
-        variants.append(base)
-    kw = _keywordize(base)
-    if kw and kw != base:
-        variants.append(kw)
-    variants.extend(_expand_abbrev(base))
+    if not base:
+        return []
 
     route = _route_name(base)
-    use_step_back = bool(config.enable_step_back) and route in {"background", "procedure", "compare"}
-    use_decomposition = bool(config.enable_decomposition) and route == "compare"
+    policy = _route_policy(route=route, config=config)
+    variants: list[str] = [base]
+    extra_variants: list[str] = []
 
-    if use_step_back:
+    if policy.use_keywordize:
+        kw = _keywordize(base)
+        if kw and kw != base:
+            extra_variants.append(kw)
+
+    if policy.use_abbrev:
+        extra_variants.extend(_expand_abbrev(base))
+
+    if policy.use_step_back:
         sb = _step_back_query(base)
-        if sb and sb != base and sb != kw:
-            variants.append(sb)
+        if sb and sb != base:
+            extra_variants.append(sb)
 
-    if use_decomposition:
-        variants.extend(_decompose(base))
+    if policy.use_decomposition:
+        extra_variants.extend(_decompose(base))
 
-    variants = _merge_lists_unique(variants)
-    if not variants:
-        return []
-    return variants[: max(1, int(config.max_variants))]
+    extra_variants = _merge_lists_unique(extra_variants)
+    max_total_variants = max(1, int(config.max_variants))
+    max_extra = min(max_total_variants - 1, max(0, int(policy.max_extra_variants)))
+    if max_extra <= 0:
+        return variants[:max_total_variants]
+    variants.extend(extra_variants[:max_extra])
+    return _merge_lists_unique(variants)[:max_total_variants]
 
 
 class QueryIntelligentRetriever:
@@ -196,6 +252,12 @@ class QueryIntelligentRetriever:
         return out
 
     def debug_stats(self) -> dict[str, Any]:
+        base_debug = {}
+        if hasattr(self._base, "debug_stats"):
+            try:
+                base_debug = dict(self._base.debug_stats() or {})
+            except Exception:
+                base_debug = {}
         return {
             "expansion_n": int(self._config.expansion_n),
             "enable_step_back": bool(self._config.enable_step_back),
@@ -204,6 +266,11 @@ class QueryIntelligentRetriever:
             "final_k": int(self._config.final_k),
             "rrf_k": int(self._config.rrf_k),
             "max_variants": int(self._config.max_variants),
+            "route_policies": {
+                route: _route_policy(route=route, config=self._config).__dict__
+                for route in ("compare", "background", "procedure", "default")
+            },
+            "base_debug": base_debug,
         }
 
 

@@ -10,6 +10,18 @@ from riskagent_agenticrag.rag.query_intelligence import QueryIntelConfig, QueryI
 from riskagent_agenticrag.rag.sparse_index import load_sparse_corpus
 
 
+def _csv_env_list(name: str, default: list[str]) -> list[str]:
+    raw = str(os.getenv(name, "")).strip()
+    if not raw:
+        return list(default)
+    out: list[str] = []
+    for item in raw.split(","):
+        v = str(item or "").strip()
+        if v and v not in out:
+            out.append(v)
+    return out
+
+
 def build_retriever(*, persist_dir: Path, final_k: int = 4):
     dense_k = int(os.getenv("RISKAGENT_DENSE_K", "30"))
     sparse_k = int(os.getenv("RISKAGENT_SPARSE_K", "30"))
@@ -22,6 +34,13 @@ def build_retriever(*, persist_dir: Path, final_k: int = 4):
     reranker_model = os.getenv("RISKAGENT_RERANKER_MODEL", "").strip()
     if not reranker_model:
         reranker_model = "cross-encoder/ms-marco-MiniLM-L-6-v2"
+    reranker_candidates = _csv_env_list(
+        "RISKAGENT_RERANKER_CANDIDATES",
+        [
+            "BAAI/bge-reranker-v2-m3",
+            reranker_model,
+        ],
+    )
 
     sparse_docs = load_sparse_corpus(persist_dir=persist_dir)
     dense_retriever = DenseMilvusRetriever(
@@ -37,6 +56,7 @@ def build_retriever(*, persist_dir: Path, final_k: int = 4):
         final_k=int(base_final_k),
         rrf_k=rrf_k,
         reranker_model=reranker_model,
+        reranker_candidates=tuple(reranker_candidates),
         min_chunk_chars=min_chunk_chars,
         max_per_source=max_per_source,
         max_per_section=max_per_section,

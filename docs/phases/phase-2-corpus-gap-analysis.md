@@ -77,6 +77,8 @@
 - 先承认语料缺口
 - 再补语料和重建索引
 - 最后继续把 `text qrel` 升级成 `chunk_id qrel`
+- 当前剩余缺口已经登记到 `tests/data/qrels_gap_allowlist.json`
+- 新增 text only qrel 时必须同步白名单和原因 否则数据加载会失败
 
 ## 下一步
 

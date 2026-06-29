@@ -22,23 +22,32 @@
 - 把当前偏 text match 的 qrels 继续升级到 chunk_id 或 evidence unit
 - 让 recall@k MRR nDCG 更真实反映召回变化
 - 优先覆盖 `definition` `compare` `numeric` `regulation` 四类题型
+- 当前未硬化题已显式收口到 `qrels_gap_allowlist.json`
+- 只有批准过的 corpus gap 才允许保留 text only qrel
 
 ### 2. index manifest 版本化
 
 - 把 `embedding model` `embedding dim` `chunking policy` `advanced index config` 纳入版本键
 - 避免旧索引被误复用
 - 避免 retrieval 实验结论被缓存污染
+- 当前已落地 `manifest v2 + schema_fingerprint`
+- schema 变化时会拒绝 partial include 并要求全量重建
 
 ### 3. sufficiency scorer
 
 - 把当前轻量 Self-RAG 规则升级为更强的 sufficiency scorer
 - 至少按题型区分 `definition` `compare` `numeric`
 - 让 stop continue 判断更贴近真实 answerability
+- 当前已落地轻量题型感知版
+- 已把 `query_coverage` `source_diversity` `parent_diversity` `numeric_evidence` 纳入判断
 
 ### 4. reranker 领域适配
 
 - 系统评估更适合中文金融文档的 reranker
 - 比较通用 baseline 和候选领域 reranker 的效果与时延
+- 当前实现已支持 `reranker candidates` 离线候选列表
+- 启动时会优先尝试候选模型 找不到再自动回退到可用 baseline
+- 评测报告会写出请求模型 候选列表 和实际生效模型
 
 ## P1 随后做
 
@@ -46,11 +55,19 @@
 
 - 不是每题都默认做全套 fanout
 - 根据题型决定 step back decomposition acronym expansion 的强度
+- 当前实现已切到 route policy
+- `default` 题型默认只保留 base query 不再盲目扩写
+- `background` `procedure` 保留 keywordize 和 step back
+- `compare` 保留更强 fanout 包括 decomposition
 
 ### 6. advanced index query aware expand
 
 - parent expand 不再一刀切
 - 根据题型和证据缺口控制 expand 强度
+- 当前实现已切到轻量规则策略
+- `compare` `background` `procedure` 会优先扩 top docs 的 parent 上下文
+- `default` `numeric` 只在强 parent signal 或更强证据条件下才扩
+- expand 理由会写回 metadata 方便 trace 和评测解释
 
 ### 7. retrieval observability
 

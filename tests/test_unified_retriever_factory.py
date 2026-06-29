@@ -109,6 +109,7 @@ class UnifiedRetrieverFactoryTest(unittest.TestCase):
             self.assertEqual(adv_kwargs["base_retriever"], "query_intel")
             self.assertEqual(adv_kwargs["persist_dir"], persist_dir)
             self.assertEqual(adv_kwargs["config"].final_k, 4)
+            self.assertIn("cross-encoder/ms-marco-MiniLM-L-6-v2", hybrid_kwargs["config"].reranker_candidates)
         finally:
             if previous is None:
                 sys.modules.pop("riskagent_agenticrag.rag.dense_milvus_retriever", None)

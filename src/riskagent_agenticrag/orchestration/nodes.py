@@ -123,6 +123,11 @@ def node_retrieve_and_critique(state: AgenticState) -> AgenticState:
                     "reason": str(g.reason),
                     "top_isrel": float(g.top_isrel),
                     "avg_isrel": float(g.avg_isrel),
+                    "question_type": str(getattr(g, "question_type", "default")),
+                    "query_coverage": float(getattr(g, "query_coverage", 0.0)),
+                    "source_diversity": int(getattr(g, "source_diversity", 0)),
+                    "parent_diversity": int(getattr(g, "parent_diversity", 0)),
+                    "numeric_evidence": bool(getattr(g, "numeric_evidence", False)),
                     "docs": [gd.__dict__ for gd in g.grades],
                 },
             }
@@ -138,7 +143,11 @@ def node_retrieve_and_critique(state: AgenticState) -> AgenticState:
                 "agent": "SelfRAG",
                 "rationale": str(g.reason),
                 "chosen": "sufficient" if g.sufficient else "insufficient",
-                "alternatives": [f"top_isrel={g.top_isrel:.3f}"],
+                "alternatives": [
+                    f"top_isrel={g.top_isrel:.3f}",
+                    f"coverage={float(getattr(g, 'query_coverage', 0.0)):.3f}",
+                    f"type={str(getattr(g, 'question_type', 'default'))}",
+                ],
             }
         )
         state["decision_log"] = decision_log

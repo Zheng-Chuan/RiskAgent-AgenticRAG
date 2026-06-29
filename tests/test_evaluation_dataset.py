@@ -70,6 +70,36 @@ class EvaluationDatasetTest(unittest.TestCase):
             self.assertEqual(items[0].qrels[1].parent_id, "parent-2")
             self.assertFalse(items[0].gate_label.should_block)
 
+    def test_reject_text_only_qrel_without_allowlist(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "questions.json"
+            qrels_path = Path(td) / "qrels.json"
+            path.write_text(json.dumps([{"id": "q1", "question": "what is theta"}]), encoding="utf-8")
+            qrels_path.write_text(
+                json.dumps([{"id": "q1", "qrels": [{"qrel_id": "q1_r1", "text": "theta definition", "relevance": 2}]}]),
+                encoding="utf-8",
+            )
+            with self.assertRaisesRegex(ValueError, "qrels_gap_allowlist"):
+                load_dataset(path)
+
+    def test_accept_text_only_qrel_with_allowlist(self) -> None:
+        with tempfile.TemporaryDirectory() as td:
+            path = Path(td) / "questions.json"
+            qrels_path = Path(td) / "qrels.json"
+            allowlist_path = Path(td) / "qrels_gap_allowlist.json"
+            path.write_text(json.dumps([{"id": "q1", "question": "what is theta"}]), encoding="utf-8")
+            qrels_path.write_text(
+                json.dumps([{"id": "q1", "qrels": [{"qrel_id": "q1_r1", "text": "theta definition", "relevance": 2}]}]),
+                encoding="utf-8",
+            )
+            allowlist_path.write_text(
+                json.dumps([{"id": "q1", "reason": "approved_gap"}]),
+                encoding="utf-8",
+            )
+            items = load_dataset(path)
+            self.assertEqual(len(items), 1)
+            self.assertEqual(items[0].qrels[0].text, "theta definition")
+
 
 if __name__ == "__main__":
     unittest.main()

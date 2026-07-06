@@ -97,16 +97,19 @@ def _row_matches_qrel(row: dict[str, Any], qrel: dict[str, Any]) -> bool:
     haystacks = _row_haystacks(row)
     target = _normalize_text(str(qrel.get("text") or ""))
 
-    if qrel_source and row_source and qrel_source == row_source:
-        if qrel_section_path and row_section_path and qrel_section_path == row_section_path:
-            return True
-        if qrel_parent_id and row_parent_id and qrel_parent_id == row_parent_id:
-            return True
-        if target:
-            for haystack in haystacks:
-                if target in haystack or haystack in target:
-                    return True
+    # 优先使用结构化定位字段做硬匹配. 只要 qrel 已经提供 source / section / parent,
+    # 就不再退回到宽松的文本包含逻辑, 避免同源或近似文本误判为命中.
+    has_structured_locator = any([qrel_source, qrel_section_path, qrel_parent_id])
+    if has_structured_locator:
+        if qrel_source and row_source != qrel_source:
+            return False
+        if qrel_section_path and row_section_path != qrel_section_path:
+            return False
+        if qrel_parent_id and row_parent_id != qrel_parent_id:
+            return False
+        return True
 
+    # 只有明确的 text-only qrel 才允许退回到文本匹配.
     if not haystacks:
         return False
     if not target:

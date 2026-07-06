@@ -60,6 +60,43 @@ class Week14AdvancedMetricsTest(unittest.TestCase):
         self.assertEqual(float(retrieval.metrics["retrieval_recall_at_1"]), 1.0)
         self.assertEqual(float(retrieval.metrics["retrieval_mrr"]), 1.0)
 
+    def test_retrieval_metrics_do_not_fallback_to_text_when_structured_locator_exists(self) -> None:
+        samples = [
+            {
+                "tags": ["definition"],
+                "qrels": [
+                    {
+                        "qrel_id": "q1_r1",
+                        "source": "corpus/a.md",
+                        "section_path": "sec/a",
+                        "text": "canonical answer",
+                        "relevance": 2,
+                    }
+                ],
+                "retrieved_docs": [
+                    {"source": "corpus/a.md", "chunk_id": "wrong-1", "section_path": "sec/b", "content": "canonical answer", "dense_rank": 1},
+                    {"source": "corpus/a.md", "chunk_id": "right-1", "section_path": "sec/a", "content": "different wording entirely", "dense_rank": 2},
+                ],
+            }
+        ]
+        retrieval = compute_retrieval_metrics(samples=samples, ks=[1, 2])
+        self.assertEqual(float(retrieval.metrics["retrieval_recall_at_1"]), 0.0)
+        self.assertEqual(float(retrieval.metrics["retrieval_recall_at_2"]), 1.0)
+        self.assertEqual(float(retrieval.metrics["retrieval_mrr"]), 0.5)
+
+    def test_retrieval_metrics_keep_text_match_for_text_only_qrels(self) -> None:
+        samples = [
+            {
+                "tags": ["definition"],
+                "qrels": [{"qrel_id": "q1_r1", "text": "theta definition", "relevance": 2}],
+                "retrieved_docs": [
+                    {"source": "corpus/a.md", "chunk_id": "a1", "content": "theta definition and examples", "dense_rank": 1},
+                ],
+            }
+        ]
+        retrieval = compute_retrieval_metrics(samples=samples, ks=[1])
+        self.assertEqual(float(retrieval.metrics["retrieval_recall_at_1"]), 1.0)
+
     def test_gate_and_reliability_metrics(self) -> None:
         samples = [
             {

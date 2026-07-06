@@ -6,28 +6,24 @@ on:
   pull_request:
 
 jobs:
-  tests:
+  release-gate:
     runs-on: ubuntu-latest
     env:
       TOKENIZERS_PARALLELISM: "false"
+      PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.10"
           cache: pip
       - name: install
         run: |
           python -m pip install --upgrade pip
-          pip install -e .
-      - name: unit tests
+          pip install -e ".[dev]"
+      - name: offline regression
         run: |
-          python -m unittest tests.test_week1_rag_baseline
-          python -m unittest tests.test_week2_rag_citation_quality
-          python -m unittest tests.test_week2_pdf_and_chunking
-          python -m unittest tests.test_week3_contract_artifacts_validator
-          python -m unittest tests.test_week4_evaluation_dataset
-          python -m unittest tests.test_week5_refusal_quality
-          python -m unittest tests.test_week6_citation_precision_quality
-          python -m unittest tests.test_week7_domain_consistency_quality
-          python -m unittest tests.test_failure_taxonomy_coverage
+          bash scripts/run_offline_regression.sh
+      - name: release acceptance
+        run: |
+          bash scripts/release_acceptance.sh

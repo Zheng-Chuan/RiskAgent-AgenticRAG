@@ -2,27 +2,39 @@
 
 ## 目标
 
-记录当前 `qrels` 升级过程中发现的语料缺口.  
-这些缺口不是评测脚本问题.  
-而是当前索引语料里没有足够硬的一跳证据.
+记录 `qrels` 升级过程中曾经发现的语料缺口以及当前回填状态.  
+这些 gap 的重点不是把指标做漂亮.  
+而是确保索引语料里真的有足够硬的一跳证据.
 
 ## 已完成
 
 - `tests/data/qrels.json` 已有第一批 `chunk_id backed qrels`
 - FRTB
 - Greeks 基础三项
+- Greeks 扩展概念
 - CVA
 - XVA 子项
 - VaR
 - Expected Shortfall
 - Initial margin
 - Variation margin
+- right-way risk
 
-## 当前缺口
+## 当前状态
 
-### 1. Greeks 扩展概念缺口
+此前文档里列出的 Phase 2 gap 目前已经在仓库中完成了最小闭环.
 
-这些问题在当前索引语料中缺少稳定的一跳定义 chunk.
+- `corpus/Background.md` 已补入 `Theta` `Rho` `Volga` `Vanna` `Charm`
+- 同一文件已补入 `implied volatility` `historical volatility` `delta-neutral portfolio` `gamma hedging`
+- 同一文件已补入 `volatility skew` `volatility smile`
+- `counterparty risk` 部分已补入 `right-way risk`
+- `tests/data/qrels.json` 已为 `q31-q40` 和 `q45` 提供 `chunk_id` 级 qrels
+
+## 已关闭的缺口
+
+### 1. Greeks 扩展概念
+
+下面这些问题现在都已经有稳定的一跳定义 chunk 和对应 qrels.
 
 - `q31` Theta
 - `q32` Rho
@@ -35,56 +47,29 @@
 - `q39` volatility skew
 - `q40` volatility smile
 
-### 2. Counterparty 风险扩展缺口
+### 2. Counterparty 风险扩展概念
 
 - `q45` right-way risk
 
-当前语料里已经有 `wrong-way risk` 的提法  
-但还没有足够稳定的 `right-way risk` 定义 chunk.
+## 当前未完成
 
-## 建议补语料方向
-
-### A. 补一份 Greeks 扩展语料
-
-最小覆盖下面这些概念.
-
-- Theta
-- Rho
-- Volga
-- Vanna
-- Charm
-- implied volatility
-- historical volatility
-- delta-neutral
-- gamma hedging
-- volatility skew
-- volatility smile
-
-### B. 补一份 Counterparty 风险术语语料
-
-最小覆盖下面这些概念.
-
-- wrong-way risk
-- right-way risk
-- CSA
-- netting set
-- initial margin
-- variation margin
+- 语料 gap 本身不是当前 Phase 2 的主阻塞项
+- 当前更需要继续推进的是 `retrieval eval` 命中规则硬化 和 fresh baseline 报告更新
+- 在没有新的正式评测报告落盘前 不能把样例 baseline 当成最新能力证明
 
 ## 原则
 
 - 不为了把 `qrels` 数字做漂亮而硬绑错误 chunk
-- 先承认语料缺口
-- 再补语料和重建索引
-- 最后继续把 `text qrel` 升级成 `chunk_id qrel`
+- 先补真实语料和 `chunk_id` 证据 再谈召回指标
+- 文档中的 gap 关闭必须以语料和 qrels 都已经落盘为前提
+- gap 关闭后仍然要继续把 `retrieval eval` 做硬 不能靠旧 sample 掩盖问题
 - 当前仓库里的 `tests/data/qrels_gap_allowlist.json` 已经清空
 - 这表示当前数据集不再允许未审批的 text only qrel 直接混入评测
-- 本文档列出的剩余 gap 是语料和概念覆盖层面的待补项 不是当前 allowlist 的现存条目
 - 如果后续必须临时保留 text only qrel 仍然要同步白名单和原因 否则数据加载会失败
 
 ## 下一步
 
-1. 补 `Greeks 扩展语料`
-2. 补 `Counterparty 风险术语语料`
-3. 重建索引
-4. 继续硬化剩余 qrels
+1. 继续硬化 `retrieval eval` 命中规则
+2. 生成一份基于当前统一主链的 fresh eval baseline 报告
+3. 把新报告接入 `README` 和 `release gate`
+4. 继续补更难题型上的语料和 qrels

@@ -77,8 +77,10 @@
 - 先承认语料缺口
 - 再补语料和重建索引
 - 最后继续把 `text qrel` 升级成 `chunk_id qrel`
-- 当前剩余缺口已经登记到 `tests/data/qrels_gap_allowlist.json`
-- 新增 text only qrel 时必须同步白名单和原因 否则数据加载会失败
+- 当前仓库里的 `tests/data/qrels_gap_allowlist.json` 已经清空
+- 这表示当前数据集不再允许未审批的 text only qrel 直接混入评测
+- 本文档列出的剩余 gap 是语料和概念覆盖层面的待补项 不是当前 allowlist 的现存条目
+- 如果后续必须临时保留 text only qrel 仍然要同步白名单和原因 否则数据加载会失败
 
 ## 下一步
 

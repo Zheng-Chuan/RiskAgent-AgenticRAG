@@ -123,10 +123,11 @@
 
 ## 9. 当前主要问题
 
-- qrels 评测单位还不够硬 当前更偏 text 级匹配 不是严格 chunk gold
-- Self-RAG 充分性判断还偏轻 主要是规则阈值和 prompt critique
-- 索引一致性还不够强 embedding 和 chunking 版本没有做硬版本键
-- 文档口径刚开始收口 还需要继续和实现保持同频
+- qrels 已经优先使用 `chunk_id` gold 标注 但 retrieval eval 仍保留部分宽松兜底命中逻辑
+- Self-RAG 充分性判断已经有题型感知版本 但整体仍偏轻量 主要依赖规则指标和 critique
+- 索引一致性已经引入 `schema_fingerprint` 和 manifest v2 但评测报告里还缺少稳定的 index version 回写
+- 发布门禁还没有完全 fresh eval 化 当前 release acceptance 仍依赖仓库内样例报告
+- 文档口径已经开始收口 但仍要持续和实现 测试 报告保持同频
 
 ---
 

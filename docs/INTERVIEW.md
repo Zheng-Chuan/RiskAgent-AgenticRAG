@@ -225,10 +225,12 @@
 #### Q14: "你们的增量索引怎么保证一致性"
 
 - 强回答要点
-  - 当前增量索引以 source 文件 sha1 为主
-  - 每次会删除该 source 对应旧 chunk 再重建 dense sparse parent summary hyde
-  - manifest 会记录 embeddings provider model dim 和每个 source 的索引摘要
-  - 但这里要诚实说明 目前跳过逻辑主要看文件 sha1 还没有把 embedding 版本变化纳入 skip 条件
+  - 当前增量索引不是只看 source 文件 sha1
+  - 真实实现会先看 manifest 里的 `schema_fingerprint`
+  - 这个指纹已经覆盖 embeddings provider model dim 以及 chunking 和 advanced index 相关版本键
+  - schema 指纹变化时不会继续 partial include 而是要求全量重建
+  - 只有 schema 未变化时 才会按 source 文件 sha1 决定哪些 source 可以跳过
+  - 每次重建都会先删该 source 旧 chunk 再重建 dense sparse parent summary hyde
 - 继续追问
   - 如果 embedding 模型换了 但原文没变 会发生什么
   - 如果 collection 维度和新模型不一致 会怎么处理
@@ -258,8 +260,11 @@
 
 - 强回答要点
   - 这个项目的核心是高可信 grounding
-  - 生成阶段如果再引入工具结果或自由世界知识 证据边界就会被打穿
-  - 只有保持纯证据生成 评测和门禁才有清晰对象
+  - 当前默认路径仍然要求答案严格基于可追溯证据生成
+  - 这里的证据不只包含检索文档 也包含被显式转换成 `Document` 的窄工具输出
+  - 当前唯一明确接入的是 numeric risk tool 这类受控工具
+  - 工具输出会写入 `tool_traces` 和 `debug.numeric_tool` 并参与后续 numeric gate
+  - 真正不允许的是自由世界知识和不可追溯的隐式补全
 - 继续追问
   - 如果检索结果不够但模型自己知道答案怎么办
   - 为什么不允许常识补全
@@ -452,7 +457,8 @@
 #### Q30: "如果面试官质疑你们的评测可不可信 你应该主动承认什么"
 
 - 强回答要点
-  - 当前 qrels 还是文本匹配驱动 不是严格 chunk_id 对齐
+  - 当前 qrels 已经优先走 `chunk_id` 对齐 不是纯文本匹配
+  - 但 retrieval eval 里仍保留了 `source + section_path + 文本包含` 的兜底命中逻辑 这部分还不够硬
   - gate_labels 样本规模还偏小
   - answer_relevancy 在没有 ragas 时会退化成 heuristic overlap
   - release acceptance 目前依赖静态 baseline sample
@@ -473,15 +479,13 @@
 #### Q31: "如果 embedding 模型换了 但文档没变 你们的增量索引会怎样"
 
 - 当前真实风险
-  - skip 条件主要看 source sha1
-  - embedding provider model dim 会写进 manifest
-  - 但不会强制因为 embedding 变更而重建所有 source
+  - 当前实现已经把 embedding provider model dim 等配置纳入 `schema_fingerprint`
+  - manifest 指纹变化时会拒绝继续 partial include 并要求全量重建
+  - 所以 embedding 模型变了 即使文档没变 也会触发重建路径
 - 这道题的推荐回答
-  - 先承认当前实现有索引一致性漏洞
-  - 再给出补法
-    - 把 embedding provider model dim 纳入 manifest version key
-    - mismatch 时强制 full rebuild
-    - 同时清 collection 和多类 jsonl 物化文件
+  - 不要再按旧口径说成只看 source sha1
+  - 应该直接说明现在已经通过 `schema_fingerprint + source sha1` 两层判断来控制增量索引
+  - 继续可补强的点不在是否重建 而在于把 manifest version 更稳定地回写到评测报告和 release gate
 
 ---
 

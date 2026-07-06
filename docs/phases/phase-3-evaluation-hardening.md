@@ -15,6 +15,20 @@
 - gate 指标继续基于标注样本做统计
 - 报告元信息继续完善到可复现级别
 
+## 当前已落地
+
+- retrieval metrics answer metrics gate metrics 已经分层输出
+- 报告已经包含 `dataset_version` `retrieval_pipeline` `reranker_model` `prompt_version` `git_commit`
+- threshold gate 和 baseline regression 已经分离展示
+- release acceptance 已能校验报告结构和阈值门禁的最小闭环
+
+## 当前仍未完成
+
+- retrieval eval 仍保留部分宽松兜底命中逻辑 还没有完全收口到更硬的 evidence unit
+- 报告元信息里还没有稳定落入 `index version` 或 `schema_fingerprint`
+- gate_labels 样本量仍然偏小 统计显著性有限
+- release acceptance 仍依赖仓库内静态 baseline sample 不是 fresh eval gate
+
 ## P0 必须先做
 
 ### 1. retrieval eval 单位继续做硬

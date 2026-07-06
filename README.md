@@ -97,6 +97,16 @@ make test CONDA_ENV=riskagent-agenticrag
 
 ## 报告引用
 
-- 基准报告 JSON: [rag_eval_baseline_sample.json](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts/reports/rag_eval_baseline_sample.json)
-- 基准报告 Markdown: [rag_eval_baseline_sample.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts/reports/rag_eval_baseline_sample.md)
+- 样例基准报告 JSON: [rag_eval_baseline_sample.json](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts/reports/rag_eval_baseline_sample.json)
+- 样例基准报告 Markdown: [rag_eval_baseline_sample.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts/reports/rag_eval_baseline_sample.md)
+- 当前仓库里的样例报告主要用于验证报告结构和 threshold gate 流程
+- 该样例报告仍带有旧字段 `retriever_mode=step4` 不应被当成当前统一检索主链的正式新基线
+- `scripts/release_acceptance.sh` 当前会校验这份样例报告 而不是强制先生成一份 fresh eval 报告
 - 后续在 `README.md` `docs/ARCHITECTURE.md` `docs/PRD.md` 中出现的关键数字 都应该能映射到具体报告文件
+
+## 当前工程现实
+
+- 默认 conda 环境口径是 `agenticrag`
+- `deploy/dev/docker-compose.yml` 定义了本地 `Milvus` 和 `Redis` 两个依赖
+- 仓库里已经存在本地数据卷快照 说明曾经跑过真实中间件和索引流程
+- 但最近一次仓库审计时本机 Docker daemon 未连通 因此无法仅凭仓库确认容器当前是否正在运行

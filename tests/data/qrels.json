@@ -418,7 +418,10 @@
     "qrels": [
       {
         "qrel_id": "q31_r1",
-        "text": "Theta is the sensitivity of a derivative's value to the passage of time.",
+        "chunk_id": "Background.md:222936993a67",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Theta: sensitivity of a derivative's value to the passage of time (also known as time decay).",
         "relevance": 2
       }
     ]
@@ -428,7 +431,10 @@
     "qrels": [
       {
         "qrel_id": "q32_r1",
-        "text": "Rho is the sensitivity of a derivative's value to changes in interest rates.",
+        "chunk_id": "Background.md:222936993a67",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Rho: sensitivity of a derivative's value to changes in interest rates.",
         "relevance": 2
       }
     ]
@@ -438,7 +444,10 @@
     "qrels": [
       {
         "qrel_id": "q33_r1",
-        "text": "Volga is the sensitivity of Vega to changes in implied volatility (second-order Greek).",
+        "chunk_id": "Background.md:222936993a67",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Volga: second-order Greek measuring the sensitivity of Vega to changes in implied volatility (also called vomma).",
         "relevance": 2
       }
     ]
@@ -448,7 +457,10 @@
     "qrels": [
       {
         "qrel_id": "q34_r1",
-        "text": "Vanna is the sensitivity of Delta to changes in implied volatility, or sensitivity of Vega to changes in underlying price.",
+        "chunk_id": "Background.md:222936993a67",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Vanna: second-order Greek measuring the sensitivity of Delta to changes in implied volatility, equivalently the sensitivity of Vega to changes in the underlying price.",
         "relevance": 2
       }
     ]
@@ -458,7 +470,10 @@
     "qrels": [
       {
         "qrel_id": "q35_r1",
-        "text": "Charm is the sensitivity of Delta to the passage of time.",
+        "chunk_id": "Background.md:222936993a67",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Charm: sensitivity of Delta to the passage of time (also known as delta decay or DdeltaDtime).",
         "relevance": 2
       }
     ]
@@ -468,8 +483,19 @@
     "qrels": [
       {
         "qrel_id": "q36_r1",
-        "text": "Historical volatility is based on past price movements, while implied volatility is the market's expectation of future volatility, derived from option prices.",
+        "chunk_id": "Background.md:402e6913648a",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Implied volatility: the market's expectation of future volatility, derived from option prices and implied by the Black-Scholes model.",
         "relevance": 2
+      },
+      {
+        "qrel_id": "q36_r2",
+        "chunk_id": "Background.md:402e6913648a",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Historical volatility: a backward-looking measure based on past price movements of the underlying asset.",
+        "relevance": 1
       }
     ]
   },
@@ -478,7 +504,10 @@
     "qrels": [
       {
         "qrel_id": "q37_r1",
-        "text": "A delta-neutral portfolio has a total delta of zero, meaning it is insensitive to small changes in the underlying price.",
+        "chunk_id": "Background.md:402e6913648a",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Delta-neutral portfolio: a portfolio whose total delta is zero, making it insensitive to small changes in the underlying price; often used by market makers to hedge directional risk.",
         "relevance": 2
       }
     ]
@@ -488,7 +517,10 @@
     "qrels": [
       {
         "qrel_id": "q38_r1",
-        "text": "Gamma hedging adjusts a portfolio to reduce gamma, making it more stable to larger moves in the underlying.",
+        "chunk_id": "Background.md:0e189bafb653",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Gamma hedging: adjusting a portfolio to reduce gamma exposure, making the hedge more stable to larger moves in the underlying asset price.",
         "relevance": 2
       }
     ]
@@ -498,7 +530,10 @@
     "qrels": [
       {
         "qrel_id": "q39_r1",
-        "text": "Volatility skew is the pattern where implied volatility varies across strike prices, typically with lower strikes having higher volatility.",
+        "chunk_id": "Background.md:402e6913648a",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Volatility skew: the pattern where implied volatility varies across strike prices, typically with lower strikes having higher volatility (common in equity index options).",
         "relevance": 2
       }
     ]
@@ -508,7 +543,10 @@
     "qrels": [
       {
         "qrel_id": "q40_r1",
-        "text": "Volatility smile is a pattern where both out-of-the-money and in-the-money options have higher implied volatility than at-the-money options.",
+        "chunk_id": "Background.md:402e6913648a",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Volatility smile: a pattern where both out-of-the-money and in-the-money options have higher implied volatility than at-the-money options.",
         "relevance": 2
       }
     ]
@@ -570,7 +608,10 @@
     "qrels": [
       {
         "qrel_id": "q45_r1",
-        "text": "Right-way risk occurs when exposure to a counterparty decreases as the counterparty's credit quality deteriorates.",
+        "chunk_id": "Background.md:dba00c31cda3",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 5. Counterparty risk and CVA",
+        "text": "Right-way risk: the opposite of wrong-way risk; occurs when exposure to a counterparty decreases as the counterparty's credit quality deteriorates, reducing overall counterparty risk.",
         "relevance": 2
       }
     ]

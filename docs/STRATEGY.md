@@ -71,7 +71,7 @@
 
 ### 5.2 第二优先级
 
-- 升级 reranker 和 query intelligence
+- 升级 query intelligence
 - 强化数值型问题上的 typed evidence 和 numeric gate
 - 做 token latency budget 和降级策略
 

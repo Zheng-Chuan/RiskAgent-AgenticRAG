@@ -18,7 +18,6 @@ Proposed
 - qrels 评测单位还不够硬
 - Self-RAG 充分性判断还偏轻
 - index manifest 和 retriever cache 版本治理不足
-- reranker 仍是通用 baseline
 - query intelligence 和 advanced index 还不够自适应
 
 ## 提案范围
@@ -26,7 +25,6 @@ Proposed
 - 把 qrels 从宽松 text 匹配升级到更硬的 evidence unit
 - 把 Self-RAG 充分性判断升级成更强的 sufficiency scorer
 - 把 index manifest 和 retriever cache 升级成版本化一致性机制
-- 评估更合适的中文和金融场景 reranker
 - 把 query intelligence 从固定全套 fanout 升级为更自适应的策略层
 - 把 advanced index 从静态补分继续升级为 query aware expand
 - 为 retrieval 主链补 token latency rerank pair 等运行观测
@@ -44,9 +42,6 @@ Proposed
 - `充分性判断`
   - 把 Self-RAG 从轻量规则升级为 claim aware sufficiency scorer
   - 目标是让 stop continue 对 compare numeric multi-hop 问题更稳
-- `reranker 领域适配`
-  - 重新评估更贴近中文金融场景的 reranker
-  - 目标是直接提升 topk 质量
 
 ### P1 随后做
 
@@ -87,7 +82,6 @@ Proposed
 ## 预期风险
 
 - qrels 升级会暴露当前真实召回短板
-- reranker 更换后可能带来 latency 上升
 - sufficiency scorer 收紧后 可能先带来更多 revise loop
 - index versioning 加强后 会增加全量重建频率
 

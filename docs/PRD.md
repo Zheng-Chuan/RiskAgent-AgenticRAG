@@ -126,7 +126,6 @@
 - qrels 评测单位还不够硬 当前更偏 text 级匹配 不是严格 chunk gold
 - Self-RAG 充分性判断还偏轻 主要是规则阈值和 prompt critique
 - 索引一致性还不够强 embedding 和 chunking 版本没有做硬版本键
-- reranker 还是通用 baseline 模型 领域适配不足
 - 文档口径刚开始收口 还需要继续和实现保持同频
 
 ---

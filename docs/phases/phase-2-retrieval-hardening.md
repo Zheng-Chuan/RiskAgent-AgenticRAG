@@ -12,7 +12,7 @@
 
 - 强化 qrels 和 retrieval eval 的可信度
 - 强化 query intelligence 和 revise loop 的有效性
-- 强化 rerank 和 advanced index 的领域适配
+- 强化 advanced index 的 query aware 能力
 - 强化索引一致性和 cache key 治理
 
 ## P0 必须先做
@@ -41,17 +41,9 @@
 - 当前已落地轻量题型感知版
 - 已把 `query_coverage` `source_diversity` `parent_diversity` `numeric_evidence` 纳入判断
 
-### 4. reranker 领域适配
-
-- 系统评估更适合中文金融文档的 reranker
-- 比较通用 baseline 和候选领域 reranker 的效果与时延
-- 当前实现已支持 `reranker candidates` 离线候选列表
-- 启动时会优先尝试候选模型 找不到再自动回退到可用 baseline
-- 评测报告会写出请求模型 候选列表 和实际生效模型
-
 ## P1 随后做
 
-### 5. query intelligence 自适应
+### 4. query intelligence 自适应
 
 - 不是每题都默认做全套 fanout
 - 根据题型决定 step back decomposition acronym expansion 的强度
@@ -60,7 +52,7 @@
 - `background` `procedure` 保留 keywordize 和 step back
 - `compare` 保留更强 fanout 包括 decomposition
 
-### 6. advanced index query aware expand
+### 5. advanced index query aware expand
 
 - parent expand 不再一刀切
 - 根据题型和证据缺口控制 expand 强度
@@ -69,7 +61,7 @@
 - `default` `numeric` 只在强 parent signal 或更强证据条件下才扩
 - expand 理由会写回 metadata 方便 trace 和评测解释
 
-### 7. retrieval observability
+### 6. retrieval observability
 
 - 记录 fanout 数量 rerank pairs node latency token 预算
 - 为后续做 retrieval budget 提供依据
@@ -79,7 +71,6 @@
 - 更硬的 qrels 单位
 - 更强的 sufficiency scorer
 - 版本化 index manifest
-- 领域更贴合的 reranker 评估结论
 - query intelligence 策略化配置
 - retrieval 运行观测字段
 

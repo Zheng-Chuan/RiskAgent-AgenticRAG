@@ -14,14 +14,18 @@
 ## 当前已落地
 
 - 仓库已经固定了 `Makefile` `scripts/run_offline_regression.sh` `scripts/release_acceptance.sh` 这条最小发布链
-- 本地 `docker-compose` 已定义 `Milvus` 和 `Redis` 两个依赖 并且仓库中存在历史数据卷快照
+- GitHub CI 已经和当前真实门禁链对齐 直接执行 `offline regression + release acceptance`
+- 本地 `docker-compose` 已定义 `Milvus` 和 `Redis` 两个依赖 并且当前审计时已验证容器可 healthy 启动
 - 默认 conda 环境口径已经收口到 `agenticrag`
+- 发布门禁已经支持 `有 LLM key 跑 fresh eval 无 LLM key 回退 sample smoke`
+- 已经验证 `RiskMonitor-MultiAgent` 的外部 `LLM` 配置能够打通当前统一主链 并生成 `5` 题 smoke 报告
 
 ## 当前仍未完成
 
-- GitHub CI 还没有和当前 pytest 测试树及 release gate 完全对齐
-- release acceptance 当前会读取仓库内样例报告 还不是基于 fresh eval 产物的严格发布门禁
-- 最近一次仓库审计时 Docker daemon 未连通 因此只能确认本地数据卷存在 不能确认容器正在运行
+- full dataset 的 fresh baseline 还没有正式落盘
+- 当前 `5` 题 smoke 报告已经证明链路可跑 但 `threshold gate` 结果仍是 `fail`
+- release acceptance 在无 `LLM key` 环境下仍会回退到仓库内样例报告
+- 还需要把最终 fresh baseline 正式接到 README 和 release 口径中
 
 ## 建议交付
 

@@ -21,13 +21,16 @@
 - 报告已经包含 `dataset_version` `retrieval_pipeline` `reranker_model` `prompt_version` `git_commit`
 - threshold gate 和 baseline regression 已经分离展示
 - release acceptance 已能校验报告结构和阈值门禁的最小闭环
+- 已经新增一条外部 `LLM` 注入脚本 可在不改本项目 `.env` 的情况下运行 fresh eval
+- 已生成 `5` 题 smoke fresh report 证明当前统一主链和外部 `LLM` 配置可以真实跑通
 
 ## 当前仍未完成
 
-- retrieval eval 仍保留部分宽松兜底命中逻辑 还没有完全收口到更硬的 evidence unit
+- full dataset 的 fresh baseline 还没有正式落盘
 - 报告元信息里还没有稳定落入 `index version` 或 `schema_fingerprint`
 - gate_labels 样本量仍然偏小 统计显著性有限
-- release acceptance 仍依赖仓库内静态 baseline sample 不是 fresh eval gate
+- 当前 `5` 题 smoke 报告的 `threshold gate` 结果为 `fail`
+- release acceptance 虽然已支持 fresh eval 但无 `LLM key` 时仍会回退到仓库内样例报告
 
 ## P0 必须先做
 

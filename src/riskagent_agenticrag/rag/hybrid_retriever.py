@@ -268,7 +268,7 @@ class HybridRetriever:
         rerank_pool = coarse_sorted[:max(1, self._cfg.rerank_k)]
 
         # 6) Cross-Encoder 精排 (可选)
-        if self._reranker is None:
+        if self._reranker is None or not rerank_pool:
             self._set_confidence_gap(rerank_pool, "coarse_score")
             return self._diversity_select(rerank_pool)
 

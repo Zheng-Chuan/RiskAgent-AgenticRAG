@@ -93,3 +93,40 @@ def test_hybrid_retriever_reports_unavailable_when_all_candidates_fail():
         "bad/model: OSError",
         "bad/second: OSError",
     ]
+
+
+@pytest.mark.unit
+def test_hybrid_retriever_skips_reranker_when_no_candidates_survive_filter():
+    from riskagent_agenticrag.rag.hybrid_retriever import HybridConfig, HybridRetriever
+
+    dense = MagicMock(
+        invoke=MagicMock(
+            return_value=[
+                Document(
+                    page_content="too short",
+                    metadata={"chunk_id": "c1", "source": "a.md", "section_path": "sec/a"},
+                )
+            ]
+        )
+    )
+    fake_reranker = MagicMock(predict=MagicMock(return_value=[]))
+
+    with patch("riskagent_agenticrag.rag.hybrid_retriever.CrossEncoder", return_value=fake_reranker):
+        retriever = HybridRetriever(
+            dense_retriever=dense,
+            sparse_docs=[],
+            config=HybridConfig(
+                dense_k=4,
+                sparse_k=4,
+                candidate_k=4,
+                rerank_k=4,
+                final_k=2,
+                reranker_model="good/model",
+                reranker_candidates=("good/model",),
+                min_chunk_chars=80,
+            ),
+        )
+        docs = retriever.invoke("Basel market risk capital")
+
+    assert docs == []
+    fake_reranker.predict.assert_not_called()

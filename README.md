@@ -101,7 +101,14 @@ make test CONDA_ENV=riskagent-agenticrag
 - 样例基准报告 Markdown: [rag_eval_baseline_sample.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts/reports/rag_eval_baseline_sample.md)
 - 当前仓库里的样例报告主要用于验证报告结构和 threshold gate 流程
 - 该样例报告仍带有旧字段 `retriever_mode=step4` 不应被当成当前统一检索主链的正式新基线
-- `scripts/release_acceptance.sh` 当前会校验这份样例报告 而不是强制先生成一份 fresh eval 报告
+- `scripts/release_acceptance.sh` 现在支持两条路径
+- 有可用 `LLM key` 时优先跑 fresh eval
+- 没有可用 `LLM key` 时回退到样例报告做 smoke 级校验
+- 当前最新的真实新报告是 `5` 题 smoke 评测
+- smoke 报告 JSON: [rag_eval_unified_smoke_5q_20260706_20260706_103824.json](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts_fresh/reports/rag_eval_unified_smoke_5q_20260706_20260706_103824.json)
+- smoke 报告 Markdown: [rag_eval_unified_smoke_5q_20260706_20260706_103824.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts_fresh/reports/rag_eval_unified_smoke_5q_20260706_20260706_103824.md)
+- 这份 smoke 报告已经证明外部 `LLM key` 和当前统一主链能够真实打通
+- 但它的 `threshold gate` 结果仍是 `fail` 还不能替代 full baseline
 - 后续在 `README.md` `docs/ARCHITECTURE.md` `docs/PRD.md` 中出现的关键数字 都应该能映射到具体报告文件
 
 ## 当前工程现实
@@ -109,4 +116,7 @@ make test CONDA_ENV=riskagent-agenticrag
 - 默认 conda 环境口径是 `agenticrag`
 - `deploy/dev/docker-compose.yml` 定义了本地 `Milvus` 和 `Redis` 两个依赖
 - 仓库里已经存在本地数据卷快照 说明曾经跑过真实中间件和索引流程
-- 但最近一次仓库审计时本机 Docker daemon 未连通 因此无法仅凭仓库确认容器当前是否正在运行
+- 当前仓库审计时已经验证 `Milvus` 和 `Redis` 容器可正常启动并处于 healthy 状态
+- GitHub CI 已经收口到当前真实门禁链 `offline regression + release acceptance`
+- fresh eval 需要同时满足 `本地 embeddings 模型可用` 和 `外部 LLM key 可用`
+- 当前仓库内新增了 `scripts/run_fresh_eval_with_current_env.py` 用于在不污染本项目 `.env` 的前提下 临时注入外部 `LLM` 配置做 fresh eval

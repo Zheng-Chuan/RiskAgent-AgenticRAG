@@ -123,10 +123,12 @@
 
 ## 9. 当前主要问题
 
-- qrels 已经优先使用 `chunk_id` gold 标注 但 retrieval eval 仍保留部分宽松兜底命中逻辑
+- qrels 已经优先使用 `chunk_id` gold 标注 且 retrieval eval 已进一步收紧为结构化定位优先
 - Self-RAG 充分性判断已经有题型感知版本 但整体仍偏轻量 主要依赖规则指标和 critique
 - 索引一致性已经引入 `schema_fingerprint` 和 manifest v2 但评测报告里还缺少稳定的 index version 回写
-- 发布门禁还没有完全 fresh eval 化 当前 release acceptance 仍依赖仓库内样例报告
+- 发布门禁已经支持 `有 LLM key 跑 fresh eval 无 LLM key 回退 sample smoke`
+- 当前最新真实新报告是 `5` 题 smoke eval 它已经验证外部 LLM 配置可打通统一主链 但 `threshold gate` 仍然失败
+- full dataset fresh baseline 还没有正式落盘 因此还不能把当前版本当成新的强基线
 - 文档口径已经开始收口 但仍要持续和实现 测试 报告保持同频
 
 ---

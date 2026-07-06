@@ -1,0 +1,1571 @@
+{
+  "generated_at": "2026-07-06T10:38:24Z",
+  "inputs": {
+    "corpus_dir": "corpus",
+    "dataset_path": ".artifacts_fresh/questions_smoke_5.json",
+    "dataset_version": "questions_smoke_5.json",
+    "persist_dir": ".milvus",
+    "k": 4,
+    "milvus_uri": null,
+    "milvus_host": null,
+    "milvus_port": null,
+    "retrieval_pipeline": "hybrid_query_intel_advanced_index",
+    "reranker_model": "",
+    "reranker_candidates": "",
+    "resolved_reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+    "resolved_reranker_status": "enabled",
+    "prompt_version": "v1",
+    "git_commit": "f9acaacaf77331e34a4d167a713e44c142385f59",
+    "profile": "all",
+    "retrieval_ks": [
+      1,
+      3,
+      5
+    ],
+    "include_cost": false,
+    "include_latency": false,
+    "with_gate": true,
+    "enable_ragas": false,
+    "retriever_debug": {
+      "parents": 495,
+      "summaries": 487,
+      "hydes": 495,
+      "summary_k": 12,
+      "hyde_k": 12,
+      "summary_weight": 0.35,
+      "hyde_weight": 0.35,
+      "expand_parent": true,
+      "max_expand_chars": 1800,
+      "final_k": 4,
+      "expand_policies": {
+        "compare": {
+          "route": "compare",
+          "max_docs": 3,
+          "max_chars": 1800,
+          "min_parent_signal": 0.0,
+          "max_gap_to_top1": 0.45,
+          "short_chunk_chars": 520
+        },
+        "background": {
+          "route": "background",
+          "max_docs": 2,
+          "max_chars": 1600,
+          "min_parent_signal": 0.0,
+          "max_gap_to_top1": 0.35,
+          "short_chunk_chars": 420
+        },
+        "procedure": {
+          "route": "procedure",
+          "max_docs": 2,
+          "max_chars": 1400,
+          "min_parent_signal": 0.0,
+          "max_gap_to_top1": 0.3,
+          "short_chunk_chars": 360
+        },
+        "numeric": {
+          "route": "numeric",
+          "max_docs": 1,
+          "max_chars": 700,
+          "min_parent_signal": 0.3,
+          "max_gap_to_top1": 0.12,
+          "short_chunk_chars": 260
+        },
+        "default": {
+          "route": "default",
+          "max_docs": 1,
+          "max_chars": 900,
+          "min_parent_signal": 0.2,
+          "max_gap_to_top1": 0.15,
+          "short_chunk_chars": 260
+        }
+      },
+      "base_debug": {
+        "expansion_n": 3,
+        "enable_step_back": true,
+        "enable_decomposition": true,
+        "per_query_k": 15,
+        "final_k": 12,
+        "rrf_k": 60,
+        "max_variants": 8,
+        "route_policies": {
+          "compare": {
+            "route": "compare",
+            "use_keywordize": true,
+            "use_abbrev": true,
+            "use_step_back": true,
+            "use_decomposition": true,
+            "max_extra_variants": 5
+          },
+          "background": {
+            "route": "background",
+            "use_keywordize": true,
+            "use_abbrev": true,
+            "use_step_back": true,
+            "use_decomposition": false,
+            "max_extra_variants": 3
+          },
+          "procedure": {
+            "route": "procedure",
+            "use_keywordize": true,
+            "use_abbrev": true,
+            "use_step_back": true,
+            "use_decomposition": false,
+            "max_extra_variants": 3
+          },
+          "default": {
+            "route": "default",
+            "use_keywordize": false,
+            "use_abbrev": false,
+            "use_step_back": false,
+            "use_decomposition": false,
+            "max_extra_variants": 0
+          }
+        },
+        "base_debug": {
+          "sparse_docs": 50185,
+          "has_bm25": true,
+          "reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+          "reranker_candidates": [
+            "cross-encoder/ms-marco-MiniLM-L-6-v2",
+            "BAAI/bge-reranker-v2-m3"
+          ],
+          "active_reranker_model": "cross-encoder/ms-marco-MiniLM-L-6-v2",
+          "reranker_status": "enabled",
+          "reranker_init_errors": [],
+          "dense_k": 30,
+          "sparse_k": 30,
+          "candidate_k": 50,
+          "rerank_k": 50,
+          "final_k": 12,
+          "rrf_k": 60,
+          "min_chunk_chars": 80,
+          "max_per_source": 2,
+          "max_per_section": 1
+        }
+      }
+    }
+  },
+  "metrics": {
+    "citations_total": 5,
+    "citations_passed": 5,
+    "citations_coverage": 1.0,
+    "citation_coverage": 1.0,
+    "faithfulness": 0.8620689655172413,
+    "answer_relevancy": 0.6066666666666667,
+    "sentence_support_rate": 0.8620689655172413,
+    "unsupported_sentence_rate": 0.13793103448275867,
+    "numeric_consistency_score": 0.9636363636363636,
+    "glossary_consistency_score": 1.0,
+    "domain_consistency_score": 0.9818181818181818,
+    "retrieval_mrr": 0.0,
+    "retrieval_ndcg_at_1": 0.0,
+    "retrieval_ndcg_at_3": 0.0,
+    "retrieval_ndcg_at_5": 0.0,
+    "retrieval_recall_at_1": 0.0,
+    "retrieval_recall_at_3": 0.0,
+    "retrieval_recall_at_5": 0.0,
+    "gate_block_rate": 1.0,
+    "gate_block_benefit_rate": 0.0,
+    "gate_false_kill_rate": 0.0,
+    "gate_miss_rate": 0.0,
+    "reliability_success_rate": 0.0,
+    "reliability_error_rate": 1.0,
+    "reliability_timeout_rate": 0.0
+  },
+  "samples": [
+    {
+      "id": "q01",
+      "question": "What is FRTB and why does it matter for market risk?",
+      "reference_answer": "FRTB (Fundamental Review of the Trading Book) is a regulatory framework to improve market risk capital requirements after 2008. It increases risk sensitivity and model risk governance by introducing stricter requirements for risk factor eligibility, backtesting, and PnL attribution.",
+      "ground_truth_contexts": [
+        "FRTB stands for Fundamental Review of the Trading Book. High level goals: Improve market risk capital framework after 2008. Increase risk sensitivity and model risk governance."
+      ],
+      "reference_contexts": null,
+      "tags": [
+        "regulation",
+        "definition"
+      ],
+      "qrels": [],
+      "gate_label": null,
+      "answer": "1) TLDR\n- FRTB stands for Fundamental Review of the Trading Book, a market risk framework prescribed in the CRR 3 proposal for Europe.\n- The EU implementation has followed a two-step approach: CRR 2 set reporting requirements for the FRTB Standardized Approach (SA) and Internal Model Approach (IMA); CRR 3 converts these into pillar 1 capital binding requirements and finalises the trading/banking book boundary.\n- Ensuring the calibration and design of FRTB remains fit and appropriate is crucial.\n\nCitations: [source=corpus/regulatory_seed/docx/en/isda_afme_frtb_position_paper.docx chunk_id=isda_afme_frtb_position_paper.docx:b9356585d0d3] [source=corpus/regulatory_seed/docx/en/isda_afme_frtb_position_paper.docx chunk_id=isda_afme_frtb_position_paper.docx:aee1d3a11513] [source=corpus/acceptance/frtb_icma.md chunk_id=frtb_icma.md:acc70e825c4e]\n\n2) Key Facts\n- FRTB is the Fundamental Review of the Trading Book.\n- It is part of the market risk framework in Europe as prescribed in the CRR 3 proposal.\n- Implementation in the EU has a two-step approach:\n  - CRR 2 set out reporting requirements for both the FRTB Standardized Approach (SA) and the Internal Model Approach (IMA), along with certain elements of the trading and banking book boundary.\n  - CRR 3 converts these reporting requirements into pillar 1 capital binding requirements and finalises the trading/banking book boundary.\n- CRR 3 represents a key step in the implementation of FRTB in Europe.\n\nCitations: [source=corpus/regulatory_seed/docx/en/isda_afme_frtb_position_paper.docx chunk_id=isda_afme_frtb_position_paper.docx:b9356585d0d3] [source=corpus/regulatory_seed/docx/en/isda_afme_frtb_position_paper.docx chunk_id=isda_afme_frtb_position_paper.docx:aee1d3a11513] [source=corpus/acceptance/frtb_icma.md chunk_id=frtb_icma.md:acc70e825c4e]\n\n3) Why it matters\n- According to the provided context, it is crucial to ensure the calibration and design of FRTB remains fit and appropriate as CRR 3 moves reporting requirements to pillar 1 capital binding requirements.\n\nCitations: [source=corpus/regulatory_seed/docx/en/isda_afme_frtb_position_paper.docx chunk_id=isda_afme_frtb_position_paper.docx:b9356585d0d3] [source=corpus/acceptance/frtb_icma.md chunk_id=frtb_icma.md:acc70e825c4e] [source=corpus/regulatory_seed/docx/en/isda_afme_frtb_position_paper.docx chunk_id=isda_afme_frtb_position_paper.docx:aee1d3a11513]",
+      "answer_len": 2390,
+      "citation_count": 4,
+      "valid_citation_count": 4,
+      "passed": true,
+      "citations": [
+        {
+          "source": "corpus/regulatory_seed/docx/en/isda_afme_frtb_position_paper.docx",
+          "chunk_id": "isda_afme_frtb_position_paper.docx:b9356585d0d3",
+          "start_index": 0,
+          "start_line": 0,
+          "end_line": 0,
+          "snippet": "## CRR3 – Fundamental Review of the Trading Book (FRTB)\n\n\n## May 2022\n\n\n## Introduction\n\nThis paper sets out the industry’s positions related to the design and calibration of market risk framework in Europe as prescribed in the CRR 3 proposal.1 In the EU, the implementation of the Fundamental Review"
+        },
+        {
+          "source": "corpus/acceptance/frtb_icma.md",
+          "chunk_id": "frtb_icma.md:006c0294481c",
+          "start_index": 0,
+          "section_path": "FRTB overview(ICMA)",
+          "start_line": 1,
+          "end_line": 7,
+          "snippet": "# FRTB overview(ICMA)\n\nSource: [https://www.icmagroup.org/market-practice-and-regulatory-policy/secondary-markets/secondary-markets-regulation/fundamental-review-of-the-trading-book-frtb/](https://www.icmagroup.org/market-practice-and-regulatory-policy/secondary-markets/secondary-markets-regulation/"
+        },
+        {
+          "source": "corpus/acceptance/frtb_icma.md",
+          "chunk_id": "frtb_icma.md:acc70e825c4e",
+          "start_index": 660,
+          "section_path": "FRTB overview(ICMA)",
+          "start_line": 5,
+          "end_line": 9,
+          "snippet": "Risk, it aims to address a number of identified shortcomings in the existing Basel II.5 framework.\n\nWhile FRTB was not intended to increase banks' capital costs beyond those imposed by Basel II.5, it is clear from both BCBS and industry analysis that banks will see significant increases in their cos"
+        },
+        {
+          "source": "corpus/regulatory_seed/docx/en/isda_afme_frtb_position_paper.docx",
+          "chunk_id": "isda_afme_frtb_position_paper.docx:aee1d3a11513",
+          "start_index": 2103,
+          "start_line": 0,
+          "end_line": 0,
+          "snippet": "cant impact the package will have on capital requirements for specific product and risk categories. The implementation of the FRTB will materially increase capital requirements for banks with market making activities in Europe, while elsewhere the Commission is trying to promote market-based financi"
+        }
+      ],
+      "contexts": [
+        "While firms implement FRTB as a reporting requirement and prepare for the start of Pillar 1 capital requirement for the new market risk standards, it can be expected that new issues may emerge during the implementation process. . The FRTB IMA standard has never been tested, and firms have yet to go through the supervisory approval process or through the live calculation of the P&L attribution test using real data. Furthermore, the implementation of pillar 1 capital requirements for FRTB will dep",
+        "# FRTB overview(ICMA)\n\nSource: [https://www.icmagroup.org/market-practice-and-regulatory-policy/secondary-markets/secondary-markets-regulation/fundamental-review-of-the-trading-book-frtb/](https://www.icmagroup.org/market-practice-and-regulatory-policy/secondary-markets/secondary-markets-regulation/fundamental-review-of-the-trading-book-frtb/)\n\nThe Fundamental Review of the Trading Book (FRTB) is a comprehensive suite of capital rules developed by the Basel Committee on Banking Supervision (BCBS",
+        "Risk, it aims to address a number of identified shortcomings in the existing Basel II.5 framework.\n\nWhile FRTB was not intended to increase banks' capital costs beyond those imposed by Basel II.5, it is clear from both BCBS and industry analysis that banks will see significant increases in their cost of capital, in particular to support their trading activities.\n\nIn the EU, FRTB is being implemented as part of the Revised Capital Requirements Regulation (CRR II), and related Banking Package prop",
+        "cant impact the package will have on capital requirements for specific product and risk categories. The implementation of the FRTB will materially increase capital requirements for banks with market making activities in Europe, while elsewhere the Commission is trying to promote market-based financing through the Capital Markets Union (CMU) project.\nIn the latest EBA’s advice3 published in September 2021 using banks’ data as of December 2020, the EBA has estimated that the impact of the FRTB wou"
+      ],
+      "retrieved_docs": [
+        {
+          "chunk_id": "isda_afme_frtb_position_paper.docx:b9356585d0d3",
+          "source": "corpus/regulatory_seed/docx/en/isda_afme_frtb_position_paper.docx",
+          "section_path": "",
+          "dense_rank": 12,
+          "sparse_rank": null,
+          "rrf_score": 0.013888888888888888,
+          "coarse_score": 0.06388888888888888,
+          "rerank_score": 7.068393707275391,
+          "content": "While firms implement FRTB as a reporting requirement and prepare for the start of Pillar 1 capital requirement for the new market risk standards, it can be expected that new issues may emerge during the implementation process. . The FRTB IMA standard has never been tested, and firms have yet to go through the supervisory approval process or through the live calculation of the P&L attribution test using real data. Furthermore, the implementation of pillar 1 capital requirements for FRTB will depend on the EBA developing a number of technical standards in line with its planned roadmap.\nThe capital impact is significant when considered against the importance of the market-making role of banks in capital markets in Europe. ",
+          "expanded_text": "## CRR3 – Fundamental Review of the Trading Book (FRTB)\n\n\n## May 2022\n\n\n## Introduction\n\nThis paper sets out the industry’s positions related to the design and calibration of market risk framework in Europe as prescribed in the CRR 3 proposal.1 In the EU, the implementation of the Fundamental Review of the Trading Book (FRTB) has followed a two-step approach – with CRR 22 setting out reporting requirements for both the FRTB Standardized Approach (SA) and the Internal Model Approach (IMA) and certain elements of the trading and banking book boundary. The CRR 3 converts these reporting requirements into pillar 1 capital binding requirements and finalises the trading/ banking book boundary.\nAs a result, CRR 3 represents a key step in the implementation of FRTB in Europe, and it will be crucial to ensure its calibration and design remains fit and appropriate. It is furthermore important that"
+        },
+        {
+          "chunk_id": "frtb_icma.md:006c0294481c",
+          "source": "corpus/acceptance/frtb_icma.md",
+          "section_path": "FRTB overview(ICMA)",
+          "dense_rank": 2,
+          "sparse_rank": null,
+          "rrf_score": 0.016129032258064516,
+          "coarse_score": 0.06612903225806452,
+          "rerank_score": 5.664997100830078,
+          "content": "# FRTB overview(ICMA)\n\nSource: [https://www.icmagroup.org/market-practice-and-regulatory-policy/secondary-markets/secondary-markets-regulation/fundamental-review-of-the-trading-book-frtb/](https://www.icmagroup.org/market-practice-and-regulatory-policy/secondary-markets/secondary-markets-regulation/fundamental-review-of-the-trading-book-frtb/)\n\nThe Fundamental Review of the Trading Book (FRTB) is a comprehensive suite of capital rules developed by the Basel Committee on Banking Supervision (BCBS) as part of Basel III, intended to be applied to banks' wholesale trading activities. Finalised in January 2016 as the Minimum Capital Requirements for Market Risk, it aims to address a number of identified shortcomings in the existing Basel II.5 framework.\n\n"
+        },
+        {
+          "chunk_id": "frtb_icma.md:acc70e825c4e",
+          "source": "corpus/acceptance/frtb_icma.md",
+          "section_path": "FRTB overview(ICMA)",
+          "dense_rank": 3,
+          "sparse_rank": null,
+          "rrf_score": 0.015873015873015872,
+          "coarse_score": 0.06587301587301587,
+          "rerank_score": 5.401639461517334,
+          "content": "Risk, it aims to address a number of identified shortcomings in the existing Basel II.5 framework.\n\nWhile FRTB was not intended to increase banks' capital costs beyond those imposed by Basel II.5, it is clear from both BCBS and industry analysis that banks will see significant increases in their cost of capital, in particular to support their trading activities.\n\nIn the EU, FRTB is being implemented as part of the Revised Capital Requirements Regulation (CRR II), and related Banking Package proposals."
+        },
+        {
+          "chunk_id": "isda_afme_frtb_position_paper.docx:aee1d3a11513",
+          "source": "corpus/regulatory_seed/docx/en/isda_afme_frtb_position_paper.docx",
+          "section_path": "",
+          "dense_rank": 10,
+          "sparse_rank": null,
+          "rrf_score": 0.014285714285714285,
+          "coarse_score": 0.0642857142857143,
+          "rerank_score": 4.239320278167725,
+          "content": "cant impact the package will have on capital requirements for specific product and risk categories. The implementation of the FRTB will materially increase capital requirements for banks with market making activities in Europe, while elsewhere the Commission is trying to promote market-based financing through the Capital Markets Union (CMU) project.\nIn the latest EBA’s advice3 published in September 2021 using banks’ data as of December 2020, the EBA has estimated that the impact of the FRTB would be 32.5% higher (using a simple average) relative to current RWA levels for the same risks. However, we believe this latest figure is underestimating the impact and is not in line with industry quantitative impact studies, as it reflects a best case scenario where firms can continue using their c"
+        }
+      ],
+      "status": "failed",
+      "failure_reason": {
+        "category": "evidence_numeric_mismatch",
+        "message": "Claim numbers are not supported by linked evidence snippets",
+        "details": {
+          "claim_id": "cl_0"
+        }
+      },
+      "latency_ms": 40645.37287500025,
+      "node_latencies": {
+        "rewrite": 6576.168212890625,
+        "retrieve_and_critique": 18397.69921875,
+        "synthesize_answer": 15622.8369140625
+      },
+      "decision_log": [
+        {
+          "step_id": "rewrite",
+          "agent": "AgenticLoop",
+          "rationale": "rewrite user question for retrieval",
+          "chosen": "FRTB regulation market risk capital requirement importance",
+          "alternatives": [
+            "What is FRTB and why does it matter for market risk?"
+          ]
+        },
+        {
+          "step_id": "self_rag_grade_docs_round_1",
+          "agent": "SelfRAG",
+          "rationale": "ok_definition",
+          "chosen": "sufficient",
+          "alternatives": [
+            "top_isrel=0.832",
+            "coverage=0.800",
+            "type=definition"
+          ]
+        },
+        {
+          "step_id": "retrieve_round_1",
+          "agent": "AgenticLoop",
+          "rationale": "The context defines FRTB as a comprehensive capital rules package addressing Basel II.5 shortcomings and explains that it matters for market risk because it significantly increases capital requirements for banks' trading activities, impacting market making and capital costs.",
+          "chosen": "stop",
+          "alternatives": [
+            "docs_count=4"
+          ]
+        },
+        {
+          "step_id": "self_rag_grade_generation",
+          "agent": "SelfRAG",
+          "rationale": "Claim numbers are not supported by linked evidence snippets",
+          "chosen": "fail",
+          "alternatives": [
+            "evidence_numeric_mismatch"
+          ]
+        }
+      ],
+      "sentence_support": {
+        "id": "q01",
+        "error": "Expecting value: line 1 column 1 (char 0)",
+        "mode": "llm"
+      },
+      "domain_consistency": {
+        "id": "q01",
+        "numeric": {
+          "score": 0.8181818181818182,
+          "total_numbers": 11,
+          "matched_numbers": 9,
+          "unmatched_values": [
+            2.0,
+            2.0
+          ]
+        },
+        "glossary": {
+          "score": 1.0,
+          "checked_terms": 0,
+          "violations": []
+        }
+      }
+    },
+    {
+      "id": "q02",
+      "question": "Explain Delta in the context of derivatives risk.",
+      "reference_answer": "Delta is the sensitivity of a derivative's value to small changes in the underlying price level.",
+      "ground_truth_contexts": [
+        "Delta: sensitivity to the underlying price level.",
+        "Greeks are sensitivities of a derivative value to small changes in risk factors."
+      ],
+      "reference_contexts": null,
+      "tags": [
+        "greek"
+      ],
+      "qrels": [],
+      "gate_label": null,
+      "answer": "1) TLDR\n- Delta is the sensitivity of a derivative’s value to the underlying price level.\n- In the specific context of Delta GIRR, sensitivity is defined as PV01, measured by shifting the risk‑free yield curve rate at a given tenor by 1 basis point and dividing the resulting value change by 0.0001.\n\nCitations: [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf chunk_id=bis_bcbs_d457.pdf:9026fd6192b5] [source=corpus/Background.md chunk_id=Background.md:222936993a67] [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf chunk_id=bis_bcbs_d457.pdf:5c955fe60aea]\n\n2) Key Facts\n- Delta: sensitivity to the underlying price level (from the list of key Greeks).\n- Delta GIRR: sensitivity is defined as the PV01. PV01 is measured by changing the interest rate \\( r \\) at tenor \\( t \\) (\\( r_t \\)) of the risk‑free yield curve in a given currency by 1 basis point (i.e., 0.0001 in absolute terms) and dividing the resulting change in the market value of the instrument (\\( V_i \\)) by 0.0001.\n\nCitations: [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf chunk_id=bis_bcbs_d457.pdf:9026fd6192b5] [source=corpus/Background.md chunk_id=Background.md:222936993a67] [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf chunk_id=bis_bcbs_d457.pdf:2de5b5286241]",
+      "answer_len": 1267,
+      "citation_count": 4,
+      "valid_citation_count": 4,
+      "passed": true,
+      "citations": [
+        {
+          "source": "corpus/Background.md",
+          "chunk_id": "Background.md:222936993a67",
+          "start_index": 653,
+          "section_path": "Background / 3. Risk sensitivities (Greeks)",
+          "start_line": 28,
+          "end_line": 43,
+          "snippet": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:\n\n- Delta: sensitivity to the underlying price level.\n- Gamma: sensitivity of Delta to the underlying price.\n- Vega: sensitivity to volatility.\n- Theta: sensitivity of a de"
+        },
+        {
+          "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+          "chunk_id": "bis_bcbs_d457.pdf:9026fd6192b5",
+          "start_index": 2175,
+          "page": 38,
+          "start_line": 0,
+          "end_line": 0,
+          "snippet": "Sensitivity definitions for delta risk  \n21.19 Delta GIRR: the sensitivity is defined as the PV01. PV01 is m easured by changing the interest rate  r \nat tenor  t (rt) of the risk -free yield curve in a given currency by 1 basis point (ie 0.0001 in absolute \nterms) and dividing the resulting change "
+        },
+        {
+          "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+          "chunk_id": "bis_bcbs_d457.pdf:5c955fe60aea",
+          "start_index": 1426,
+          "page": 41,
+          "start_line": 0,
+          "end_line": 0,
+          "snippet": "not, the \nsensitivity inputs used for the delta and curvature risk calculation must be consistent.  \n21.33 Where a bank opts not to apply the look -through approach in accordance with [MAR21.31], a \nsingle sensitivity shall be calculated to each widely recognised and accepted index that an \ninstrume"
+        },
+        {
+          "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+          "chunk_id": "bis_bcbs_d457.pdf:2de5b5286241",
+          "start_index": 800,
+          "page": 124,
+          "start_line": 0,
+          "end_line": 0,
+          "snippet": "ately calculated capital requirements that incorporate both \ngeneral market risk and specific risk. The risk numbers thus generated are then added to the capital requirements fo r the relevant category, ie interest rate related instruments, equities, FX \nand commodities as described in [MAR40.3] to "
+        }
+      ],
+      "contexts": [
+        "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:\n\n- Delta: sensitivity to the underlying price level.\n- Gamma: sensitivity of Delta to the underlying price.\n- Vega: sensitivity to volatility.\n- Theta: sensitivity of a derivative's value to the passage of time (also known as time decay).\n- Rho: sensitivity of a derivative's value to changes in interest rates.\n- Volga: second-order Greek measuring the sensitivity of Ve",
+        "\nSensitivity definitions for delta risk  \n21.19 Delta GIRR: the sensitivity is defined as the PV01. PV01 is m easured by changing the interest rate  r \nat tenor  t (rt) of the risk -free yield curve in a given currency by 1 basis point (ie 0.0001 in absolute \nterms) and dividing the resulting change in the market value of the instrument (V i) by 0.0001 (ie \n0.01%) as fol lows, where:  \n(1) rt is the risk -free yield curve at tenor t ;  \n(2) cst is the credit spread curve at tenor t ; and  \n(3) V",
+        " not, the \nsensitivity inputs used for the delta and curvature risk calculation must be consistent.  \n21.33 Where a bank opts not to apply the look -through approach in accordance with [MAR21.31], a \nsingle sensitivity shall be calculated to each widely recognised and accepted index that an \ninstrument references. The sensitivity to the index should be assigned to the relevant  delta risk \nbucket defined in [MAR21.53] and [MAR21.72] as follows:  \n(1) Where more than 75% of constituents in that i",
+        "ately calculated capital requirements that incorporate both \ngeneral market risk and specific risk. The risk numbers thus generated are then added to the capital requirements fo r the relevant category, ie interest rate related instruments, equities, FX \nand commodities as described in [MAR40.3] to [MAR40.73]. The delta -plus method uses the \nsensitivity parameters or Greek letters associated with options to measure their market risk  and \ncapital requirements. Under this method, the delta -equi"
+      ],
+      "retrieved_docs": [
+        {
+          "chunk_id": "Background.md:222936993a67",
+          "source": "corpus/Background.md",
+          "section_path": "Background / 3. Risk sensitivities (Greeks)",
+          "dense_rank": 11,
+          "sparse_rank": 1,
+          "rrf_score": 0.03047794966520434,
+          "coarse_score": 0.5804779496652044,
+          "rerank_score": 6.373241424560547,
+          "content": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:\n\n- Delta: sensitivity to the underlying price level.\n- Gamma: sensitivity of Delta to the underlying price.\n- Vega: sensitivity to volatility.\n- Theta: sensitivity of a derivative's value to the passage of time (also known as time decay).\n- Rho: sensitivity of a derivative's value to changes in interest rates.\n- Volga: second-order Greek measuring the sensitivity of Vega to changes in implied volatility (also called vomma).\n- Vanna: second-order Greek measuring the sensitivity of Delta to changes in implied volatility, equivalently the sensitivity of Vega to changes in the underlying price.\n- Charm: sensitivity of Delta to the passage of time (also known as delta decay or DdeltaDtime).\n\n"
+        },
+        {
+          "chunk_id": "bis_bcbs_d457.pdf:9026fd6192b5",
+          "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+          "section_path": "",
+          "dense_rank": 23,
+          "sparse_rank": null,
+          "rrf_score": 0.012048192771084338,
+          "coarse_score": 0.012048192771084338,
+          "rerank_score": 4.880035400390625,
+          "content": "\nSensitivity definitions for delta risk  \n21.19 Delta GIRR: the sensitivity is defined as the PV01. PV01 is m easured by changing the interest rate  r \nat tenor  t (rt) of the risk -free yield curve in a given currency by 1 basis point (ie 0.0001 in absolute \nterms) and dividing the resulting change in the market value of the instrument (V i) by 0.0001 (ie \n0.01%) as fol lows, where:  \n(1) rt is the risk -free yield curve at tenor t ;  \n(2) cst is the credit spread curve at tenor t ; and  \n(3) Vi is the market value of the instrument i  as a function of the risk -free interest rate curve \nand credit spread curve :  \n𝑠𝑠𝑘𝑘,𝐶𝐶𝑐𝑐=𝐶𝐶𝑖𝑖(𝑟𝑟𝐶𝐶+0.0001 ,𝑟𝑟𝑠𝑠𝐶𝐶)−𝐶𝐶𝑖𝑖(𝑟𝑟𝐶𝐶,𝑟𝑟𝑠𝑠𝐶𝐶)\n0.0001 \n21.20 Delta CSR non -securitisation, securitisation (non -CTP) and securitisation (CTP):  the sensitivity is \ndefined as CS01. "
+        },
+        {
+          "chunk_id": "bis_bcbs_d457.pdf:5c955fe60aea",
+          "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+          "section_path": "",
+          "dense_rank": 16,
+          "sparse_rank": null,
+          "rrf_score": 0.013157894736842105,
+          "coarse_score": 0.013157894736842105,
+          "rerank_score": 4.238581657409668,
+          "content": " not, the \nsensitivity inputs used for the delta and curvature risk calculation must be consistent.  \n21.33 Where a bank opts not to apply the look -through approach in accordance with [MAR21.31], a \nsingle sensitivity shall be calculated to each widely recognised and accepted index that an \ninstrument references. The sensitivity to the index should be assigned to the relevant  delta risk \nbucket defined in [MAR21.53] and [MAR21.72] as follows:  \n(1) Where more than 75% of constituents in that index (taking into account the weightings \nof that index) would be mapped to a specific sector bucket (ie bucket 1 to bucket 11 for \nequity risk, or bucket 1 to bucket 16 for CSR), the sensitivity to the index shall be mapped to that single specific sector bucket and treated like any other single -name sensitivity in \nthat bucket. "
+        },
+        {
+          "chunk_id": "bis_bcbs_d457.pdf:2de5b5286241",
+          "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+          "section_path": "",
+          "dense_rank": 22,
+          "sparse_rank": null,
+          "rrf_score": 0.012195121951219513,
+          "coarse_score": 0.012195121951219513,
+          "rerank_score": 4.245981216430664,
+          "content": "ately calculated capital requirements that incorporate both \ngeneral market risk and specific risk. The risk numbers thus generated are then added to the capital requirements fo r the relevant category, ie interest rate related instruments, equities, FX \nand commodities as described in [MAR40.3] to [MAR40.73]. The delta -plus method uses the \nsensitivity parameters or Greek letters associated with options to measure their market risk  and \ncapital requirements. Under this method, the delta -equivalent position of each option becomes \npart of the simplified standardised approach set out in [MAR40.3] to [MAR40.73] with the delta -\nequivalent amount subject to the applicable general market ris k charges. Separate capital \nrequirements are then applied to the gamma and vega risks of the option positions. "
+        }
+      ],
+      "status": "failed",
+      "failure_reason": {
+        "category": "evidence_numeric_mismatch",
+        "message": "Claim numbers are not supported by linked evidence snippets",
+        "details": {
+          "claim_id": "cl_0"
+        }
+      },
+      "latency_ms": 26186.495040999944,
+      "node_latencies": {
+        "rewrite": 3513.434814453125,
+        "retrieve_and_critique": 9062.087890625,
+        "synthesize_answer": 13598.885986328125
+      },
+      "decision_log": [
+        {
+          "step_id": "rewrite",
+          "agent": "AgenticLoop",
+          "rationale": "rewrite user question for retrieval",
+          "chosen": "Delta risk measure derivatives sensitivity",
+          "alternatives": [
+            "Explain Delta in the context of derivatives risk."
+          ]
+        },
+        {
+          "step_id": "self_rag_grade_docs_round_1",
+          "agent": "SelfRAG",
+          "rationale": "ok_numeric",
+          "chosen": "sufficient",
+          "alternatives": [
+            "top_isrel=0.512",
+            "coverage=0.500",
+            "type=numeric"
+          ]
+        },
+        {
+          "step_id": "retrieve_round_1",
+          "agent": "AgenticLoop",
+          "rationale": "The context only provides a one-line definition and unrelated regulatory fragments, lacking a substantive explanation of Delta's meaning, usage, and importance in risk management.",
+          "chosen": "stop",
+          "alternatives": [
+            "docs_count=4"
+          ]
+        },
+        {
+          "step_id": "self_rag_grade_generation",
+          "agent": "SelfRAG",
+          "rationale": "Claim numbers are not supported by linked evidence snippets",
+          "chosen": "fail",
+          "alternatives": [
+            "evidence_numeric_mismatch"
+          ]
+        }
+      ],
+      "sentence_support": {
+        "id": "q02",
+        "citation_precision": 1.0,
+        "total_sentences": 5,
+        "supported_sentences_count": 5,
+        "supported_sentences": [
+          "1) TLDR",
+          "- Delta is the sensitivity of a derivative’s value to the underlying price level",
+          "- In the specific context of Delta GIRR, sensitivity is defined as PV01, measured by shifting the risk‑free yield curve rate at a given tenor by 1 basis point and dividing the resulting value change by 0",
+          "0001",
+          "Citations: [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d457"
+        ],
+        "unsupported_sentences": [],
+        "mode": "llm"
+      },
+      "domain_consistency": {
+        "id": "q02",
+        "numeric": {
+          "score": 1.0,
+          "total_numbers": 8,
+          "matched_numbers": 8,
+          "unmatched_values": []
+        },
+        "glossary": {
+          "score": 1.0,
+          "checked_terms": 1,
+          "violations": []
+        }
+      }
+    },
+    {
+      "id": "q03",
+      "question": "What is Gamma and how is it different from Delta?",
+      "reference_answer": "Gamma is the sensitivity of Delta to changes in the underlying price, representing the second derivative of the option price with respect to the underlying.",
+      "ground_truth_contexts": [
+        "Gamma: sensitivity of Delta to the underlying price.",
+        "Delta: sensitivity to the underlying price level."
+      ],
+      "reference_contexts": null,
+      "tags": [
+        "compare",
+        "greek",
+        "definition"
+      ],
+      "qrels": [],
+      "gate_label": null,
+      "answer": "1) TLDR\n- Delta measures sensitivity of the derivative value to the underlying price level.\n- Gamma measures sensitivity of Delta to the underlying price.\n- Gamma is a second-order effect: it shows how Delta itself changes when the underlying moves.\n\nCitations: [source=corpus/Background.md chunk_id=Background.md:222936993a67] [source=corpus/Background.md chunk_id=Background.md:0e189bafb653] [source=corpus/acceptance/greeks_gundersen.md chunk_id=greeks_gundersen.md:ce053440f246]\n\n2) Key Facts\n- From the provided context: \"Delta: sensitivity to the underlying price level.\"\n- \"Gamma: sensitivity of Delta to the underlying price.\"\n\nCitations: [source=corpus/Background.md chunk_id=Background.md:222936993a67] [source=corpus/Background.md chunk_id=Background.md:0e189bafb653] [source=corpus/acceptance/greeks_gundersen.md chunk_id=greeks_gundersen.md:ce053440f246]",
+      "answer_len": 867,
+      "citation_count": 4,
+      "valid_citation_count": 4,
+      "passed": true,
+      "citations": [
+        {
+          "source": "corpus/Background.md",
+          "chunk_id": "Background.md:222936993a67",
+          "start_index": 653,
+          "section_path": "Background / 3. Risk sensitivities (Greeks)",
+          "start_line": 28,
+          "end_line": 43,
+          "snippet": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:\n\n- Delta: sensitivity to the underlying price level.\n- Gamma: sensitivity of Delta to the underlying price.\n- Vega: sensitivity to volatility.\n- Theta: sensitivity of a de"
+        },
+        {
+          "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+          "chunk_id": "bis_bcbs_d457.pdf:2de5b5286241",
+          "start_index": 800,
+          "page": 124,
+          "start_line": 0,
+          "end_line": 0,
+          "snippet": "ately calculated capital requirements that incorporate both \ngeneral market risk and specific risk. The risk numbers thus generated are then added to the capital requirements fo r the relevant category, ie interest rate related instruments, equities, FX \nand commodities as described in [MAR40.3] to "
+        },
+        {
+          "source": "corpus/acceptance/greeks_gundersen.md",
+          "chunk_id": "greeks_gundersen.md:ce053440f246",
+          "start_index": 0,
+          "section_path": "Greeks overview(Gundersen)",
+          "start_line": 1,
+          "end_line": 11,
+          "snippet": "# Greeks overview(Gundersen)\n\nSource: [https://gregorygundersen.com/blog/2023/10/08/greeks/](https://gregorygundersen.com/blog/2023/10/08/greeks/)\n\nAn option pricing model is a function that takes the price of the underlying asset, or spot price S, and other market inputs and outputs an option's fai"
+        },
+        {
+          "source": "corpus/Background.md",
+          "chunk_id": "Background.md:0e189bafb653",
+          "start_index": 2139,
+          "section_path": "Background / 3. Risk sensitivities (Greeks)",
+          "start_line": 49,
+          "end_line": 53,
+          "snippet": "ve to small changes in the underlying price; often used by market makers to hedge directional risk.\n- Gamma hedging: adjusting a portfolio to reduce gamma exposure, making the hedge more stable to larger moves in the underlying asset price.\n\nIn risk systems, Greeks are often aggregated by dimensions"
+        }
+      ],
+      "contexts": [
+        "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:\n\n- Delta: sensitivity to the underlying price level.\n- Gamma: sensitivity of Delta to the underlying price.\n- Vega: sensitivity to volatility.\n- Theta: sensitivity of a derivative's value to the passage of time (also known as time decay).\n- Rho: sensitivity of a derivative's value to changes in interest rates.\n- Volga: second-order Greek measuring the sensitivity of Ve",
+        "ately calculated capital requirements that incorporate both \ngeneral market risk and specific risk. The risk numbers thus generated are then added to the capital requirements fo r the relevant category, ie interest rate related instruments, equities, FX \nand commodities as described in [MAR40.3] to [MAR40.73]. The delta -plus method uses the \nsensitivity parameters or Greek letters associated with options to measure their market risk  and \ncapital requirements. Under this method, the delta -equi",
+        "# Greeks overview(Gundersen)\n\nSource: [https://gregorygundersen.com/blog/2023/10/08/greeks/](https://gregorygundersen.com/blog/2023/10/08/greeks/)\n\nAn option pricing model is a function that takes the price of the underlying asset, or spot price S, and other market inputs and outputs an option's fair value V.\n\nAn important way to understand an option-pricing model is to study the output price's sensitivity to the model's inputs. These partial derivatives are called the Greeks.\n\nFor example, the ",
+        "ve to small changes in the underlying price; often used by market makers to hedge directional risk.\n- Gamma hedging: adjusting a portfolio to reduce gamma exposure, making the hedge more stable to larger moves in the underlying asset price.\n\nIn risk systems, Greeks are often aggregated by dimensions such as desk, book, trader, and risk factor.\n"
+      ],
+      "retrieved_docs": [
+        {
+          "chunk_id": "Background.md:222936993a67",
+          "source": "corpus/Background.md",
+          "section_path": "Background / 3. Risk sensitivities (Greeks)",
+          "dense_rank": 1,
+          "sparse_rank": 24,
+          "rrf_score": 0.028298204527712725,
+          "coarse_score": 0.3898222543117946,
+          "rerank_score": 3.2834041118621826,
+          "content": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:\n\n- Delta: sensitivity to the underlying price level.\n- Gamma: sensitivity of Delta to the underlying price.\n- Vega: sensitivity to volatility.\n- Theta: sensitivity of a derivative's value to the passage of time (also known as time decay).\n- Rho: sensitivity of a derivative's value to changes in interest rates.\n- Volga: second-order Greek measuring the sensitivity of Vega to changes in implied volatility (also called vomma).\n- Vanna: second-order Greek measuring the sensitivity of Delta to changes in implied volatility, equivalently the sensitivity of Vega to changes in the underlying price.\n- Charm: sensitivity of Delta to the passage of time (also known as delta decay or DdeltaDtime).\n\n"
+        },
+        {
+          "chunk_id": "bis_bcbs_d457.pdf:2de5b5286241",
+          "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+          "section_path": "",
+          "dense_rank": 3,
+          "sparse_rank": null,
+          "rrf_score": 0.015873015873015872,
+          "coarse_score": 0.015873015873015872,
+          "rerank_score": 1.1731059551239014,
+          "content": "ately calculated capital requirements that incorporate both \ngeneral market risk and specific risk. The risk numbers thus generated are then added to the capital requirements fo r the relevant category, ie interest rate related instruments, equities, FX \nand commodities as described in [MAR40.3] to [MAR40.73]. The delta -plus method uses the \nsensitivity parameters or Greek letters associated with options to measure their market risk  and \ncapital requirements. Under this method, the delta -equivalent position of each option becomes \npart of the simplified standardised approach set out in [MAR40.3] to [MAR40.73] with the delta -\nequivalent amount subject to the applicable general market ris k charges. Separate capital \nrequirements are then applied to the gamma and vega risks of the option positions. "
+        },
+        {
+          "chunk_id": "greeks_gundersen.md:ce053440f246",
+          "source": "corpus/acceptance/greeks_gundersen.md",
+          "section_path": "Greeks overview(Gundersen)",
+          "dense_rank": 2,
+          "sparse_rank": null,
+          "rrf_score": 0.016129032258064516,
+          "coarse_score": 0.06612903225806452,
+          "rerank_score": -0.4232277274131775,
+          "content": "# Greeks overview(Gundersen)\n\nSource: [https://gregorygundersen.com/blog/2023/10/08/greeks/](https://gregorygundersen.com/blog/2023/10/08/greeks/)\n\nAn option pricing model is a function that takes the price of the underlying asset, or spot price S, and other market inputs and outputs an option's fair value V.\n\nAn important way to understand an option-pricing model is to study the output price's sensitivity to the model's inputs. These partial derivatives are called the Greeks.\n\nFor example, the sensitivity of option price to spot is delta, written as dV/dS.\n\nThe most common choice for an option pricing model is the Black-Scholes equation, with inputs including spot price, strike price, time to expiry, volatility, and risk-free interest rate."
+        },
+        {
+          "chunk_id": "Background.md:0e189bafb653",
+          "source": "corpus/Background.md",
+          "section_path": "Background / 3. Risk sensitivities (Greeks)",
+          "dense_rank": 7,
+          "sparse_rank": 25,
+          "rrf_score": 0.0266900790166813,
+          "coarse_score": 0.3733042661274616,
+          "rerank_score": -0.8681777715682983,
+          "content": "ve to small changes in the underlying price; often used by market makers to hedge directional risk.\n- Gamma hedging: adjusting a portfolio to reduce gamma exposure, making the hedge more stable to larger moves in the underlying asset price.\n\nIn risk systems, Greeks are often aggregated by dimensions such as desk, book, trader, and risk factor.\n"
+        }
+      ],
+      "status": "failed",
+      "failure_reason": {
+        "category": "evidence_numeric_mismatch",
+        "message": "Claim numbers are not supported by linked evidence snippets",
+        "details": {
+          "claim_id": "cl_0"
+        }
+      },
+      "latency_ms": 28585.33824999995,
+      "node_latencies": {
+        "rewrite": 8993.7998046875,
+        "retrieve_and_critique": 9818.905029296875,
+        "synthesize_answer": 9765.53466796875
+      },
+      "decision_log": [
+        {
+          "step_id": "rewrite",
+          "agent": "AgenticLoop",
+          "rationale": "rewrite user question for retrieval",
+          "chosen": "Gamma vs Delta options Greeks difference definition",
+          "alternatives": [
+            "What is Gamma and how is it different from Delta?"
+          ]
+        },
+        {
+          "step_id": "self_rag_grade_docs_round_1",
+          "agent": "SelfRAG",
+          "rationale": "ok_numeric",
+          "chosen": "sufficient",
+          "alternatives": [
+            "top_isrel=0.591",
+            "coverage=0.400",
+            "type=numeric"
+          ]
+        },
+        {
+          "step_id": "retrieve_round_1",
+          "agent": "AgenticLoop",
+          "rationale": "The context defines Delta as sensitivity to the underlying price level and Gamma as sensitivity of Delta to the underlying price, directly explaining what Gamma is and how it differs from Delta.",
+          "chosen": "stop",
+          "alternatives": [
+            "docs_count=4"
+          ]
+        },
+        {
+          "step_id": "self_rag_grade_generation",
+          "agent": "SelfRAG",
+          "rationale": "Claim numbers are not supported by linked evidence snippets",
+          "chosen": "fail",
+          "alternatives": [
+            "evidence_numeric_mismatch"
+          ]
+        }
+      ],
+      "sentence_support": {
+        "id": "q03",
+        "citation_precision": 0.8,
+        "total_sentences": 5,
+        "supported_sentences_count": 4,
+        "supported_sentences": [
+          "1) TLDR",
+          "- Delta measures sensitivity of the derivative value to the underlying price level",
+          "- Gamma measures sensitivity of Delta to the underlying price",
+          "- Gamma is a second-order effect: it shows how Delta itself changes when the underlying moves"
+        ],
+        "unsupported_sentences": [
+          "Gamma is a second-order effect: it shows how Delta itself changes when the underlying moves."
+        ],
+        "mode": "llm"
+      },
+      "domain_consistency": {
+        "id": "q03",
+        "numeric": {
+          "score": 1.0,
+          "total_numbers": 0,
+          "matched_numbers": 0,
+          "unmatched_values": []
+        },
+        "glossary": {
+          "score": 1.0,
+          "checked_terms": 2,
+          "violations": []
+        }
+      }
+    },
+    {
+      "id": "q04",
+      "question": "What is Vega and when is it important?",
+      "reference_answer": "Vega is the sensitivity of a derivative's value to changes in implied volatility. It is most important when trading options or volatility-dependent products.",
+      "ground_truth_contexts": [
+        "Vega: sensitivity to volatility.",
+        "Greeks are sensitivities of a derivative value to small changes in risk factors."
+      ],
+      "reference_contexts": null,
+      "tags": [
+        "greek",
+        "definition"
+      ],
+      "qrels": [],
+      "gate_label": null,
+      "answer": "### 1) TLDR\n- Vega is the change in an option’s market value resulting from a small change in its implied volatility.\n- Vega risk sensitivity is measured by multiplying vega by the option’s implied volatility, using inputs from the bank’s independent risk control unit.\n- The definition appears within minimum capital requirements for market risk, indicating its role in regulatory capital calculations.\n\nCitations: [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf chunk_id=bis_bcbs_d457.pdf:b93bae6eef8a] [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d488.pdf chunk_id=bis_bcbs_d488.pdf:4f1db5d0b601] [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf chunk_id=bis_bcbs_d457.pdf:226e73dfd000]\n\n### 2) Key Facts\n- **Definition:** *“vega … is defined as the change in the market value of the option … as a result of a small amount of change to the implied volatility”* (from para 21.25(1)).\n- **Sensitivity formula:** *“The option‑level vega risk sensitivity to a given risk factor is measured by multiplying vega by the implied volatility of the option”* (para 21.25).\n- **Data source:** *“the instrument’s vega and implied volatility used in the calculation of vega sensitivities must be sourced from pricing models used by the independent risk control unit of the bank”* (para 21.25(2)).\n- **Maturity mapping:** *“the implied volatility of the option must be mapped to one or more maturity tenors”* (footnote [8]).\n- **Context:** The entire description is part of *“Minimum capital requirements for market risk”*.\n\nCitations: [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf chunk_id=bis_bcbs_d457.pdf:b93bae6eef8a] [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d488.pdf chunk_id=bis_bcbs_d488.pdf:4f1db5d0b601] [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf chunk_id=bis_bcbs_d457.pdf:882f3d6ce053]\n\n### 3) Why it matters\n- Because the context is set within **minimum capital requirements for market risk**, vega is important for quantifying an option’s exposure to changes in implied volatility and for determining the regulatory capital a bank must hold against that risk. No further detail on its importance is provided in the context.\n\nCitations: [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf chunk_id=bis_bcbs_d457.pdf:b93bae6eef8a] [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf chunk_id=bis_bcbs_d457.pdf:226e73dfd000] [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d488.pdf chunk_id=bis_bcbs_d488.pdf:4f1db5d0b601]",
+      "answer_len": 2474,
+      "citation_count": 4,
+      "valid_citation_count": 4,
+      "passed": true,
+      "citations": [
+        {
+          "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+          "chunk_id": "bis_bcbs_d457.pdf:b93bae6eef8a",
+          "start_index": 0,
+          "page": 40,
+          "start_line": 0,
+          "end_line": 0,
+          "snippet": "34 Minimum capital requirements for market risk  \n \n Sensitivity definitions for vega risk  \n21.25 The option -level vega risk sensitivity to a given risk factor[8] is measured by multiplying vega by \nthe implied volatility of the option as follows, where:  \n(1) vega, 𝜕𝜕𝜕𝜕𝑖𝑖\n𝜕𝜕𝜕𝜕𝑖𝑖, is defined as th"
+        },
+        {
+          "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+          "chunk_id": "bis_bcbs_d457.pdf:882f3d6ce053",
+          "start_index": 1504,
+          "page": 36,
+          "start_line": 0,
+          "end_line": 0,
+          "snippet": "two dimensions:  \n(a) legal terms with respect to the delivery location\n[6] of the commodity; and  \n(b) time to maturity of the traded instrument at the following tenors: 0 years, 0.25 years, 0.5 years, 1 year, 2 years, 3 years, 5 years, 10 years, 15 years, 20 years and \n30 years.  \n(2) Vega commodi"
+        },
+        {
+          "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+          "chunk_id": "bis_bcbs_d457.pdf:226e73dfd000",
+          "start_index": 1437,
+          "page": 25,
+          "start_line": 0,
+          "end_line": 0,
+          "snippet": ") Delta : a risk measure based on sensitivities of an instrument to regulatory delta \nrisk factors.  \n(b) Vega : a ris k measure based on sensitivities to regulatory vega risk factors.  \n(c) Curvature : a risk measure which captures the incremental risk not captured by \nthe delta risk measure for pr"
+        },
+        {
+          "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d488.pdf",
+          "chunk_id": "bis_bcbs_d488.pdf:4f1db5d0b601",
+          "start_index": 775,
+          "page": 37,
+          "start_line": 0,
+          "end_line": 0,
+          "snippet": ":  \n(1) The single commodity vega risk factor is a simultaneous relative shift of the volatilities \nfor all commodities in the bucket.  \n(2) The sensitivity to the commodity vega risk factor is measured by simultaneously shifting the volatilities for all commodities in the bucket by 1% relative to t"
+        }
+      ],
+      "contexts": [
+        " \n \n34 Minimum capital requirements for market risk  \n \n Sensitivity definitions for vega risk  \n21.25 The option -level vega risk sensitivity to a given risk factor[8] is measured by multiplying vega by \nthe implied volatility of the option as follows, where:  \n(1) vega, 𝜕𝜕𝜕𝜕𝑖𝑖\n𝜕𝜕𝜕𝜕𝑖𝑖, is defined as the change in the market value of the option 𝐶𝐶𝑖𝑖 as a result of a \nsmall amount of change to the implied volatility 𝜎𝜎𝑖𝑖; and  \n(2) the instrument’s vega and implied volatility used in the calculat",
+        "two dimensions:  \n(a) legal terms with respect to the delivery location\n[6] of the commodity; and  \n(b) time to maturity of the traded instrument at the following tenors: 0 years, 0.25 years, 0.5 years, 1 year, 2 years, 3 years, 5 years, 10 years, 15 years, 20 years and \n30 years.  \n(2) Vega commodity: the commodity vega risk factors are the implied volatilities of options \nthat reference commodity spot prices as underlyings. No differentiation between commodity spot pri ces by the maturity of t",
+        ") Delta : a risk measure based on sensitivities of an instrument to regulatory delta \nrisk factors.  \n(b) Vega : a ris k measure based on sensitivities to regulatory vega risk factors.  \n(c) Curvature : a risk measure which captures the incremental risk not captured by \nthe delta risk measure for price changes in an option. Curvature risk is based on two stress scenarios involvin g an upward shock and a downward shock to \neach regulatory risk factor.  \n(d) The above three risk measures specify r",
+        ":  \n(1) The single commodity vega risk factor is a simultaneous relative shift of the volatilities \nfor all commodities in the bucket.  \n(2) The sensitivity to the commodity vega risk factor is measured by simultaneously shifting the volatilities for all commodities in the bucket by 1% relative to their current values and dividing the resulting change in the aggregate CVA (or the value of CVA h edges) \nby 0.01.  \n(3) The risk weights for commodity volatilities RW k are set to  100% . \n𝑅𝑅𝑊𝑊𝑘𝑘=𝑅𝑅𝑊"
+      ],
+      "retrieved_docs": [
+        {
+          "chunk_id": "bis_bcbs_d457.pdf:b93bae6eef8a",
+          "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+          "section_path": "",
+          "dense_rank": 4,
+          "sparse_rank": null,
+          "rrf_score": 0.015625,
+          "coarse_score": 0.065625,
+          "rerank_score": 2.710097312927246,
+          "content": " \n \n34 Minimum capital requirements for market risk  \n \n Sensitivity definitions for vega risk  \n21.25 The option -level vega risk sensitivity to a given risk factor[8] is measured by multiplying vega by \nthe implied volatility of the option as follows, where:  \n(1) vega, 𝜕𝜕𝜕𝜕𝑖𝑖\n𝜕𝜕𝜕𝜕𝑖𝑖, is defined as the change in the market value of the option 𝐶𝐶𝑖𝑖 as a result of a \nsmall amount of change to the implied volatility 𝜎𝜎𝑖𝑖; and  \n(2) the instrument’s vega and implied volatility used in the calculation of vega sensitivities \nmust be sourced from pricing models used by the independent risk control unit of the \nbank.  \n𝑠𝑠𝑘𝑘=𝑟𝑟𝐷𝐷𝑣𝑣 𝐷𝐷×𝑟𝑟𝑚𝑚𝑟𝑟𝐷𝐷𝑟𝑟𝐷𝐷 𝑖𝑖 𝑟𝑟𝑣𝑣𝐷𝐷𝐷𝐷𝐷𝐷𝑟𝑟𝐷𝐷𝑟𝑟𝐷𝐷𝑟𝑟  \nFootnote \n[8] As specified in the  vega risk factor definitions in [MAR21.8] to [MAR21.14], the implied \nvolatility of the option must be mapped to one or more maturity tenors. ",
+          "expanded_text": "34 Minimum capital requirements for market risk  \n \n Sensitivity definitions for vega risk  \n21.25 The option -level vega risk sensitivity to a given risk factor[8] is measured by multiplying vega by \nthe implied volatility of the option as follows, where:  \n(1) vega, 𝜕𝜕𝜕𝜕𝑖𝑖\n𝜕𝜕𝜕𝜕𝑖𝑖, is defined as the change in the market value of the option 𝐶𝐶𝑖𝑖 as a result of a \nsmall amount of change to the implied volatility 𝜎𝜎𝑖𝑖; and  \n(2) the instrument’s vega and implied volatility used in the calculation of vega sensitivities \nmust be sourced from pricing models used by the independent risk control unit of the \nbank.  \n𝑠𝑠𝑘𝑘=𝑟𝑟𝐷𝐷𝑣𝑣 𝐷𝐷×𝑟𝑟𝑚𝑚𝑟𝑟𝐷𝐷𝑟𝑟𝐷𝐷 𝑖𝑖 𝑟𝑟𝑣𝑣𝐷𝐷𝐷𝐷𝐷𝐷𝑟𝑟𝐷𝐷𝑟𝑟𝐷𝐷𝑟𝑟  \nFootnote \n[8] As specified in the  vega risk factor definitions in [MAR21.8] to [MAR21.14], the implied \nvolatility of the option must be mapped to one or more maturity tenors.  \n21.26 The following sets out how to derive vega ri"
+        },
+        {
+          "chunk_id": "bis_bcbs_d457.pdf:882f3d6ce053",
+          "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+          "section_path": "",
+          "dense_rank": 1,
+          "sparse_rank": null,
+          "rrf_score": 0.01639344262295082,
+          "coarse_score": 0.06639344262295083,
+          "rerank_score": 2.285728931427002,
+          "content": "two dimensions:  \n(a) legal terms with respect to the delivery location\n[6] of the commodity; and  \n(b) time to maturity of the traded instrument at the following tenors: 0 years, 0.25 years, 0.5 years, 1 year, 2 years, 3 years, 5 years, 10 years, 15 years, 20 years and \n30 years.  \n(2) Vega commodity: the commodity vega risk factors are the implied volatilities of options \nthat reference commodity spot prices as underlyings. No differentiation between commodity spot pri ces by the maturity of the underlying or delivery location is required. \nThe commodity vega risk factors are further defined along one dimension, the maturity of the option. This is defined as the implied volatility of the option as mapped to one or \nseveral  of the following maturity tenors: 0.5 years, 1 year, 3 years, 5 years and 10 years. "
+        },
+        {
+          "chunk_id": "bis_bcbs_d457.pdf:226e73dfd000",
+          "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+          "section_path": "",
+          "dense_rank": null,
+          "sparse_rank": 4,
+          "rrf_score": 0.015625,
+          "coarse_score": 0.5589710255095874,
+          "rerank_score": 1.8063251972198486,
+          "content": ") Delta : a risk measure based on sensitivities of an instrument to regulatory delta \nrisk factors.  \n(b) Vega : a ris k measure based on sensitivities to regulatory vega risk factors.  \n(c) Curvature : a risk measure which captures the incremental risk not captured by \nthe delta risk measure for price changes in an option. Curvature risk is based on two stress scenarios involvin g an upward shock and a downward shock to \neach regulatory risk factor.  \n(d) The above three risk measures specify risk weights to be applied to the regulatory risk factor sensitivities. To calculate the overall capital requirement, the risk -weighted sensitivit ies are aggregated using specified correlation \nparameters to recognise diversification benefits between risk factors. "
+        },
+        {
+          "chunk_id": "bis_bcbs_d488.pdf:4f1db5d0b601",
+          "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d488.pdf",
+          "section_path": "",
+          "dense_rank": 15,
+          "sparse_rank": null,
+          "rrf_score": 0.013333333333333334,
+          "coarse_score": 0.06333333333333334,
+          "rerank_score": 1.6036417484283447,
+          "content": ":  \n(1) The single commodity vega risk factor is a simultaneous relative shift of the volatilities \nfor all commodities in the bucket.  \n(2) The sensitivity to the commodity vega risk factor is measured by simultaneously shifting the volatilities for all commodities in the bucket by 1% relative to their current values and dividing the resulting change in the aggregate CVA (or the value of CVA h edges) \nby 0.01.  \n(3) The risk weights for commodity volatilities RW k are set to  100% . \n𝑅𝑅𝑊𝑊𝑘𝑘=𝑅𝑅𝑊𝑊𝜎𝜎∙√12 ,where RW σ is set at 55%.  \n  "
+        }
+      ],
+      "status": "failed",
+      "failure_reason": {
+        "category": "evidence_numeric_mismatch",
+        "message": "Claim numbers are not supported by linked evidence snippets",
+        "details": {
+          "claim_id": "cl_0"
+        }
+      },
+      "latency_ms": 48095.31599999991,
+      "node_latencies": {
+        "rewrite": 5245.446044921875,
+        "retrieve_and_critique": 14285.4208984375,
+        "revise_query": 0.00390625,
+        "synthesize_answer": 20694.413818359375
+      },
+      "decision_log": [
+        {
+          "step_id": "rewrite",
+          "agent": "AgenticLoop",
+          "rationale": "rewrite user question for retrieval",
+          "chosen": "Vega options volatility sensitivity importance risk management",
+          "alternatives": [
+            "What is Vega and when is it important?"
+          ]
+        },
+        {
+          "step_id": "self_rag_grade_docs_round_1",
+          "agent": "SelfRAG",
+          "rationale": "definition_coverage_thin",
+          "chosen": "insufficient",
+          "alternatives": [
+            "top_isrel=0.588",
+            "coverage=0.250",
+            "type=definition"
+          ]
+        },
+        {
+          "step_id": "retrieve_round_1",
+          "agent": "AgenticLoop",
+          "rationale": "The context only provides regulatory definitions of vega risk sensitivity for market risk capital requirements. It does not explain what vega is conceptually or when it is important in a broader trading or risk management context.",
+          "chosen": "continue",
+          "alternatives": [
+            "docs_count=4"
+          ]
+        },
+        {
+          "step_id": "revise_query",
+          "agent": "AgenticLoop",
+          "rationale": "revise query based on critique",
+          "chosen": "What is Vega in options trading and when is it an important risk measure?",
+          "alternatives": [
+            "Vega options volatility sensitivity importance risk management"
+          ]
+        },
+        {
+          "step_id": "self_rag_grade_docs_round_2",
+          "agent": "SelfRAG",
+          "rationale": "definition_coverage_thin",
+          "chosen": "insufficient",
+          "alternatives": [
+            "top_isrel=0.588",
+            "coverage=0.250",
+            "type=definition"
+          ]
+        },
+        {
+          "step_id": "retrieve_round_2",
+          "agent": "AgenticLoop",
+          "rationale": "The context provides only a narrow, regulatory definition of vega as a sensitivity of an option's value to implied volatility within the framework of minimum capital requirements for market risk. It does not explain what vega is in a general financial context, nor does it discuss when it is important (e.g., in options trading, volatility hedging, or portfolio risk management). A broader search is needed.",
+          "chosen": "stop",
+          "alternatives": [
+            "docs_count=4"
+          ]
+        },
+        {
+          "step_id": "self_rag_grade_generation",
+          "agent": "SelfRAG",
+          "rationale": "Claim numbers are not supported by linked evidence snippets",
+          "chosen": "fail",
+          "alternatives": [
+            "evidence_numeric_mismatch"
+          ]
+        }
+      ],
+      "sentence_support": {
+        "id": "q04",
+        "citation_precision": 0.7,
+        "total_sentences": 10,
+        "supported_sentences_count": 7,
+        "supported_sentences": [
+          "### 1) TLDR",
+          "- Vega is the change in an option’s market value resulting from a small change in its implied volatility",
+          "- Vega risk sensitivity is measured by multiplying vega by the option’s implied volatility, using inputs from the bank’s independent risk control unit",
+          "- The definition appears within minimum capital requirements for market risk, indicating its role in regulatory capital calculations",
+          "Citations: [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d457"
+        ],
+        "unsupported_sentences": [
+          "Vega risk sensitivity is measured by multiplying vega by the option’s implied volatility, using inputs from the bank’s independent risk control unit.",
+          "Data source: “the instrument’s vega and implied volatility used in the calculation of vega sensitivities must be sourced from pricing models used by the independent risk control unit of the bank” (para 21.25(2)).",
+          "Maturity mapping: “the implied volatility of the option must be mapped to one or more maturity tenors” (footnote [8])."
+        ],
+        "mode": "llm"
+      },
+      "domain_consistency": {
+        "id": "q04",
+        "numeric": {
+          "score": 1.0,
+          "total_numbers": 9,
+          "matched_numbers": 9,
+          "unmatched_values": []
+        },
+        "glossary": {
+          "score": 1.0,
+          "checked_terms": 1,
+          "violations": []
+        }
+      }
+    },
+    {
+      "id": "q05",
+      "question": "What is CVA and what risk does it represent?",
+      "reference_answer": "CVA stands for Credit Valuation Adjustment and is an adjustment to the risk-free value to account for counterparty default risk.",
+      "ground_truth_contexts": [
+        "CVA stands for Credit Valuation Adjustment."
+      ],
+      "reference_contexts": null,
+      "tags": [
+        "regulation",
+        "definition"
+      ],
+      "qrels": [],
+      "gate_label": null,
+      "answer": "1) TLDR\n- CVA stands for Credit Valuation Adjustment.\n- CVA is an adjustment to the risk-free value that increases when counterparty credit quality worsens.\n- CVA represents counterparty risk, which is the risk that the counterparty defaults before final settlement.\n\nCitations: [source=corpus/Background.md chunk_id=Background.md:3d93df2f9fc8] [source=corpus/regulatory_seed/md/en/wikipedia_cva.md chunk_id=wikipedia_cva.md:636a7e4ebb8a] [source=corpus/regulatory_seed/docx/en/isda_afme_cva_position_paper.docx chunk_id=isda_afme_cva_position_paper.docx:ef77585d19cf]\n\n2) Key Facts\n- Counterparty risk is the risk that the counterparty defaults before final settlement.\n- CVA stands for Credit Valuation Adjustment.\n- CVA is an adjustment to the risk-free value.\n- CVA increases when counterparty credit quality worsens.\n- CVA depends on exposure profile over time.\n- In practice, CVA often interacts with collateral, netting sets, and wrong-way risk.\n\nCitations: [source=corpus/Background.md chunk_id=Background.md:3d93df2f9fc8] [source=corpus/regulatory_seed/md/en/wikipedia_cva.md chunk_id=wikipedia_cva.md:636a7e4ebb8a] [source=corpus/regulatory_seed/docx/en/isda_afme_cva_position_paper.docx chunk_id=isda_afme_cva_position_paper.docx:ef77585d19cf]",
+      "answer_len": 1254,
+      "citation_count": 4,
+      "valid_citation_count": 4,
+      "passed": true,
+      "citations": [
+        {
+          "source": "corpus/Background.md",
+          "chunk_id": "Background.md:3d93df2f9fc8",
+          "start_index": 2832,
+          "section_path": "Background / 5. Counterparty risk and CVA",
+          "start_line": 69,
+          "end_line": 87,
+          "snippet": "## 5. Counterparty risk and CVA\n\nCounterparty risk is the risk that the counterparty defaults before final settlement.\n\nCVA stands for Credit Valuation Adjustment.\n\nA simplified intuition:\n\n- CVA is an adjustment to the risk-free value.\n- CVA increases when counterparty credit quality worsens.\n- CVA"
+        },
+        {
+          "source": "corpus/regulatory_seed/docx/en/isda_afme_cva_position_paper.docx",
+          "chunk_id": "isda_afme_cva_position_paper.docx:ef77585d19cf",
+          "start_index": 0,
+          "start_line": 0,
+          "end_line": 0,
+          "snippet": "## CRR 3 - Credit Valuation Adjustment (CVA) Risk\n\n\n## February 2022\n\n\n## Introduction\n\nIn July 2020, the BCBS published targeted revisions to the Credit Valuation Adjustment (CVA) framework, bringing final changes to the initial revised framework published in 2017, as part of the Basel III agreemen"
+        },
+        {
+          "source": "corpus/regulatory_seed/md/en/wikipedia_cva.md",
+          "chunk_id": "wikipedia_cva.md:636a7e4ebb8a",
+          "start_index": 69,
+          "section_path": "Text",
+          "start_line": 5,
+          "end_line": 438,
+          "snippet": "Calculation\n[\nedit\n]\n\n\nFurther information: \nXVA § Valuation adjustments\n\n\nIn \nfinancial mathematics\n one defines CVA as the difference between the risk-free portfolio value and the true \nportfolio value\n that takes into account the possibility of a \ncounterparty\n's default. \nIn other words, CVA is "
+        },
+        {
+          "source": "corpus/regulatory_seed/docx/en/isda_afme_cva_position_paper.docx",
+          "chunk_id": "isda_afme_cva_position_paper.docx:3a328363a912",
+          "start_index": 0,
+          "start_line": 0,
+          "end_line": 0,
+          "snippet": "## CRR 3 - Credit Valuation Adjustment (CVA) Risk\n\n\n## February 2022\n\n\n## Introduction\n\nIn July 2020, the BCBS published targeted revisions to the Credit Valuation Adjustment (CVA) framework, bringing final changes to the initial revised framework published in 2017, as part of the Basel III agreemen"
+        }
+      ],
+      "contexts": [
+        "## 5. Counterparty risk and CVA\n\nCounterparty risk is the risk that the counterparty defaults before final settlement.\n\nCVA stands for Credit Valuation Adjustment.\n\nA simplified intuition:\n\n- CVA is an adjustment to the risk-free value.\n- CVA increases when counterparty credit quality worsens.\n- CVA depends on exposure profile over time.\n\nIn practice, CVA often interacts with collateral, netting sets, and wrong-way risk.\n\nKey counterparty risk concepts:\n\n- Netting set: a group of trades with a s",
+        "## CVA: A Brief Primer\n\nBanks that undertake derivatives are subject to the risk of incurring mark-to-market losses because of the deterioration in the creditworthiness of their counterparties. This potential source of loss, due primarily to changes in counterparty credit spreads, but also other market risk factors, is known as CVA risk. CVA is thus viewed as the “price” of counterparty credit risk (CCR).\nIn December 2017, the BCBS published an initial revision of the CVA framework1 to better ca",
+        "Calculation\n[\nedit\n]\n\n\nFurther information: \nXVA § Valuation adjustments\n\n\nIn \nfinancial mathematics\n one defines CVA as the difference between the risk-free portfolio value and the true \nportfolio value\n that takes into account the possibility of a \ncounterparty\n's default. \nIn other words, CVA is the \nmarket value\n of \ncounterparty credit risk\n. \nThis price adjustment will depend on counterparty \ncredit spreads\n as well as on the market risk factors that drive derivatives' values and, therefor",
+        "## CRR 3 - Credit Valuation Adjustment (CVA) Risk\n\n\n## February 2022\n\n\n## Introduction\n\nIn July 2020, the BCBS published targeted revisions to the Credit Valuation Adjustment (CVA) framework, bringing final changes to the initial revised framework published in 2017, as part of the Basel III agreement. CVA refers to a measure of market risk incurred in the context of transactions or contracts involving counterparties (such as sovereign banks, other financial institutions, non-financial companies,"
+      ],
+      "retrieved_docs": [
+        {
+          "chunk_id": "Background.md:3d93df2f9fc8",
+          "source": "corpus/Background.md",
+          "section_path": "Background / 5. Counterparty risk and CVA",
+          "dense_rank": 1,
+          "sparse_rank": null,
+          "rrf_score": 0.01639344262295082,
+          "coarse_score": 0.1663934426229508,
+          "rerank_score": 9.143453598022461,
+          "content": "## 5. Counterparty risk and CVA\n\nCounterparty risk is the risk that the counterparty defaults before final settlement.\n\nCVA stands for Credit Valuation Adjustment.\n\nA simplified intuition:\n\n- CVA is an adjustment to the risk-free value.\n- CVA increases when counterparty credit quality worsens.\n- CVA depends on exposure profile over time.\n\nIn practice, CVA often interacts with collateral, netting sets, and wrong-way risk.\n\nKey counterparty risk concepts:\n\n- Netting set: a group of trades with a single counterparty that can be netted under a single master agreement (e.g., ISDA Master Agreement), reducing overall exposure by offsetting positive and negative mark-to-market values.\n- CSA (Credit Support Annex): a legal document that supplements the ISDA Master Agreement, governing the terms for posting and receiving collateral between counterparties to mitigate credit risk.\n",
+          "expanded_text": "## 5. Counterparty risk and CVA\n\nCounterparty risk is the risk that the counterparty defaults before final settlement.\n\nCVA stands for Credit Valuation Adjustment.\n\nA simplified intuition:\n\n- CVA is an adjustment to the risk-free value.\n- CVA increases when counterparty credit quality worsens.\n- CVA depends on exposure profile over time.\n\nIn practice, CVA often interacts with collateral, netting sets, and wrong-way risk.\n\nKey counterparty risk concepts:\n\n- Netting set: a group of trades with a single counterparty that can be netted under a single master agreement (e.g., ISDA Master Agreement), reducing overall exposure by offsetting positive and negative mark-to-market values.\n- CSA (Credit Support Annex): a legal document that supplements the ISDA Master Agreement, governing the terms for posting and receiving collateral between counterparties to mitigate credit risk.\n- Wrong-way risk: occurs when exposure to a counterparty increases as the counterparty's credit quality deteriorates; for example, buying a put option from a bank on the bank's own stock.\n- Right-way risk: the opposite of wrong-way risk; occurs when exposure to a counterparty decreases as the counterparty's credit quality deteriorates, reducing overall counterparty risk."
+        },
+        {
+          "chunk_id": "isda_afme_cva_position_paper.docx:ef77585d19cf",
+          "source": "corpus/regulatory_seed/docx/en/isda_afme_cva_position_paper.docx",
+          "section_path": "",
+          "dense_rank": 5,
+          "sparse_rank": null,
+          "rrf_score": 0.015384615384615385,
+          "coarse_score": 0.06538461538461539,
+          "rerank_score": 8.84909725189209,
+          "content": "## CVA: A Brief Primer\n\nBanks that undertake derivatives are subject to the risk of incurring mark-to-market losses because of the deterioration in the creditworthiness of their counterparties. This potential source of loss, due primarily to changes in counterparty credit spreads, but also other market risk factors, is known as CVA risk. CVA is thus viewed as the “price” of counterparty credit risk (CCR).\nIn December 2017, the BCBS published an initial revision of the CVA framework1 to better capture CVA risk and provide better recognition of CVA hedges. Further revisions were introduced on July 8th 20202 when the BCBS released its final rule for the CVA framework to ensure, amongst other provisions, further alignment between the market risk and CVA rules, as well as address calibration issues within the framework.\n",
+          "expanded_text": "## CRR 3 - Credit Valuation Adjustment (CVA) Risk\n\n\n## February 2022\n\n\n## Introduction\n\nIn July 2020, the BCBS published targeted revisions to the Credit Valuation Adjustment (CVA) framework, bringing final changes to the initial revised framework published in 2017, as part of the Basel III agreement. CVA refers to a measure of market risk incurred in the context of transactions or contracts involving counterparties (such as sovereign banks, other financial institutions, non-financial companies, etc.). In other words, as banks enter into derivatives contracts, they face the risk of incurring losses due to changes in the market value of those transactions and the deterioration of the creditworthiness of their counterparties.\nCapital requirements for CVA risk are meant to require banks to hold aside capital to account for these losses. While the 2020 revisions attempted to solve some of the identified issues with the current CVA framework, further calibration is necessary to ensure that end-users, who typically use derivatives to hedge risk, are still able to access them at a reasonable cost. Particularly in the context of the recovery from the COVID-19 pandemic, it is crucial for banks to continue to support the real economy through the provision of these services and to not be constrained from doing so by an undue increase in the capital held against CVA risk. It is also important that the CVA framework is implemented in a coherent manner, and due consideration should be given to aligning the implementation timeline with the interlinked market risk standards.\n\n## CVA: A Bri"
+        },
+        {
+          "chunk_id": "wikipedia_cva.md:636a7e4ebb8a",
+          "source": "corpus/regulatory_seed/md/en/wikipedia_cva.md",
+          "section_path": "Text",
+          "dense_rank": 21,
+          "sparse_rank": null,
+          "rrf_score": 0.012345679012345678,
+          "coarse_score": 0.06234567901234568,
+          "rerank_score": 8.25480842590332,
+          "content": "Calculation\n[\nedit\n]\n\n\nFurther information: \nXVA § Valuation adjustments\n\n\nIn \nfinancial mathematics\n one defines CVA as the difference between the risk-free portfolio value and the true \nportfolio value\n that takes into account the possibility of a \ncounterparty\n's default. \nIn other words, CVA is the \nmarket value\n of \ncounterparty credit risk\n. \nThis price adjustment will depend on counterparty \ncredit spreads\n as well as on the market risk factors that drive derivatives' values and, therefore, exposure. \nIt is typically calculated under \na simulation framework\n.\n[\n4\n]\n\n\n[\n5\n]\n\n\n[\n6\n]\n\n(Which can become computationally intensive; see \n[\nb\n]\n.)\n\n\n\nRisk-neutral expectation\n[\nedit\n]\n\n\nUnilateral CVA is given by the \nrisk-neutral\n expectation of the discounted loss. The risk-neutral expectation can be written \n\n"
+        },
+        {
+          "chunk_id": "isda_afme_cva_position_paper.docx:3a328363a912",
+          "source": "corpus/regulatory_seed/docx/en/isda_afme_cva_position_paper.docx",
+          "section_path": "",
+          "dense_rank": 9,
+          "sparse_rank": null,
+          "rrf_score": 0.014492753623188406,
+          "coarse_score": 0.0644927536231884,
+          "rerank_score": 7.38279390335083,
+          "content": "## CRR 3 - Credit Valuation Adjustment (CVA) Risk\n\n\n## February 2022\n\n\n## Introduction\n\nIn July 2020, the BCBS published targeted revisions to the Credit Valuation Adjustment (CVA) framework, bringing final changes to the initial revised framework published in 2017, as part of the Basel III agreement. CVA refers to a measure of market risk incurred in the context of transactions or contracts involving counterparties (such as sovereign banks, other financial institutions, non-financial companies, etc.). In other words, as banks enter into derivatives contracts, they face the risk of incurring losses due to changes in the market value of those transactions and the deterioration of the creditworthiness of their counterparties.\nCapital requirements for CVA risk are meant to require banks to hold aside capital to account for these losses. "
+        }
+      ],
+      "status": "failed",
+      "failure_reason": {
+        "category": "evidence_numeric_mismatch",
+        "message": "Claim numbers are not supported by linked evidence snippets",
+        "details": {
+          "claim_id": "cl_0"
+        }
+      },
+      "latency_ms": 34926.07500000031,
+      "node_latencies": {
+        "rewrite": 3870.507080078125,
+        "retrieve_and_critique": 21350.0361328125,
+        "synthesize_answer": 9695.355712890625
+      },
+      "decision_log": [
+        {
+          "step_id": "rewrite",
+          "agent": "AgenticLoop",
+          "rationale": "rewrite user question for retrieval",
+          "chosen": "CVA definition counterparty credit risk",
+          "alternatives": [
+            "What is CVA and what risk does it represent?"
+          ]
+        },
+        {
+          "step_id": "self_rag_grade_docs_round_1",
+          "agent": "SelfRAG",
+          "rationale": "ok_definition",
+          "chosen": "sufficient",
+          "alternatives": [
+            "top_isrel=0.827",
+            "coverage=0.750",
+            "type=definition"
+          ]
+        },
+        {
+          "step_id": "retrieve_round_1",
+          "agent": "AgenticLoop",
+          "rationale": "The context defines CVA as Credit Valuation Adjustment, the market value of counterparty credit risk, and explains that it represents a risk of mark-to-market losses due to changes in counterparty creditworthiness or credit spreads, which directly answers the question.",
+          "chosen": "stop",
+          "alternatives": [
+            "docs_count=4"
+          ]
+        },
+        {
+          "step_id": "self_rag_grade_generation",
+          "agent": "SelfRAG",
+          "rationale": "Claim numbers are not supported by linked evidence snippets",
+          "chosen": "fail",
+          "alternatives": [
+            "evidence_numeric_mismatch"
+          ]
+        }
+      ],
+      "sentence_support": {
+        "id": "q05",
+        "citation_precision": 1.0,
+        "total_sentences": 9,
+        "supported_sentences_count": 9,
+        "supported_sentences": [
+          "1) TLDR",
+          "- CVA stands for Credit Valuation Adjustment",
+          "- CVA is an adjustment to the risk-free value that increases when counterparty credit quality worsens",
+          "- CVA represents counterparty risk, which is the risk that the counterparty defaults before final settlement",
+          "Citations: [source=corpus/Background"
+        ],
+        "unsupported_sentences": [],
+        "mode": "llm"
+      },
+      "domain_consistency": {
+        "id": "q05",
+        "numeric": {
+          "score": 1.0,
+          "total_numbers": 0,
+          "matched_numbers": 0,
+          "unmatched_values": []
+        },
+        "glossary": {
+          "score": 1.0,
+          "checked_terms": 0,
+          "violations": []
+        }
+      }
+    }
+  ],
+  "answer_eval": {
+    "enabled": true,
+    "ok": true,
+    "metrics": {
+      "citation_coverage": 1.0,
+      "faithfulness": 0.8620689655172413,
+      "answer_relevancy": 0.6066666666666667,
+      "sentence_support_rate": 0.8620689655172413,
+      "unsupported_sentence_rate": 0.13793103448275867
+    },
+    "thresholds": {
+      "citation_coverage": 0.8,
+      "faithfulness": 0.75,
+      "answer_relevancy": 0.7
+    },
+    "details": {
+      "metric_sources": {
+        "citation_coverage": "citations",
+        "faithfulness": "sentence_support",
+        "answer_relevancy": "heuristic_overlap"
+      },
+      "samples": [
+        {
+          "id": "q01",
+          "error": "Expecting value: line 1 column 1 (char 0)",
+          "mode": "llm"
+        },
+        {
+          "id": "q02",
+          "citation_precision": 1.0,
+          "total_sentences": 5,
+          "supported_sentences_count": 5,
+          "supported_sentences": [
+            "1) TLDR",
+            "- Delta is the sensitivity of a derivative’s value to the underlying price level",
+            "- In the specific context of Delta GIRR, sensitivity is defined as PV01, measured by shifting the risk‑free yield curve rate at a given tenor by 1 basis point and dividing the resulting value change by 0",
+            "0001",
+            "Citations: [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d457"
+          ],
+          "unsupported_sentences": [],
+          "mode": "llm"
+        },
+        {
+          "id": "q03",
+          "citation_precision": 0.8,
+          "total_sentences": 5,
+          "supported_sentences_count": 4,
+          "supported_sentences": [
+            "1) TLDR",
+            "- Delta measures sensitivity of the derivative value to the underlying price level",
+            "- Gamma measures sensitivity of Delta to the underlying price",
+            "- Gamma is a second-order effect: it shows how Delta itself changes when the underlying moves"
+          ],
+          "unsupported_sentences": [
+            "Gamma is a second-order effect: it shows how Delta itself changes when the underlying moves."
+          ],
+          "mode": "llm"
+        },
+        {
+          "id": "q04",
+          "citation_precision": 0.7,
+          "total_sentences": 10,
+          "supported_sentences_count": 7,
+          "supported_sentences": [
+            "### 1) TLDR",
+            "- Vega is the change in an option’s market value resulting from a small change in its implied volatility",
+            "- Vega risk sensitivity is measured by multiplying vega by the option’s implied volatility, using inputs from the bank’s independent risk control unit",
+            "- The definition appears within minimum capital requirements for market risk, indicating its role in regulatory capital calculations",
+            "Citations: [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d457"
+          ],
+          "unsupported_sentences": [
+            "Vega risk sensitivity is measured by multiplying vega by the option’s implied volatility, using inputs from the bank’s independent risk control unit.",
+            "Data source: “the instrument’s vega and implied volatility used in the calculation of vega sensitivities must be sourced from pricing models used by the independent risk control unit of the bank” (para 21.25(2)).",
+            "Maturity mapping: “the implied volatility of the option must be mapped to one or more maturity tenors” (footnote [8])."
+          ],
+          "mode": "llm"
+        },
+        {
+          "id": "q05",
+          "citation_precision": 1.0,
+          "total_sentences": 9,
+          "supported_sentences_count": 9,
+          "supported_sentences": [
+            "1) TLDR",
+            "- CVA stands for Credit Valuation Adjustment",
+            "- CVA is an adjustment to the risk-free value that increases when counterparty credit quality worsens",
+            "- CVA represents counterparty risk, which is the risk that the counterparty defaults before final settlement",
+            "Citations: [source=corpus/Background"
+          ],
+          "unsupported_sentences": [],
+          "mode": "llm"
+        }
+      ]
+    },
+    "error": null
+  },
+  "citation_precision": {
+    "enabled": true,
+    "ok": true,
+    "metrics": {
+      "citation_precision": 0.875,
+      "hallucination_rate_in_citations": 0.5,
+      "sentence_support_rate": 0.8620689655172413,
+      "unsupported_sentence_rate": 0.13793103448275867,
+      "judged": 4.0,
+      "skipped": 0.0,
+      "errors": 1.0
+    },
+    "details": [
+      {
+        "id": "q01",
+        "error": "Expecting value: line 1 column 1 (char 0)",
+        "mode": "llm"
+      },
+      {
+        "id": "q02",
+        "citation_precision": 1.0,
+        "total_sentences": 5,
+        "supported_sentences_count": 5,
+        "supported_sentences": [
+          "1) TLDR",
+          "- Delta is the sensitivity of a derivative’s value to the underlying price level",
+          "- In the specific context of Delta GIRR, sensitivity is defined as PV01, measured by shifting the risk‑free yield curve rate at a given tenor by 1 basis point and dividing the resulting value change by 0",
+          "0001",
+          "Citations: [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d457"
+        ],
+        "unsupported_sentences": [],
+        "mode": "llm"
+      },
+      {
+        "id": "q03",
+        "citation_precision": 0.8,
+        "total_sentences": 5,
+        "supported_sentences_count": 4,
+        "supported_sentences": [
+          "1) TLDR",
+          "- Delta measures sensitivity of the derivative value to the underlying price level",
+          "- Gamma measures sensitivity of Delta to the underlying price",
+          "- Gamma is a second-order effect: it shows how Delta itself changes when the underlying moves"
+        ],
+        "unsupported_sentences": [
+          "Gamma is a second-order effect: it shows how Delta itself changes when the underlying moves."
+        ],
+        "mode": "llm"
+      },
+      {
+        "id": "q04",
+        "citation_precision": 0.7,
+        "total_sentences": 10,
+        "supported_sentences_count": 7,
+        "supported_sentences": [
+          "### 1) TLDR",
+          "- Vega is the change in an option’s market value resulting from a small change in its implied volatility",
+          "- Vega risk sensitivity is measured by multiplying vega by the option’s implied volatility, using inputs from the bank’s independent risk control unit",
+          "- The definition appears within minimum capital requirements for market risk, indicating its role in regulatory capital calculations",
+          "Citations: [source=corpus/regulatory_seed/pdf/en/bis_bcbs_d457"
+        ],
+        "unsupported_sentences": [
+          "Vega risk sensitivity is measured by multiplying vega by the option’s implied volatility, using inputs from the bank’s independent risk control unit.",
+          "Data source: “the instrument’s vega and implied volatility used in the calculation of vega sensitivities must be sourced from pricing models used by the independent risk control unit of the bank” (para 21.25(2)).",
+          "Maturity mapping: “the implied volatility of the option must be mapped to one or more maturity tenors” (footnote [8])."
+        ],
+        "mode": "llm"
+      },
+      {
+        "id": "q05",
+        "citation_precision": 1.0,
+        "total_sentences": 9,
+        "supported_sentences_count": 9,
+        "supported_sentences": [
+          "1) TLDR",
+          "- CVA stands for Credit Valuation Adjustment",
+          "- CVA is an adjustment to the risk-free value that increases when counterparty credit quality worsens",
+          "- CVA represents counterparty risk, which is the risk that the counterparty defaults before final settlement",
+          "Citations: [source=corpus/Background"
+        ],
+        "unsupported_sentences": [],
+        "mode": "llm"
+      }
+    ],
+    "error": null
+  },
+  "domain_consistency": {
+    "enabled": true,
+    "ok": true,
+    "metrics": {
+      "numeric_consistency_score": 0.9636363636363636,
+      "glossary_consistency_score": 1.0,
+      "domain_consistency_score": 0.9818181818181818
+    },
+    "error": null,
+    "details": {
+      "samples": [
+        {
+          "id": "q01",
+          "numeric": {
+            "score": 0.8181818181818182,
+            "total_numbers": 11,
+            "matched_numbers": 9,
+            "unmatched_values": [
+              2.0,
+              2.0
+            ]
+          },
+          "glossary": {
+            "score": 1.0,
+            "checked_terms": 0,
+            "violations": []
+          }
+        },
+        {
+          "id": "q02",
+          "numeric": {
+            "score": 1.0,
+            "total_numbers": 8,
+            "matched_numbers": 8,
+            "unmatched_values": []
+          },
+          "glossary": {
+            "score": 1.0,
+            "checked_terms": 1,
+            "violations": []
+          }
+        },
+        {
+          "id": "q03",
+          "numeric": {
+            "score": 1.0,
+            "total_numbers": 0,
+            "matched_numbers": 0,
+            "unmatched_values": []
+          },
+          "glossary": {
+            "score": 1.0,
+            "checked_terms": 2,
+            "violations": []
+          }
+        },
+        {
+          "id": "q04",
+          "numeric": {
+            "score": 1.0,
+            "total_numbers": 9,
+            "matched_numbers": 9,
+            "unmatched_values": []
+          },
+          "glossary": {
+            "score": 1.0,
+            "checked_terms": 1,
+            "violations": []
+          }
+        },
+        {
+          "id": "q05",
+          "numeric": {
+            "score": 1.0,
+            "total_numbers": 0,
+            "matched_numbers": 0,
+            "unmatched_values": []
+          },
+          "glossary": {
+            "score": 1.0,
+            "checked_terms": 0,
+            "violations": []
+          }
+        }
+      ],
+      "numeric_failures": [
+        {
+          "id": "q01",
+          "unmatched_values": [
+            2.0,
+            2.0
+          ],
+          "matched_numbers": 9,
+          "total_numbers": 11
+        }
+      ],
+      "glossary_violations": []
+    }
+  },
+  "retrieval_metrics": {
+    "gold_metrics": {
+      "retrieval_mrr": 0.0,
+      "retrieval_ndcg_at_1": 0.0,
+      "retrieval_ndcg_at_3": 0.0,
+      "retrieval_ndcg_at_5": 0.0,
+      "retrieval_recall_at_1": 0.0,
+      "retrieval_recall_at_3": 0.0,
+      "retrieval_recall_at_5": 0.0
+    },
+    "slice_metrics": {
+      "regulation": {
+        "retrieval_mrr": 0.0,
+        "retrieval_ndcg_at_1": 0.0,
+        "retrieval_ndcg_at_3": 0.0,
+        "retrieval_ndcg_at_5": 0.0,
+        "retrieval_recall_at_1": 0.0,
+        "retrieval_recall_at_3": 0.0,
+        "retrieval_recall_at_5": 0.0
+      },
+      "definition": {
+        "retrieval_mrr": 0.0,
+        "retrieval_ndcg_at_1": 0.0,
+        "retrieval_ndcg_at_3": 0.0,
+        "retrieval_ndcg_at_5": 0.0,
+        "retrieval_recall_at_1": 0.0,
+        "retrieval_recall_at_3": 0.0,
+        "retrieval_recall_at_5": 0.0
+      },
+      "greek": {
+        "retrieval_mrr": 0.0,
+        "retrieval_ndcg_at_1": 0.0,
+        "retrieval_ndcg_at_3": 0.0,
+        "retrieval_ndcg_at_5": 0.0,
+        "retrieval_recall_at_1": 0.0,
+        "retrieval_recall_at_3": 0.0,
+        "retrieval_recall_at_5": 0.0
+      },
+      "compare": {
+        "retrieval_mrr": 0.0,
+        "retrieval_ndcg_at_1": 0.0,
+        "retrieval_ndcg_at_3": 0.0,
+        "retrieval_ndcg_at_5": 0.0,
+        "retrieval_recall_at_1": 0.0,
+        "retrieval_recall_at_3": 0.0,
+        "retrieval_recall_at_5": 0.0
+      }
+    },
+    "citation_diagnostics": {
+      "citations_total": 5,
+      "citations_passed": 5,
+      "citations_coverage": 1.0
+    }
+  },
+  "gate_metrics": {
+    "metrics": {
+      "gate_block_rate": 1.0,
+      "gate_block_benefit_rate": 0.0,
+      "gate_false_kill_rate": 0.0,
+      "gate_miss_rate": 0.0
+    },
+    "distributions": {
+      "failure_reason_distribution": {
+        "Claim numbers are not supported by linked evidence snippets": 5
+      },
+      "labeled_counts": {
+        "labeled_total": 0,
+        "true_positive": 0,
+        "false_positive": 0,
+        "false_negative": 0
+      }
+    }
+  },
+  "reliability_metrics": {
+    "metrics": {
+      "reliability_success_rate": 0.0,
+      "reliability_error_rate": 1.0,
+      "reliability_timeout_rate": 0.0
+    },
+    "node_latency_p95": {}
+  },
+  "threshold_gate": {
+    "verdict": "fail",
+    "failures": [
+      {
+        "metric": "answer_relevancy",
+        "reason": "below_minimum",
+        "current": 0.6066666666666667,
+        "minimum": 0.7,
+        "tolerance": 0.0
+      },
+      {
+        "metric": "retrieval_recall_at_5",
+        "reason": "below_minimum",
+        "current": 0.0,
+        "minimum": 0.6,
+        "tolerance": 0.0
+      }
+    ],
+    "regressions": [],
+    "warnings": [
+      {
+        "metric": "hallucination_rate_in_citations",
+        "reason": "missing_metric"
+      }
+    ],
+    "checked_metrics": [
+      "answer_relevancy",
+      "citation_coverage",
+      "faithfulness",
+      "glossary_consistency_score",
+      "hallucination_rate_in_citations",
+      "numeric_consistency_score",
+      "retrieval_recall_at_5"
+    ],
+    "fail_on_regression": true
+  }
+}

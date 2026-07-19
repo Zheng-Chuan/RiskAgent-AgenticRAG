@@ -118,6 +118,53 @@ def test_node_retrieve_and_critique_insufficient_continues(mock_critique, mock_g
     assert result["improved_query"] == "try broader terms"
 
 
+@pytest.mark.unit
+@patch("riskagent_agenticrag.orchestration.nodes.extract_structured_request", return_value=None)
+@patch("riskagent_agenticrag.orchestration.nodes.grade_docs")
+@patch("riskagent_agenticrag.orchestration.nodes.agentic_primitives.critique_retrieval")
+def test_node_retrieve_and_critique_disagreement_prefers_continue_when_self_rag_only_says_sufficient(
+    mock_critique, mock_grade, mock_extract
+):
+    from riskagent_agenticrag.orchestration.nodes import node_retrieve_and_critique
+
+    mock_doc = MagicMock(page_content="thin context", metadata={"chunk_id": "c1"})
+    retriever = MagicMock(invoke=MagicMock(return_value=[mock_doc]))
+    mock_critique.return_value = (False, "broader FRTB definition", "context is too thin")
+    mock_grade.return_value = MagicMock(
+        sufficient=True, reason="ok_definition", top_isrel=0.7, avg_isrel=0.5,
+        grades=[]
+    )
+
+    state = _make_state(retriever=retriever, current_query="FRTB")
+    result = node_retrieve_and_critique(state)
+
+    assert result["should_continue"] is True
+    assert result["improved_query"] == "broader FRTB definition"
+
+
+@pytest.mark.unit
+@patch("riskagent_agenticrag.orchestration.nodes.extract_structured_request", return_value=None)
+@patch("riskagent_agenticrag.orchestration.nodes.grade_docs")
+@patch("riskagent_agenticrag.orchestration.nodes.agentic_primitives.critique_retrieval")
+def test_node_retrieve_and_critique_disagreement_prefers_continue_when_self_rag_says_insufficient(
+    mock_critique, mock_grade, mock_extract
+):
+    from riskagent_agenticrag.orchestration.nodes import node_retrieve_and_critique
+
+    mock_doc = MagicMock(page_content="partial context", metadata={"chunk_id": "c1"})
+    retriever = MagicMock(invoke=MagicMock(return_value=[mock_doc]))
+    mock_critique.return_value = (True, "", "llm thinks enough")
+    mock_grade.return_value = MagicMock(
+        sufficient=False, reason="definition_coverage_thin", top_isrel=0.4, avg_isrel=0.3,
+        grades=[]
+    )
+
+    state = _make_state(retriever=retriever, current_query="FRTB")
+    result = node_retrieve_and_critique(state)
+
+    assert result["should_continue"] is True
+
+
 # ---------------------------------------------------------------------------
 # Node: revise_query
 # ---------------------------------------------------------------------------

@@ -99,7 +99,10 @@ def rewrite_query(question: str) -> str:
         "- Keep it under 20 tokens if possible.\n\n"
         f"User question: {question}\n"
     )
-    data = call_llm_json(prompt, temperature=0.0)
+    try:
+        data = call_llm_json(prompt, temperature=0.0)
+    except Exception:
+        return question
     query = str(data.get("query", "")).strip()
     return query or question
 
@@ -118,12 +121,17 @@ def critique_retrieval(question: str, docs: list[Document]) -> tuple[bool, str, 
         f"Question: {question}\n\n"
         f"Context:\n{context}\n"
     )
-    data = call_llm_json(prompt, temperature=0.0)
-
-    sufficient = bool(data.get("sufficient", False))
-    improved_query = str(data.get("improved_query", "")).strip()
-    reason = str(data.get("reason", "")).strip()
-    return sufficient, improved_query, reason
+    try:
+        data = call_llm_json(prompt, temperature=0.0)
+        sufficient = bool(data.get("sufficient", False))
+        improved_query = str(data.get("improved_query", "")).strip()
+        reason = str(data.get("reason", "")).strip()
+        return sufficient, improved_query, reason
+    except Exception:
+        sufficient, score = heuristic_retrieval_sufficient(question, docs)
+        if sufficient:
+            return True, "", f"json_parse_fallback_heuristic_sufficient overlap={score:.3f}"
+        return False, question, f"json_parse_fallback_heuristic_insufficient overlap={score:.3f}"
 
 
 def synthesize_answer(*, question: str, docs: list[Document]) -> str:
@@ -202,12 +210,15 @@ def build_evidence_set_from_docs(
         except Exception:
             start_index = 0
 
+        snippet_text = str(doc.metadata.get("expanded_text") or doc.page_content or "")
+        snippet_text = snippet_text.strip()
+
         item: dict[str, Any] = {
             "evidence_id": evidence_id,
             "source": str(doc.metadata.get("source", "")),
             "chunk_id": str(doc.metadata.get("chunk_id", "")),
             "start_index": start_index,
-            "snippet": (doc.page_content or "")[:200],
+            "snippet": snippet_text[:600],
         }
         if doc.metadata.get("tool_name"):
             item["tool_name"] = str(doc.metadata.get("tool_name"))
@@ -233,9 +244,41 @@ def build_evidence_set_from_docs(
             except Exception:
                 pass
         if include_text:
-            item["text"] = (doc.page_content or "")[:200]
+            item["text"] = snippet_text[:1200]
         evidence_set.append(item)
     return evidence_set
+
+
+def _extract_chunk_ids_from_text(text: str) -> list[str]:
+    citations_re = re.compile(r"chunk_id=([^\]\s]+)")
+    chunk_ids: list[str] = []
+    for m in citations_re.finditer(str(text or "")):
+        cid = m.group(1).strip()
+        if cid and cid not in chunk_ids:
+            chunk_ids.append(cid)
+    return chunk_ids
+
+
+def _split_claim_statements(block: str) -> list[str]:
+    statements: list[str] = []
+    for raw_line in str(block or "").splitlines():
+        line = raw_line.strip()
+        if not line:
+            continue
+        if line.lower().startswith("citations:"):
+            continue
+        if re.fullmatch(r"\d+\)\s*.*", line):
+            continue
+        line = re.sub(r"^[-*]\s+", "", line).strip()
+        if not line:
+            continue
+        statements.append(line[:300])
+    if statements:
+        return statements
+    cleaned = str(block or "").strip()
+    if cleaned:
+        return [cleaned[:300]]
+    return []
 
 
 def build_claims_from_answer(
@@ -262,35 +305,43 @@ def build_claims_from_answer(
     if not evidence_ids:
         return []
 
-    citations_re = re.compile(r"chunk_id=([^\]\s]+)")
     paragraphs = [p.strip() for p in (answer or "").split("\n\n") if p.strip()]
     claims: list[dict[str, Any]] = []
+    claim_idx = 0
     for idx, p in enumerate(paragraphs):
-        lines = [ln.strip() for ln in p.splitlines()]
-        kept = [ln for ln in lines if ln and not ln.lower().startswith("citations:")]
-        statement = "\n".join(kept).strip()
-        if not statement:
+        if p.lower().startswith("citations:"):
             continue
 
         matched_eids: list[str] = []
-        for m in citations_re.finditer(p):
-            cid = m.group(1).strip()
-            eid = evidence_by_chunk_id.get(cid)
-            if eid and eid not in matched_eids:
-                matched_eids.append(eid)
+        citation_texts = [p]
+        if idx + 1 < len(paragraphs) and paragraphs[idx + 1].lower().startswith("citations:"):
+            citation_texts.append(paragraphs[idx + 1])
+        for citation_text in citation_texts:
+            for cid in _extract_chunk_ids_from_text(citation_text):
+                eid = evidence_by_chunk_id.get(cid)
+                if eid and eid not in matched_eids:
+                    matched_eids.append(eid)
 
-        if not matched_eids:
-            stoks = set(re.findall(r"[A-Za-z0-9]+|[\u4e00-\u9fff]+", statement.lower()))
-            best_eid = evidence_ids[0]
-            best_score = -1
-            for eid in evidence_ids:
-                et = evidence_texts.get(eid, "").lower()
-                etoks = set(re.findall(r"[A-Za-z0-9]+|[\u4e00-\u9fff]+", et))
-                score = len(stoks & etoks)
-                if score > best_score:
-                    best_score = score
-                    best_eid = eid
-            matched_eids = [best_eid]
+        for statement in _split_claim_statements(p):
+            local_eids = list(matched_eids)
+            if not local_eids:
+                stoks = set(re.findall(r"[A-Za-z0-9]+|[\u4e00-\u9fff]+", statement.lower()))
+                scored_eids: list[tuple[int, str]] = []
+                for eid in evidence_ids:
+                    et = evidence_texts.get(eid, "").lower()
+                    etoks = set(re.findall(r"[A-Za-z0-9]+|[\u4e00-\u9fff]+", et))
+                    score = len(stoks & etoks)
+                    if score > 0:
+                        scored_eids.append((score, eid))
+                scored_eids.sort(key=lambda item: item[0], reverse=True)
+                local_eids = [eid for _, eid in scored_eids[:3]] or [evidence_ids[0]]
 
-        claims.append({"claim_id": f"cl_{idx}", "statement": statement[:300], "evidence_ids": matched_eids})
+            claims.append(
+                {
+                    "claim_id": f"cl_{claim_idx}",
+                    "statement": statement,
+                    "evidence_ids": local_eids,
+                }
+            )
+            claim_idx += 1
     return claims

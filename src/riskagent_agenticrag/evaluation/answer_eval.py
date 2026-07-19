@@ -40,6 +40,10 @@ _STOPWORDS = {
     "what",
     "how",
     "why",
+    "explain",
+    "describe",
+    "context",
+    "meaning",
     "的",
     "了",
     "在",
@@ -47,18 +51,43 @@ _STOPWORDS = {
 }
 
 
+def _normalize_token(token: str) -> str:
+    token = str(token or "").strip().lower()
+    if len(token) > 4 and token.endswith("ies"):
+        return token[:-3] + "y"
+    if len(token) > 3 and token.endswith("s") and not token.endswith("ss"):
+        return token[:-1]
+    return token
+
+
 def _tokens(text: str) -> set[str]:
     raw = re.findall(r"[A-Za-z0-9]+|[\u4e00-\u9fff]+", str(text or "").lower())
-    return {token for token in raw if token and token not in _STOPWORDS}
+    normalized = (_normalize_token(token) for token in raw)
+    return {token for token in normalized if token and token not in _STOPWORDS}
 
 
-def _heuristic_answer_relevancy(question: str, answer: str) -> float:
+def _overlap_ratio(expected_tokens: set[str], actual_tokens: set[str]) -> float:
+    if not expected_tokens or not actual_tokens:
+        return 0.0
+    overlap = len(expected_tokens & actual_tokens)
+    return float(overlap) / float(max(1, len(expected_tokens)))
+
+
+def _heuristic_answer_relevancy(question: str, answer: str, reference_answer: str | None = None) -> float:
     q = _tokens(question)
     a = _tokens(answer)
     if not q or not a:
         return 0.0
-    overlap = len(q & a)
-    return float(overlap) / float(max(1, len(q)))
+
+    question_overlap = _overlap_ratio(q, a)
+    reference_overlap = 0.0
+    if reference_answer:
+        r = _tokens(reference_answer)
+        reference_overlap = _overlap_ratio(r, a)
+
+    if reference_overlap <= 0.0:
+        return float(question_overlap)
+    return float(max(question_overlap, (0.6 * question_overlap) + (0.4 * reference_overlap)))
 
 
 def build_answer_eval(
@@ -92,7 +121,11 @@ def build_answer_eval(
             answer_relevancy = float(raw.get("ragas_answer_relevancy", 0.0) or 0.0)
     if answer_relevancy <= 0.0:
         heuristic_scores = [
-            _heuristic_answer_relevancy(str(sample.get("question", "")), str(sample.get("answer", "")))
+            _heuristic_answer_relevancy(
+                str(sample.get("question", "")),
+                str(sample.get("answer", "")),
+                str(sample.get("reference_answer", "") or ""),
+            )
             for sample in samples
             if str(sample.get("answer", "")).strip()
         ]

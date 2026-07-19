@@ -61,6 +61,17 @@ class TestRewriteQuery:
             result = rewrite_query("FRTB overview")
             assert result == "FRTB overview"
 
+    def test_fallback_returns_original_when_json_call_fails(self):
+        """If LLM JSON parsing fails, rewrite_query should keep the original question."""
+        from riskagent_agenticrag.rag.agentic_primitives import rewrite_query
+
+        with patch(
+            "riskagent_agenticrag.rag.agentic_primitives.call_llm_json",
+            side_effect=RuntimeError("LLM did not return valid JSON"),
+        ):
+            result = rewrite_query("What is CVA capital?")
+            assert result == "What is CVA capital?"
+
 
 # ---------------------------------------------------------------------------
 # critique_retrieval
@@ -110,6 +121,36 @@ class TestCritiqueRetrieval:
         assert sufficient is False
         assert "empty" in reason
 
+    def test_json_failure_falls_back_to_heuristic_continue(self):
+        """If critique JSON parsing fails, use heuristic insufficiency instead of crashing."""
+        from riskagent_agenticrag.rag.agentic_primitives import critique_retrieval
+
+        docs = [Document(page_content="Short unrelated weather paragraph about rain and wind.")]
+        with patch(
+            "riskagent_agenticrag.rag.agentic_primitives.call_llm_json",
+            side_effect=RuntimeError("LLM did not return valid JSON"),
+        ):
+            sufficient, improved_query, reason = critique_retrieval("FRTB capital?", docs)
+
+        assert sufficient is False
+        assert improved_query == "FRTB capital?"
+        assert "json_parse_fallback_heuristic_insufficient" in reason
+
+    def test_json_failure_falls_back_to_heuristic_stop(self):
+        """If critique JSON parsing fails on good evidence, use heuristic sufficiency."""
+        from riskagent_agenticrag.rag.agentic_primitives import critique_retrieval
+
+        docs = [Document(page_content="FRTB capital requirement for market risk uses standardized and internal model approaches.")]
+        with patch(
+            "riskagent_agenticrag.rag.agentic_primitives.call_llm_json",
+            side_effect=RuntimeError("LLM did not return valid JSON"),
+        ):
+            sufficient, improved_query, reason = critique_retrieval("What is FRTB capital requirement?", docs)
+
+        assert sufficient is True
+        assert improved_query == ""
+        assert "json_parse_fallback_heuristic_sufficient" in reason
+
 
 # ---------------------------------------------------------------------------
 # synthesize_answer
@@ -154,6 +195,29 @@ class TestSynthesizeAnswer:
         ):
             result = synthesize_answer(question="Question?", docs=docs)
             assert "No evidence" in result
+
+
+@pytest.mark.unit
+class TestGenerateAnswerSanitization:
+    """Tests for answer post-processing that removes weak meta statements."""
+
+    def test_generate_answer_sanitizes_unsupported_meta_lines(self):
+        from riskagent_agenticrag.llm.generate import generate_answer
+
+        docs = [Document(page_content="FRTB is a market risk framework introduced after Basel II.5 shortcomings.")]
+        raw = (
+            "1) TLDR\n"
+            "- FRTB is a market risk framework.\n\n"
+            "3) Why it matters\n"
+            "- The context does not discuss why it matters.\n"
+            "Next actions: read more sources."
+        )
+        with patch("riskagent_agenticrag.llm.generate.call_llm_text", return_value=raw):
+            result = generate_answer("What is FRTB?", docs)
+
+        assert "FRTB is a market risk framework" in result
+        assert "The context does not discuss" not in result
+        assert "Next actions" not in result
 
 
 # ---------------------------------------------------------------------------
@@ -215,6 +279,25 @@ class TestBuildEvidenceSetFromDocs:
         assert evidence[0]["tool_name"] == "web_search"
         assert evidence[0]["section_path"] == "Risk / FRTB"
 
+    def test_prefers_expanded_text_and_keeps_longer_snippet(self):
+        """Expanded text should be preferred so numeric support is not truncated too early."""
+        from riskagent_agenticrag.rag.agentic_primitives import build_evidence_set_from_docs
+
+        docs = [
+            Document(
+                page_content="short body",
+                metadata={
+                    "source": "doc.md",
+                    "chunk_id": "c1",
+                    "start_index": 0,
+                    "expanded_text": "LGD is 100 percent for equity and 75 percent for senior debt instruments.",
+                },
+            )
+        ]
+        evidence = build_evidence_set_from_docs(docs, include_text=True)
+        assert "75 percent" in evidence[0]["snippet"]
+        assert "75 percent" in evidence[0]["text"]
+
 
 # ---------------------------------------------------------------------------
 # build_claims_from_answer
@@ -264,3 +347,40 @@ class TestBuildClaimsFromAnswer:
         assert len(claims) == 1
         # Should match ev_0 due to token overlap with "FRTB delta risk"
         assert "ev_0" in claims[0]["evidence_ids"]
+
+    def test_claims_use_following_citations_block(self):
+        """A paragraph should inherit chunk citations from the next Citations block."""
+        from riskagent_agenticrag.rag.agentic_primitives import build_claims_from_answer
+
+        answer = (
+            "LGD is 100 percent for equity instruments.\n"
+            "- Senior debt instruments use 75 percent.\n\n"
+            "Citations: [source=doc.md chunk_id=doc_chunk_1]"
+        )
+        evidence_set = [
+            {"evidence_id": "ev_0", "chunk_id": "doc_chunk_1", "snippet": "LGD is 100 percent for equity instruments and 75 percent for senior debt."}
+        ]
+
+        claims = build_claims_from_answer(answer, evidence_set=evidence_set)
+        assert len(claims) == 2
+        assert claims[0]["evidence_ids"] == ["ev_0"]
+        assert claims[1]["evidence_ids"] == ["ev_0"]
+
+    def test_claims_split_bullets_into_separate_claims(self):
+        """Bullet lines should become separate claims instead of a single oversized paragraph claim."""
+        from riskagent_agenticrag.rag.agentic_primitives import build_claims_from_answer
+
+        answer = (
+            "1) TLDR\n"
+            "- FRTB is a market risk framework.\n"
+            "- It replaced Basel II.5 in important areas.\n\n"
+            "Citations: [source=doc.md chunk_id=frtb_chunk]"
+        )
+        evidence_set = [
+            {"evidence_id": "ev_0", "chunk_id": "frtb_chunk", "snippet": "FRTB is a market risk framework that replaced Basel II.5."}
+        ]
+
+        claims = build_claims_from_answer(answer, evidence_set=evidence_set)
+        assert len(claims) == 2
+        assert claims[0]["statement"] == "FRTB is a market risk framework."
+        assert claims[1]["statement"] == "It replaced Basel II.5 in important areas."

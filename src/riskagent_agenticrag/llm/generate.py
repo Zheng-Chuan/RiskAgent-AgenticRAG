@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import logging
 import os
+import re
 import subprocess
 import tempfile
 import time
@@ -26,15 +27,20 @@ _ANSWER_TEMPLATE_INSTRUCTIONS = (
     "1) TLDR (2-4 bullets, each grounded in context)\n"
     "2) Key Facts (only facts explicitly stated in context)\n"
     "3) Why it matters (only if context discusses relevance)\n"
+    "The first TLDR bullet MUST directly answer the question using the question's key term(s) when the context supports them.\n"
+    "Prefer the same subject words as the question over generic paraphrases when both are supported by context.\n"
     "Do NOT include sections for which the context provides no information.\n"
     "Do NOT generate examples unless the context contains one.\n"
+    "Do NOT say 'the context does not discuss' or 'no further detail is provided'. Omit missing aspects instead.\n"
+    "Do NOT add next actions, caveats, or refusal-style text when some usable context exists.\n"
 )
 
 _COMPLIANCE_INSTRUCTIONS = (
     "STRICT COMPLIANCE:\n"
     "- Every number in your answer MUST appear verbatim in the provided context.\n"
     "- Do NOT infer, calculate, or fabricate any number not explicitly stated in context.\n"
-    "- If context is insufficient, say you do not know and propose next actions.\n"
+    "- If context is partially insufficient, answer only the supported parts and omit unsupported parts.\n"
+    "- Say you do not know and propose next actions only when there is no usable context at all.\n"
     "- Do not output secrets, credentials, or personal data.\n"
     "- Do not provide trading or investment advice.\n"
 )
@@ -100,6 +106,7 @@ def _call_via_langchain(
     api_key: str,
     temperature: float,
     max_tokens: int | None,
+    timeout_total: int,
     prompt: str,
 ) -> tuple[str, dict[str, int]]:
     """通过 langchain_openai.ChatOpenAI 调用 LLM.
@@ -123,6 +130,7 @@ def _call_via_langchain(
         "base_url": base_url,
         "api_key": api_key,
         "temperature": temperature,
+        "timeout": float(timeout_total),
         "default_headers": headers or None,
     }
     if max_tokens is not None:
@@ -239,7 +247,7 @@ def _call_llm_core(
             else:
                 content, usage = _call_via_langchain(
                     resolved_model, base_url, api_key, float(temperature),
-                    resolved_max_tokens, prompt,
+                    resolved_max_tokens, int(timeout_total), prompt,
                 )
 
             latency_ms = (time.time() - t0) * 1000.0
@@ -312,10 +320,31 @@ def call_llm_json(
     estimated_tokens: int | None = None,
 ) -> dict[str, Any]:
     """使用默认模型调用 LLM, 返回 JSON dict."""
-    return _parse_json_response(call_llm_text(
-        prompt, temperature=temperature,
-        priority=priority, estimated_tokens=estimated_tokens,
-    ))
+    text = call_llm_text(
+        prompt,
+        temperature=temperature,
+        priority=priority,
+        estimated_tokens=estimated_tokens,
+    )
+    try:
+        return _parse_json_response(text)
+    except Exception as first_exc:
+        logger.warning("LLM JSON parse failed, attempting repair pass: %s", first_exc)
+        repair_prompt = (
+            "Convert the following model output into one valid JSON object only.\n"
+            "Return JSON only with no explanation, no markdown fences, and no extra text.\n\n"
+            f"Original output:\n{text}\n"
+        )
+        repaired_text = call_llm_text(
+            repair_prompt,
+            temperature=0.0,
+            priority=priority,
+            estimated_tokens=estimated_tokens,
+        )
+        try:
+            return _parse_json_response(repaired_text)
+        except Exception:
+            raise first_exc
 
 
 def call_llm_text_with_model(
@@ -348,7 +377,27 @@ def call_llm_json_with_model(
         prompt, model=model, temperature=temperature, max_tokens=max_tokens,
         priority=priority, estimated_tokens=estimated_tokens,
     )
-    return _parse_json_response(text)
+    try:
+        return _parse_json_response(text)
+    except Exception as first_exc:
+        logger.warning("LLM JSON parse failed for model %s, attempting repair pass: %s", model, first_exc)
+        repair_prompt = (
+            "Convert the following model output into one valid JSON object only.\n"
+            "Return JSON only with no explanation, no markdown fences, and no extra text.\n\n"
+            f"Original output:\n{text}\n"
+        )
+        repaired_text = call_llm_text_with_model(
+            repair_prompt,
+            model=model,
+            temperature=0.0,
+            max_tokens=max_tokens,
+            priority=priority,
+            estimated_tokens=estimated_tokens,
+        )
+        try:
+            return _parse_json_response(repaired_text)
+        except Exception:
+            raise first_exc
 
 
 # ---------------------------------------------------------------------------
@@ -378,6 +427,41 @@ def _format_context(docs: Iterable[Document], limit: int = 1200) -> str:
     return "\n".join(parts).strip()
 
 
+_UNSUPPORTED_META_LINE_PATTERNS = (
+    re.compile(r"\bi'?m unable to answer\b", re.IGNORECASE),
+    re.compile(r"\bi do not know\b", re.IGNORECASE),
+    re.compile(r"\bno relevant information was found\b", re.IGNORECASE),
+    re.compile(r"\bnext actions\s*:", re.IGNORECASE),
+    re.compile(r"\bsuggested next steps\s*:", re.IGNORECASE),
+    re.compile(r"\bthe provided context does not\b", re.IGNORECASE),
+    re.compile(r"\bthe context does not\b", re.IGNORECASE),
+    re.compile(r"\bno further detail\b", re.IGNORECASE),
+    re.compile(r"\bbased on the provided context\b", re.IGNORECASE),
+    re.compile(r"\bbecause the information is insufficient\b", re.IGNORECASE),
+)
+
+
+def _sanitize_answer_for_grounding(answer: str) -> str:
+    """删除容易越过证据边界的元描述行, 保留实质性回答内容."""
+    blocks = [block.strip() for block in str(answer or "").split("\n\n") if block.strip()]
+    cleaned_blocks: list[str] = []
+    for block in blocks:
+        kept_lines: list[str] = []
+        for raw_line in block.splitlines():
+            line = raw_line.strip()
+            if not line:
+                continue
+            if any(pattern.search(line) for pattern in _UNSUPPORTED_META_LINE_PATTERNS):
+                continue
+            kept_lines.append(line)
+        if not kept_lines:
+            continue
+        if len(kept_lines) == 1 and re.fullmatch(r"\d+\)\s+.*", kept_lines[0]):
+            continue
+        cleaned_blocks.append("\n".join(kept_lines))
+    return "\n\n".join(cleaned_blocks).strip()
+
+
 def generate_answer(question: str, docs: list[Document]) -> str:
     """统一入口: question + docs -> answer 字符串."""
     context = _format_context(docs)
@@ -392,7 +476,8 @@ def generate_answer(question: str, docs: list[Document]) -> str:
         f"Question: {question}\n\n"
         f"Context:\n{context}\n"
     )
-    return call_llm_text(prompt, temperature=0.0)
+    answer = call_llm_text(prompt, temperature=0.0)
+    return _sanitize_answer_for_grounding(answer)
 
 
 # ---------------------------------------------------------------------------
@@ -401,10 +486,35 @@ def generate_answer(question: str, docs: list[Document]) -> str:
 
 def _parse_json_response(text: str) -> dict[str, Any]:
     """解析 LLM 返回的 JSON 文本, 校验为 dict."""
-    try:
-        data = json.loads(str(text or ""))
-    except Exception as exc:
-        raise RuntimeError("LLM did not return valid JSON") from exc
-    if not isinstance(data, dict):
-        raise RuntimeError("LLM returned JSON but not an object")
-    return data
+    raw = str(text or "").strip()
+    candidates: list[str] = []
+    seen: set[str] = set()
+
+    def _push(candidate: str) -> None:
+        normalized = str(candidate or "").strip()
+        if not normalized or normalized in seen:
+            return
+        seen.add(normalized)
+        candidates.append(normalized)
+
+    _push(raw)
+    for match in re.finditer(r"```(?:json)?\s*([\s\S]*?)\s*```", raw, flags=re.IGNORECASE):
+        _push(match.group(1))
+
+    start = raw.find("{")
+    end = raw.rfind("}")
+    if start >= 0 and end > start:
+        _push(raw[start : end + 1])
+
+    last_exc: Exception | None = None
+    for candidate in candidates:
+        try:
+            data = json.loads(candidate)
+        except Exception as exc:
+            last_exc = exc
+            continue
+        if not isinstance(data, dict):
+            raise RuntimeError("LLM returned JSON but not an object")
+        return data
+
+    raise RuntimeError("LLM did not return valid JSON") from last_exc

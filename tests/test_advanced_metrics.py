@@ -84,6 +84,63 @@ class Week14AdvancedMetricsTest(unittest.TestCase):
         self.assertEqual(float(retrieval.metrics["retrieval_recall_at_2"]), 1.0)
         self.assertEqual(float(retrieval.metrics["retrieval_mrr"]), 0.5)
 
+    def test_retrieval_metrics_allow_chunk_drift_with_same_section_and_text(self) -> None:
+        samples = [
+            {
+                "tags": ["definition"],
+                "qrels": [
+                    {
+                        "qrel_id": "q1_r1",
+                        "chunk_id": "old-chunk-id",
+                        "source": "corpus/Background.md",
+                        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+                        "text": "Delta: sensitivity to the underlying price level.",
+                        "relevance": 2,
+                    }
+                ],
+                "retrieved_docs": [
+                    {
+                        "source": "corpus/Background.md",
+                        "chunk_id": "new-chunk-id",
+                        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+                        "content": "Greeks are sensitivities of a derivative value to small changes in risk factors. Delta: sensitivity to the underlying price level.",
+                        "dense_rank": 1,
+                    }
+                ],
+            }
+        ]
+        retrieval = compute_retrieval_metrics(samples=samples, ks=[1])
+        self.assertEqual(float(retrieval.metrics["retrieval_recall_at_1"]), 1.0)
+        self.assertEqual(float(retrieval.metrics["retrieval_mrr"]), 1.0)
+
+    def test_retrieval_metrics_do_not_allow_chunk_drift_across_other_sections(self) -> None:
+        samples = [
+            {
+                "tags": ["definition"],
+                "qrels": [
+                    {
+                        "qrel_id": "q1_r1",
+                        "chunk_id": "old-chunk-id",
+                        "source": "corpus/Background.md",
+                        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+                        "text": "Delta: sensitivity to the underlying price level.",
+                        "relevance": 2,
+                    }
+                ],
+                "retrieved_docs": [
+                    {
+                        "source": "corpus/Background.md",
+                        "chunk_id": "new-chunk-id",
+                        "section_path": "Background / 4. FRTB overview",
+                        "content": "Delta: sensitivity to the underlying price level.",
+                        "dense_rank": 1,
+                    }
+                ],
+            }
+        ]
+        retrieval = compute_retrieval_metrics(samples=samples, ks=[1])
+        self.assertEqual(float(retrieval.metrics["retrieval_recall_at_1"]), 0.0)
+
     def test_retrieval_metrics_keep_text_match_for_text_only_qrels(self) -> None:
         samples = [
             {

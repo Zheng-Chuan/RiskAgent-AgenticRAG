@@ -85,9 +85,6 @@ def _row_haystacks(row: dict[str, Any]) -> list[str]:
 def _row_matches_qrel(row: dict[str, Any], qrel: dict[str, Any]) -> bool:
     row_chunk_id = _normalize_id(row.get("chunk_id"))
     qrel_chunk_id = _normalize_id(qrel.get("chunk_id"))
-    if qrel_chunk_id:
-        return bool(row_chunk_id) and row_chunk_id == qrel_chunk_id
-
     row_source = _normalize_id(row.get("source"))
     qrel_source = _normalize_id(qrel.get("source"))
     row_section_path = _normalize_id(row.get("section_path"))
@@ -96,6 +93,9 @@ def _row_matches_qrel(row: dict[str, Any], qrel: dict[str, Any]) -> bool:
     qrel_parent_id = _normalize_id(qrel.get("parent_id"))
     haystacks = _row_haystacks(row)
     target = _normalize_text(str(qrel.get("text") or ""))
+
+    if qrel_chunk_id and row_chunk_id == qrel_chunk_id:
+        return True
 
     # 优先使用结构化定位字段做硬匹配. 只要 qrel 已经提供 source / section / parent,
     # 就不再退回到宽松的文本包含逻辑, 避免同源或近似文本误判为命中.
@@ -107,7 +107,20 @@ def _row_matches_qrel(row: dict[str, Any], qrel: dict[str, Any]) -> bool:
             return False
         if qrel_parent_id and row_parent_id != qrel_parent_id:
             return False
+        # 中文注释: 当 qrel 带 chunk_id 但由于重切块导致 chunk_id 漂移时,
+        # 允许退回到同 source / section / parent 下的文本硬覆盖匹配.
+        # 这样不会把其他 section 的近似文本误判成命中.
+        if qrel_chunk_id:
+            if not haystacks or not target:
+                return False
+            for haystack in haystacks:
+                if target in haystack or haystack in target:
+                    return True
+            return False
         return True
+
+    if qrel_chunk_id:
+        return False
 
     # 只有明确的 text-only qrel 才允许退回到文本匹配.
     if not haystacks:

@@ -152,9 +152,13 @@ def node_retrieve_and_critique(state: AgenticState) -> AgenticState:
         )
         state["decision_log"] = decision_log
 
-    sufficient, improved_query, critique_reason = agentic_primitives.critique_retrieval(question, docs)
+    critique_sufficient, improved_query, critique_reason = agentic_primitives.critique_retrieval(question, docs)
     next_round = current_round + 1
-    should_continue = (not bool(sufficient or self_sufficient)) and (next_round < max_rounds)
+
+    # 中文注释: 开启 self_rag 时, 只有 LLM critique 和 self_rag 都认为检索足够, 才允许停止.
+    # 这样可以减少单侧误判 sufficient 导致的过早停检索.
+    retrieval_sufficient = bool(critique_sufficient) and (not self_rag_enabled or bool(self_sufficient))
+    should_continue = (not retrieval_sufficient) and (next_round < max_rounds)
 
     state["docs"] = docs
     state["critique_reason"] = critique_reason

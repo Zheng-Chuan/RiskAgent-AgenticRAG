@@ -19,6 +19,7 @@ import argparse
 import json
 import subprocess
 import time
+import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -86,6 +87,7 @@ def _doc_eval_row(doc: Any) -> dict[str, Any]:
         "chunk_id": str(meta.get("chunk_id") or ""),
         "source": str(meta.get("source") or ""),
         "section_path": str(meta.get("section_path") or ""),
+        "parent_id": str(meta.get("parent_id") or ""),
         "dense_rank": meta.get("dense_rank"),
         "sparse_rank": meta.get("sparse_rank"),
         "rrf_score": meta.get("rrf_score"),
@@ -133,6 +135,20 @@ def _nested_debug_value(debug: dict[str, Any], key: str) -> Any:
             if found is not None:
                 return found
     return None
+
+
+def _sample_contexts(docs: list[Any], *, max_docs: int = 4, max_chars: int = 1800) -> list[str]:
+    """评测上下文应尽量贴近生成链路, 优先使用 expanded_text."""
+    contexts: list[str] = []
+    for d in docs[:max_docs]:
+        meta = getattr(d, "metadata", {}) or {}
+        if not isinstance(meta, dict):
+            meta = {}
+        text = str(meta.get("expanded_text") or getattr(d, "page_content", "") or "").strip()
+        if not text:
+            continue
+        contexts.append(text[:max_chars])
+    return contexts
 
 
 def _parse_retrieval_ks(text: str) -> list[int]:
@@ -184,6 +200,43 @@ def _merge_float_metrics(target: dict[str, Any], source: dict[str, Any], keys: l
             pass
 
 
+def _debug_emit(hypothesis_id: str, msg: str, *, data: dict[str, Any] | None = None) -> None:
+    # #region debug-point A:report-phases
+    env_path = Path(".dbg/report-hang.env")
+    debug_url = "http://127.0.0.1:7777/event"
+    session_id = "report-hang"
+    try:
+        content = env_path.read_text(encoding="utf-8")
+        for line in content.splitlines():
+            if line.startswith("DEBUG_SERVER_URL="):
+                debug_url = line.split("=", 1)[1].strip() or debug_url
+            elif line.startswith("DEBUG_SESSION_ID="):
+                session_id = line.split("=", 1)[1].strip() or session_id
+    except Exception:
+        return
+    payload = {
+        "sessionId": session_id,
+        "runId": str(os.getenv("RISKAGENT_DEBUG_RUN_ID", "pre-fix") or "pre-fix"),
+        "hypothesisId": hypothesis_id,
+        "location": "evaluation.run",
+        "msg": f"[DEBUG] {msg}",
+        "data": data or {},
+        "ts": int(time.time() * 1000),
+    }
+    try:
+        urllib.request.urlopen(
+            urllib.request.Request(
+                debug_url,
+                data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+            ),
+            timeout=0.8,
+        ).read()
+    except Exception:
+        pass
+    # #endregion
+
+
 def run_evaluation(
     *,
     corpus_dir: Path,
@@ -199,9 +252,11 @@ def run_evaluation(
     os.environ.setdefault("EMBEDDINGS_PROVIDER", "hf")
 
     items = load_dataset(dataset_path)
+    # 中文注释: 评测需要覆盖最大的 k, 否则 `recall@5` 会被 `final_k=4` 人为压低.
+    eval_final_k = max([4, *[int(k) for k in retrieval_ks or []]])
 
     incremental_index(corpus_dir=corpus_dir, persist_dir=persist_dir, include_paths=None)
-    retriever = build_retriever(persist_dir=persist_dir, final_k=4)
+    retriever = build_retriever(persist_dir=persist_dir, final_k=eval_final_k)
     retriever_debug = {}
     if hasattr(retriever, "debug_stats"):
         try:
@@ -222,10 +277,7 @@ def run_evaluation(
         if not isinstance(citations, list):
             citations = extract_citations(docs)
 
-        contexts: list[str] = []
-        for d in docs[:4]:
-            text = getattr(d, "page_content", "")
-            contexts.append(str(text)[:500])
+        contexts = _sample_contexts(docs)
         retrieved_docs = [_doc_eval_row(d) for d in docs]
         for idx, d in enumerate(docs[: len(retrieved_docs)]):
             text = str(getattr(d, "page_content", "") or "")
@@ -288,9 +340,20 @@ def run_evaluation(
             }
         )
 
+    _debug_emit("A", "post_loop_complete", data={"samples": len(samples), "profile": str(profile or "all")})
     cov = compute_citations_coverage(samples)
     citation_mode = os.getenv("EVAL_CITATION_JUDGE_MODE", "auto")
+    _debug_emit("A", "citation_precision_start", data={"mode": citation_mode, "samples": len(samples)})
     citation_precision_out = try_compute_citation_precision(samples=samples, mode=citation_mode)
+    _debug_emit(
+        "A",
+        "citation_precision_done",
+        data={
+            "ok": bool(citation_precision_out.ok),
+            "error": str(citation_precision_out.error or ""),
+            "details": len(citation_precision_out.details or []),
+        },
+    )
     citation_precision_result = {
         "enabled": citation_precision_out.enabled,
         "ok": citation_precision_out.ok,
@@ -323,7 +386,13 @@ def run_evaluation(
         numeric_tolerance = float(os.getenv("EVAL_NUMERIC_TOLERANCE", "0.01"))
     except (TypeError, ValueError):
         numeric_tolerance = 0.01
+    _debug_emit("C", "domain_consistency_start", data={"samples": len(samples), "tolerance": numeric_tolerance})
     out = try_compute_domain_consistency(samples=samples, tolerance=numeric_tolerance)
+    _debug_emit(
+        "C",
+        "domain_consistency_done",
+        data={"ok": bool(out.ok), "error": str(out.error or ""), "detail_samples": len((out.details or {}).get("samples", []))},
+    )
     domain_consistency = {
         "enabled": out.enabled,
         "ok": out.ok,
@@ -331,12 +400,18 @@ def run_evaluation(
         "error": out.error,
         "details": out.details,
     }
+    _debug_emit("C", "answer_eval_start", data={"samples": len(samples), "citation_coverage": cov.coverage})
     answer_eval_out = build_answer_eval(
         samples=samples,
         citation_coverage=cov.coverage,
         citation_precision_result=citation_precision_result,
         ragas_result=ragas_result,
         thresholds=_answer_eval_thresholds(),
+    )
+    _debug_emit(
+        "C",
+        "answer_eval_done",
+        data={"ok": bool(answer_eval_out.ok), "error": str(answer_eval_out.error or "")},
     )
     answer_eval = {
         "enabled": answer_eval_out.enabled,
@@ -369,7 +444,7 @@ def run_evaluation(
             "dataset_path": str(dataset_path),
             "dataset_version": str(dataset_path.name),
             "persist_dir": str(persist_dir),
-            "k": 4,
+            "k": eval_final_k,
             "milvus_uri": os.getenv("MILVUS_URI"),
             "milvus_host": os.getenv("MILVUS_HOST"),
             "milvus_port": os.getenv("MILVUS_PORT"),
@@ -441,7 +516,13 @@ def run_evaluation(
     if bool(with_gate):
         flags["gate"] = True
     if flags["retrieval"]:
+        _debug_emit("C", "retrieval_metrics_start", data={"ks": retrieval_ks})
         retrieval = compute_retrieval_metrics(samples=samples, ks=retrieval_ks)
+        _debug_emit(
+            "C",
+            "retrieval_metrics_done",
+            data={"metrics": len(retrieval.metrics or {}), "slices": len(retrieval.slice_metrics or {})},
+        )
         report["retrieval_metrics"] = {
             "gold_metrics": retrieval.metrics,
             "slice_metrics": retrieval.slice_metrics,
@@ -453,17 +534,29 @@ def run_evaluation(
         }
         report["metrics"].update(retrieval.metrics)
     if flags["gate"]:
+        _debug_emit("C", "gate_metrics_start", data={"samples": len(samples)})
         gate = compute_gate_metrics(samples=samples)
+        _debug_emit(
+            "C",
+            "gate_metrics_done",
+            data={"metrics": len(gate.metrics or {}), "distributions": len(gate.distributions or {})},
+        )
         report["gate_metrics"] = {
             "metrics": gate.metrics,
             "distributions": gate.distributions,
         }
         report["metrics"].update(gate.metrics)
     if flags["reliability"]:
+        _debug_emit("C", "reliability_metrics_start", data={"include_latency": bool(include_latency), "include_cost": bool(include_cost)})
         rc = compute_reliability_cost_metrics(
             samples=samples,
             include_latency=bool(include_latency),
             include_cost=bool(include_cost),
+        )
+        _debug_emit(
+            "C",
+            "reliability_metrics_done",
+            data={"metrics": len(rc.metrics or {}), "node_latency_p95": len(rc.node_latency_p95 or {})},
         )
         report["reliability_metrics"] = {
             "metrics": rc.metrics,
@@ -471,6 +564,7 @@ def run_evaluation(
         }
         report["metrics"].update(rc.metrics)
 
+    _debug_emit("C", "run_evaluation_return", data={"metric_count": len(report.get("metrics", {})), "sample_count": len(samples)})
     return report
 
 

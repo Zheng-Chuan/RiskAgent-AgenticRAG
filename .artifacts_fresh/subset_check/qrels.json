@@ -1,0 +1,57 @@
+[
+  {
+    "id": "q01",
+    "qrels": [
+      {
+        "qrel_id": "q01_r1",
+        "chunk_id": "Background.md:52ecd236d3e8",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 4. FRTB overview",
+        "text": "FRTB stands for Fundamental Review of the Trading Book. High level goals: Improve market risk capital framework after 2008. Increase risk sensitivity and model risk governance.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q02",
+    "qrels": [
+      {
+        "qrel_id": "q02_r1",
+        "chunk_id": "Background.md:a87505a01dca",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Delta: sensitivity to the underlying price level.",
+        "relevance": 2
+      },
+      {
+        "qrel_id": "q02_r2",
+        "chunk_id": "Background.md:a87505a01dca",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Greeks are sensitivities of a derivative value to small changes in risk factors.",
+        "relevance": 1
+      }
+    ]
+  },
+  {
+    "id": "q03",
+    "qrels": [
+      {
+        "qrel_id": "q03_r1",
+        "chunk_id": "Background.md:a87505a01dca",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Gamma: sensitivity of Delta to the underlying price.",
+        "relevance": 2
+      },
+      {
+        "qrel_id": "q03_r2",
+        "chunk_id": "Background.md:a87505a01dca",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Delta: sensitivity to the underlying price level.",
+        "relevance": 1
+      }
+    ]
+  }
+]

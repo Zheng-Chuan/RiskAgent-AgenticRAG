@@ -1,0 +1,40 @@
+[
+  {
+    "id": "q01",
+    "question": "What is FRTB and why does it matter for market risk?",
+    "reference_answer": "FRTB (Fundamental Review of the Trading Book) is a regulatory framework to improve market risk capital requirements after 2008. It increases risk sensitivity and model risk governance by introducing stricter requirements for risk factor eligibility, backtesting, and PnL attribution.",
+    "ground_truth_contexts": [
+      "FRTB stands for Fundamental Review of the Trading Book. High level goals: Improve market risk capital framework after 2008. Increase risk sensitivity and model risk governance."
+    ],
+    "tags": [
+      "regulation",
+      "definition"
+    ]
+  },
+  {
+    "id": "q02",
+    "question": "Explain Delta in the context of derivatives risk.",
+    "reference_answer": "Delta is the sensitivity of a derivative's value to small changes in the underlying price level.",
+    "ground_truth_contexts": [
+      "Delta: sensitivity to the underlying price level.",
+      "Greeks are sensitivities of a derivative value to small changes in risk factors."
+    ],
+    "tags": [
+      "greek"
+    ]
+  },
+  {
+    "id": "q03",
+    "question": "What is Gamma and how is it different from Delta?",
+    "reference_answer": "Gamma is the sensitivity of Delta to changes in the underlying price, representing the second derivative of the option price with respect to the underlying.",
+    "ground_truth_contexts": [
+      "Gamma: sensitivity of Delta to the underlying price.",
+      "Delta: sensitivity to the underlying price level."
+    ],
+    "tags": [
+      "compare",
+      "greek",
+      "definition"
+    ]
+  }
+]

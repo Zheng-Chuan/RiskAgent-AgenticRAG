@@ -104,11 +104,15 @@ make test CONDA_ENV=riskagent-agenticrag
 - `scripts/release_acceptance.sh` 现在支持两条路径
 - 有可用 `LLM key` 时优先跑 fresh eval
 - 没有可用 `LLM key` 时回退到样例报告做 smoke 级校验
-- 当前最新的真实新报告是 `5` 题 smoke 评测
+- 当前最新的真实新报告已经是 `50` 题 full baseline fresh eval
+- full baseline 报告 JSON: [rag_eval_unified_full_baseline_after_judge_timeout_fix_20260718_20260718_024808.json](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts_fresh/reports/rag_eval_unified_full_baseline_after_judge_timeout_fix_20260718_20260718_024808.json)
+- full baseline 报告 Markdown: [rag_eval_unified_full_baseline_after_judge_timeout_fix_20260718_20260718_024808.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts_fresh/reports/rag_eval_unified_full_baseline_after_judge_timeout_fix_20260718_20260718_024808.md)
 - smoke 报告 JSON: [rag_eval_unified_smoke_5q_20260706_20260706_103824.json](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts_fresh/reports/rag_eval_unified_smoke_5q_20260706_20260706_103824.json)
 - smoke 报告 Markdown: [rag_eval_unified_smoke_5q_20260706_20260706_103824.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts_fresh/reports/rag_eval_unified_smoke_5q_20260706_20260706_103824.md)
 - 这份 smoke 报告已经证明外部 `LLM key` 和当前统一主链能够真实打通
-- 但它的 `threshold gate` 结果仍是 `fail` 还不能替代 full baseline
+- 当前 full baseline 的关键结果是 `passed=33/50` `citation_coverage=0.960` `faithfulness=0.591` `answer_relevancy=0.865`
+- 当前 full baseline 的 `threshold gate` 结果仍是 `fail`
+- 当前未完成项已经从 `full baseline 是否能落盘` 变成 `faithfulness` 和 `retrieval_recall_at_5` 仍未达阈值 以及 `release acceptance` 尚未重跑
 - 后续在 `README.md` `docs/ARCHITECTURE.md` `docs/PRD.md` 中出现的关键数字 都应该能映射到具体报告文件
 
 ## 当前工程现实

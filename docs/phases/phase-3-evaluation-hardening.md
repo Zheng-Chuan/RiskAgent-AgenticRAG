@@ -23,13 +23,16 @@
 - release acceptance 已能校验报告结构和阈值门禁的最小闭环
 - 已经新增一条外部 `LLM` 注入脚本 可在不改本项目 `.env` 的情况下运行 fresh eval
 - 已生成 `5` 题 smoke fresh report 证明当前统一主链和外部 `LLM` 配置可以真实跑通
+- 已正式生成 `50` 题 full baseline fresh report
+- 当前 full baseline 关键结果为 `passed=33/50` `citation_coverage=0.960` `faithfulness=0.591` `answer_relevancy=0.865` `retrieval_recall_at_5=0.500`
 
 ## 当前仍未完成
 
-- full dataset 的 fresh baseline 还没有正式落盘
 - 报告元信息里还没有稳定落入 `index version` 或 `schema_fingerprint`
 - gate_labels 样本量仍然偏小 统计显著性有限
-- 当前 `5` 题 smoke 报告的 `threshold gate` 结果为 `fail`
+- 当前 `50` 题 full baseline 的 `threshold gate` 结果为 `fail`
+- 当前 `faithfulness=0.591` 低于阈值 `0.75`
+- 当前 `retrieval_recall_at_5=0.500` 低于阈值 `0.6`
 - release acceptance 虽然已支持 fresh eval 但无 `LLM key` 时仍会回退到仓库内样例报告
 
 ## P0 必须先做

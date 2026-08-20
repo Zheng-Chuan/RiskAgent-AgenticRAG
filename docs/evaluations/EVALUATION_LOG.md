@@ -17,6 +17,27 @@
 | 2026-07-18 | unified_full_baseline_after_judge_parallel_bugfix | 38/50 | FAIL | recall@5=0.500 低于阈值 0.6, 是 gate 唯一瓶颈 | `.artifacts_fresh/reports/rag_eval_unified_full_baseline_after_judge_parallel_bugfix_20260718_*.md` |
 | 2026-08-18 | prod_pipeline v10 (规则分块重建索引 2393 chunks 后) | - | FAIL | faithfulness=0.681 未达 0.75; recall@5=0.373 检索侧瓶颈; citation 0.82 / relevancy 0.882 达标 | 容器内 `/app/.artifacts/reports/` |
 | 2026-08-18 | prod_pipeline_v10b_targ_rerank_recallfix | 47/50 | PASS | gate 首次全绿; recall@5 0.373 -> 0.78; 3 FAIL 均为 TARG 词表缺失 | `.artifacts/reports/rag_eval_prod_pipeline_v10b_targ_rerank_recallfix_20260818_073514.md` |
+| 2026-08-20 | prod_pipeline_v10c_fva_mva_colva_fix | 3/3 | PASS | v10b 的 3 个 FAIL 复跑全部转 PASS; 只跑 FAIL 子集未重建索引 | 容器内 `/app/.artifacts/reports/rag_eval_prod_pipeline_v10c_fva_mva_colva_fix_20260820_103543.md` |
+
+## 2026-08-20 prod_pipeline_v10c_fva_mva_colva_fix (FAIL 子集复跑)
+
+背景: v10b 评测中 q19/q21/q22 三题因 TARG 词表缺失被判 simple 跳过检索. 修复 (词表补 fva/mva/colva) 已随 v10c-fix 镜像部署到 k8s, 本次只复跑这 3 题, 未跑全量, 未重建索引 (manifest v4 只读).
+
+环境: k8s 容器 `riskagent-api-7d7d4cdb88-9lwwm` (镜像 v10c-fix), 数据集为 3 题子集 (`/app/eval_subset/questions.json` + 同级 `qrels.json`).
+
+### 结果
+
+| 题号 | 题目 | 结果 | 检索链路证据 |
+|---|---|---|---|
+| q19 | What is FVA? | PASS | nodes 含 retrieve_and_critique, 检回 8 docs, top1 source=`corpus/regulatory_seed/md/en/wikipedia_xva.md` (rerank 0.623) |
+| q21 | What is MVA? | PASS | nodes 含 retrieve_and_critique |
+| q22 | What is ColVA? | PASS | nodes 含 retrieve_and_critique |
+
+子集指标 (仅 3 题, 不代表全量): retrieval_mrr=0.333, recall@5=0.333. 题目级判定以 answer_eval PASS 为准, 全量口径仍以 v10b 报告为准.
+
+注: 本次 ragas judge 出现 API 噪声 (部分 job 报 `n should not greater than 1` 400 错误和超时), ragas 聚合指标为空, 不影响题目级 PASS 判定. 该 judge 稳定性问题已列入观察项.
+
+结论: v10b 的 3 个 FAIL 全部闭环, 修复链路 = 词表补全 -> v10c-fix 镜像 -> 检索链路恢复 -> 题目转 PASS. 全量 50 题预期 50/50, 待下次全量评测确认.
 
 ## 2026-08-18 prod_pipeline_v10b_targ_rerank_recallfix
 

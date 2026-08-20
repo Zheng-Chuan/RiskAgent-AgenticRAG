@@ -34,6 +34,7 @@
 - `docs/decisions/ADR-*.md`: 已接受的架构决策和 trade-off
 - `docs/decisions/RFC-*.md`: 大改动提案和待决问题
 - `docs/phases/*.md`: 分阶段迭代计划 checkpoint exit criteria 和交付物
+- `docs/evaluations/EVALUATION_LOG.md`: 每次正式评测的结果台账 FAIL 根因和修复追踪
 - `docs/INTERVIEW.md`: 面向高压面试追问的专项问答
 
 文档迭代流程.
@@ -62,6 +63,7 @@
 - [docs/INTERVIEW.md](docs/INTERVIEW.md)
 - [docs/decisions/](docs/decisions/)
 - [docs/phases/](docs/phases/)
+- [docs/evaluations/EVALUATION_LOG.md](docs/evaluations/EVALUATION_LOG.md)
 
 ## 快速开始
 
@@ -105,14 +107,18 @@ make test CONDA_ENV=riskagent-agenticrag
 - 有可用 `LLM key` 时优先跑 fresh eval
 - 没有可用 `LLM key` 时回退到样例报告做 smoke 级校验
 - 当前最新的真实新报告已经是 `50` 题 full baseline fresh eval
-- full baseline 报告 JSON: [rag_eval_unified_full_baseline_after_judge_timeout_fix_20260718_20260718_024808.json](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts_fresh/reports/rag_eval_unified_full_baseline_after_judge_timeout_fix_20260718_20260718_024808.json)
-- full baseline 报告 Markdown: [rag_eval_unified_full_baseline_after_judge_timeout_fix_20260718_20260718_024808.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts_fresh/reports/rag_eval_unified_full_baseline_after_judge_timeout_fix_20260718_20260718_024808.md)
+- 历次评测结果 FAIL 根因和修复追踪见 [docs/evaluations/EVALUATION_LOG.md](docs/evaluations/EVALUATION_LOG.md)
+- 当前最新 gate 全绿报告: `prod_pipeline_v10b_targ_rerank_recallfix` (2026-08-18, `passed=47/50` `faithfulness=0.895` `citation_coverage=0.940` `answer_relevancy=0.943` `retrieval_recall_at_5=0.78`, gate PASS)
+- v10b 报告 Markdown: [rag_eval_prod_pipeline_v10b_targ_rerank_recallfix_20260818_073514.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts/reports/rag_eval_prod_pipeline_v10b_targ_rerank_recallfix_20260818_073514.md)
+- full baseline 报告 JSON: [rag_eval_unified_full_baseline_after_judge_parallel_bugfix_20260718_20260718_065654.json](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts_fresh/reports/rag_eval_unified_full_baseline_after_judge_parallel_bugfix_20260718_20260718_065654.json)
+- full baseline 报告 Markdown: [rag_eval_unified_full_baseline_after_judge_parallel_bugfix_20260718_20260718_065654.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts_fresh/reports/rag_eval_unified_full_baseline_after_judge_parallel_bugfix_20260718_20260718_065654.md)
 - smoke 报告 JSON: [rag_eval_unified_smoke_5q_20260706_20260706_103824.json](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts_fresh/reports/rag_eval_unified_smoke_5q_20260706_20260706_103824.json)
 - smoke 报告 Markdown: [rag_eval_unified_smoke_5q_20260706_20260706_103824.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts_fresh/reports/rag_eval_unified_smoke_5q_20260706_20260706_103824.md)
 - 这份 smoke 报告已经证明外部 `LLM key` 和当前统一主链能够真实打通
-- 当前 full baseline 的关键结果是 `passed=33/50` `citation_coverage=0.960` `faithfulness=0.591` `answer_relevancy=0.865`
-- 当前 full baseline 的 `threshold gate` 结果仍是 `fail`
-- 当前未完成项已经从 `full baseline 是否能落盘` 变成 `faithfulness` 和 `retrieval_recall_at_5` 仍未达阈值 以及 `release acceptance` 尚未重跑
+- 2026-07-18 full baseline 的关键结果是 `passed=38/50` `citation_coverage=0.960` `faithfulness=0.775` `answer_relevancy=0.848` `retrieval_recall_at_5=0.500` gate `fail`
+- 该瓶颈已在 2026-08-18 `v10b` 报告中解决 (`retrieval_recall_at_5=0.78` gate 首次全绿), 详见评测台账
+- `release acceptance` 尚未用 `v10b` 报告重跑
+- 遗留: v10b 3 个 FAIL (`FVA` `MVA` `ColVA`) 根因是 TARG 词表缺失, 修复已合入待部署, 详见评测台账
 - 后续在 `README.md` `docs/ARCHITECTURE.md` `docs/PRD.md` 中出现的关键数字 都应该能映射到具体报告文件
 
 ## 当前工程现实
@@ -124,3 +130,12 @@ make test CONDA_ENV=riskagent-agenticrag
 - GitHub CI 已经收口到当前真实门禁链 `offline regression + release acceptance`
 - fresh eval 需要同时满足 `本地 embeddings 模型可用` 和 `外部 LLM key 可用`
 - 当前仓库内新增了 `scripts/run_fresh_eval_with_current_env.py` 用于在不污染本项目 `.env` 的前提下 临时注入外部 `LLM` 配置做 fresh eval
+
+## 测试覆盖率现状
+
+- 当前测试覆盖率约 `33%` 远低于 `Makefile` 中 `test-coverage` 目标设定的 `90%` 阈值
+- `tests/unit/` 覆盖较好 但 `evaluation/` 模块覆盖率仅约 `7%` 是最大缺口
+- `api/server.py` 因 `email-validator` 导入问题导致部分测试无法执行
+- `rag/hybrid_retriever.py` 混合检索核心逻辑覆盖率仅约 `5%`
+- 详细覆盖率分析见 [COVERAGE_REPORT.md](COVERAGE_REPORT.md) 但该报告本身也可能过时 需要以实际运行结果为准
+- 当前测试文件共 `55+` 个 覆盖 unit smoke scenario performance milestone acceptance 等多个层次

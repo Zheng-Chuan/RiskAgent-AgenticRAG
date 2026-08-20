@@ -78,7 +78,7 @@ def test_build_graph_validate_ends():
 @patch("riskagent_agenticrag.orchestration.nodes.validate_response", return_value=None)
 @patch("riskagent_agenticrag.orchestration.nodes.should_require_numeric_backing", return_value=False)
 @patch("riskagent_agenticrag.orchestration.nodes.grade_generation", return_value={"ok": True, "message": "", "category": ""})
-@patch("riskagent_agenticrag.orchestration.nodes.grade_docs")
+@patch("riskagent_agenticrag.orchestration.nodes.grade_docs_crag")
 @patch("riskagent_agenticrag.orchestration.nodes.extract_structured_request", return_value=None)
 @patch("riskagent_agenticrag.orchestration.nodes.extract_citations", return_value=[])
 @patch("riskagent_agenticrag.orchestration.nodes.agentic_primitives")
@@ -113,17 +113,18 @@ def test_run_langgraph_agentic_chat_returns_expected_keys(
 # ---------------------------------------------------------------------------
 
 @pytest.mark.unit
+@patch("riskagent_agenticrag.rag.crag_strategies.rewrite_and_retrieve", side_effect=Exception("mock"))
 @patch("riskagent_agenticrag.orchestration.nodes.save_artifact", return_value="/tmp/a.json")
 @patch("riskagent_agenticrag.orchestration.nodes.validate_response", return_value=None)
 @patch("riskagent_agenticrag.orchestration.nodes.should_require_numeric_backing", return_value=False)
 @patch("riskagent_agenticrag.orchestration.nodes.grade_generation", return_value={"ok": True, "message": "", "category": ""})
-@patch("riskagent_agenticrag.orchestration.nodes.grade_docs")
+@patch("riskagent_agenticrag.orchestration.nodes.grade_docs_crag")
 @patch("riskagent_agenticrag.orchestration.nodes.extract_structured_request", return_value=None)
 @patch("riskagent_agenticrag.orchestration.nodes.extract_citations", return_value=[])
 @patch("riskagent_agenticrag.orchestration.nodes.agentic_primitives")
 def test_max_rounds_stops_retrieval_loop(
     mock_prims, mock_cite, mock_extract, mock_grade, mock_gen,
-    mock_num, mock_val, mock_save
+    mock_num, mock_val, mock_save, mock_rw
 ):
     """Even if critique says insufficient, loop stops at max_rounds."""
     from riskagent_agenticrag.orchestration.langgraph_runner import run_langgraph_agentic_chat
@@ -140,7 +141,11 @@ def test_max_rounds_stops_retrieval_loop(
     )
 
     retriever = MagicMock(invoke=MagicMock(return_value=[]))
-    result = run_langgraph_agentic_chat("question", retriever, max_rounds=2)
+    # TARG moderate 查询会设置 skip_fanout=True, _invoke_without_fanout 会尝试下钻 _base._base.
+    # 设置 _base=None 强制回退到 retriever.invoke, 确保 call_count 能正确统计检索次数.
+    retriever._base = None
+    # 使用 moderate 查询 (>=15 字符且无复杂信号) 确保 TARG 判定 needs_retrieval=True, 走检索链路
+    result = run_langgraph_agentic_chat("What is FRTB delta capital charge", retriever, max_rounds=2)
 
     # Should still produce an answer (loop terminated by max_rounds)
     assert result["answer"] == "ans"
@@ -160,7 +165,8 @@ def test_state_transition_rewrite_to_retrieve():
     with patch("riskagent_agenticrag.orchestration.nodes.agentic_primitives.rewrite_query",
                return_value="expanded query"):
         state = {
-            "question": "Q", "request_id": "r1", "run_id": "r1",
+            # 使用 moderate 查询 (>=15 字符且无复杂信号) 确保 TARG 判定 needs_rewrite=True
+            "question": "What is FRTB delta capital charge", "request_id": "r1", "run_id": "r1",
             "max_rounds": 2, "retriever": MagicMock(),
             "current_query": "", "improved_query": "", "current_round": 0,
             "docs": [], "critique_reason": "", "should_continue": False,

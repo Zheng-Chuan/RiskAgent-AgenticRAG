@@ -28,6 +28,31 @@ def _compute_line_range(*, full_text: str, start_index: int, chunk_text: str) ->
     return start_line, end_line
 
 
+# 噪声 chunk 特征: 引用标记 / 参考文献残留 / 页脚模板
+_CITATION_RE = re.compile(r"\[\s*\d+\s*\]|\^\s*\[|\[\s*edit\s*\]|Archived\s+\d{4}|Wayback Machine|ISBN|registered trademark")
+_NAV_RE = re.compile(r"^(jump to|navigation|search|further information|see also|external links|references|sources|bibliography|log in|contents|move to sidebar|hide|print/export|download as pdf|printable version|in other projects|wikidata item|appearance|permanent link|page information|cite this page|get shortened link|upload file|special pages|about wikipedia|disclaimers|contact wikipedia|code of conduct|developers|statistics|cookie statement|privacy policy|terms of use)\b", re.IGNORECASE)
+
+
+def _is_junk_chunk(text: str) -> bool:
+    """判断是否为噪声 chunk (引用标记/参考文献残留/页脚模板), 此类 chunk 无检索价值."""
+    stripped = text.strip()
+    if not stripped:
+        return True
+    if _NAV_RE.match(stripped):
+        return True
+    noise_chars = sum(len(m.group(0)) for m in _CITATION_RE.finditer(stripped))
+    if noise_chars / max(1, len(stripped)) > 0.15:
+        return True
+    # 参考文献行特征: 以 ^ 开头 (维基百科引用块) 或含多个 "Retrieved ... Edition ... Press" 串
+    if stripped.startswith("^"):
+        return True
+    bib_marks = len(re.findall(r"\b\d{4}\b", stripped))
+    words = re.findall(r"[A-Za-z]{3,}", stripped)
+    if words and bib_marks / len(words) > 0.25:  # 年份密度过高 -> 参考文献列表
+        return True
+    return False
+
+
 def _markdown_sections(text: str) -> list[tuple[str, str, int, int, int]]:
     """解析 Markdown 文本, 按标题拆分为 (section_path, text, start_line, end_line, start_char)."""
     lines = (text or "").splitlines()
@@ -248,8 +273,26 @@ def split_documents(
         )
         chunks = base_splitter.split_documents(enriched_docs)
 
-    # 3) 元数据丰富
+    # 3) 轻量清洗: 去除维基百科式引用标记 ([13] / [edit] / ^[16]) 与多余空白
+    _INLINE_NOISE_RE = re.compile(r"\[\s*(?:\d+|edit|citation needed)\s*\]|\^\s*\[\d+\]")
+    for c in chunks:
+        cleaned = _INLINE_NOISE_RE.sub("", str(c.page_content or ""))
+        cleaned = re.sub(r"[ \t]{2,}", " ", cleaned)
+        cleaned = re.sub(r"\n{3,}", "\n\n", cleaned)
+        c.page_content = cleaned.strip()
+
+    # 4) 元数据丰富
     _enrich_chunk_metadata(chunks)
+
+    # 5) 过滤过短的无意义碎片 (如 PDF 残句 "." / "e over time.") 和引用/参考文献噪声 chunk
+    import os
+
+    min_chunk_chars = int(os.getenv("RISKAGENT_MIN_CHUNK_CHARS", "30"))
+    chunks = [
+        c
+        for c in chunks
+        if len((c.page_content or "").strip()) >= min_chunk_chars and not _is_junk_chunk(str(c.page_content or ""))
+    ]
 
     return chunks
 

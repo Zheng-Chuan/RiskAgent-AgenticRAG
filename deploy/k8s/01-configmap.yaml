@@ -1,0 +1,90 @@
+# RiskAgent-AgenticRAG 非敏感配置
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: riskagent-config
+  namespace: riskagent
+  labels:
+    app.kubernetes.io/name: riskagent-agenticrag
+data:
+  # Milvus 配置
+  MILVUS_HOST: "milvus.riskagent.svc.cluster.local"
+  MILVUS_PORT: "19530"
+  MILVUS_URI: "http://milvus.riskagent.svc.cluster.local:19530"
+  MILVUS_COLLECTION: "riskagent_agenticrag"
+  MILVUS_INDEX_TYPE: "IVF_FLAT"
+  MILVUS_METRIC_TYPE: "COSINE"
+  MILVUS_NLIST: "128"
+  MILVUS_NPROBE: "16"
+  MILVUS_WAIT_READY: "true"
+  MILVUS_HEALTH_PORT: "9091"
+  MILVUS_READY_TIMEOUT_S: "120"
+  MILVUS_CONSISTENCY: "Session"
+  RISKAGENT_USE_DOCKER_MILVUS: "true"
+
+  # Redis 配置
+  REDIS_HOST: "redis.riskagent.svc.cluster.local"
+  REDIS_PORT: "6379"
+  REDIS_DB: "0"
+
+  # Embeddings 配置 (硅基流动远程 API)
+  EMBEDDINGS_PROVIDER: "openai"
+  EMBEDDINGS_MODEL_NAME: "Qwen/Qwen3-Embedding-4B"
+  EMBEDDINGS_BASE_URL: "https://api.siliconflow.cn/v1"
+
+  # 路径配置
+  RISKAGENT_CORPUS_DIR: "corpus"
+  RISKAGENT_PERSIST_DIR: "/app/.milvus"
+
+  # API 端口 (显式设置, 避免被 k8s Service 自动注入的 <SERVICE>_PORT 覆盖)
+  RISKAGENT_API_PORT: "8000"
+
+  # 功能开关
+  USE_LANGGRAPH: "true"
+  RISKAGENT_SELF_RAG: "true"
+  RISKAGENT_ENABLE_QUERY_INTEL: "true"
+  RISKAGENT_RETRIEVER_MODE: "step2"
+  RISKAGENT_PROMPT_VERSION: "v1"
+  RISKAGENT_TRACE_SNIPPET_CHARS: "240"
+  # 分块策略: 规则分块 (LLM 分块对大 PDF 串行调用耗时数小时, 规则分块秒级)
+  RISKAGENT_USE_LLM_CHUNKING: "false"
+
+  # 速率限制
+  RATE_LIMIT_ENABLED: "true"
+  RATE_LIMIT_PER_MINUTE: "60"
+  RATE_LIMIT_PER_HOUR: "1000"
+
+  # API 认证开关
+  API_KEY_ENABLED: "true"
+
+  # HuggingFace 离线模式 (仅 hf provider 需要, 默认用远程 API 不需要)
+  # HF_HUB_OFFLINE: "1"
+  # TRANSFORMERS_OFFLINE: "1"
+  # HF_DATASETS_OFFLINE: "1"
+
+  # LLM Governance
+  LLM_GOVERNANCE_RATE_LIMIT_TOKENS_PER_MIN: "500000"
+  LLM_GOVERNANCE_RATE_LIMIT_TOKENS_PER_MIN_NON_CRITICAL: "100000"
+  LLM_GOVERNANCE_MAX_RETRIES: "3"
+  LLM_GOVERNANCE_TIMEOUT_TOTAL: "120"
+  LLM_GOVERNANCE_CACHE_ENABLED: "true"
+  LLM_GOVERNANCE_MAX_CONCURRENT_REQUESTS: "10"
+
+---
+# Milvus embedEtcd 配置
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: milvus-config
+  namespace: riskagent
+  labels:
+    app.kubernetes.io/name: milvus
+data:
+  embedEtcd.yaml: |
+    listen-client-urls: http://0.0.0.0:2379
+    advertise-client-urls: http://0.0.0.0:2379
+    quota-backend-bytes: 4294967296
+    auto-compaction-mode: revision
+    auto-compaction-retention: '1000'
+  user.yaml: |
+    # Extra config to override default milvus.yaml

@@ -63,13 +63,20 @@ class ContractLangGraphTest(unittest.TestCase):
         mock_retriever = MagicMock()
         mock_retriever.invoke.return_value = []
 
-        with patch(
+        # 关闭 Self-RAG/CRAG, 避免 revise_query 在 CRAG action 中额外调用 retriever.invoke
+        # (CRAG 的 expand_topk/rewrite_and_retrieve 会触发额外检索, 导致 call_count > max_rounds)
+        with patch.dict("os.environ", {"RISKAGENT_SELF_RAG": "false"}), patch(
             "riskagent_agenticrag.rag.agentic_primitives.critique_retrieval",
             return_value=(False, "improved query", "insufficient"),
         ), patch("riskagent_agenticrag.rag.agentic_primitives.call_llm_json", side_effect=self._fake_llm_json), patch(
             "riskagent_agenticrag.rag.agentic_primitives.call_llm_text", side_effect=self._fake_llm_text
         ), patch("riskagent_agenticrag.llm.generate.call_llm_text", side_effect=self._fake_llm_text):
-            _out = run_langgraph_agentic_chat(question="What is delta?", retriever=mock_retriever, max_rounds=2)
+            # 使用 complex 查询 (含 compare 信号) 确保 needs_fanout=True, 走完整检索链路
+            _out = run_langgraph_agentic_chat(
+                question="compare FRTB delta and gamma risk weights",
+                retriever=mock_retriever,
+                max_rounds=2,
+            )
 
         self.assertEqual(mock_retriever.invoke.call_count, 2)
 

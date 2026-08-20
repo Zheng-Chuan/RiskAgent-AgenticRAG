@@ -46,6 +46,7 @@ def ensure_collection(*, client: MilvusClient, config: MilvusStoreConfig, dim: i
         FieldSchema(name="file_type", dtype=DataType.VARCHAR, max_length=16),
         FieldSchema(name="parent_id", dtype=DataType.VARCHAR, max_length=64),
         FieldSchema(name="section_path", dtype=DataType.VARCHAR, max_length=1024),
+        FieldSchema(name="context_brief", dtype=DataType.VARCHAR, max_length=2048),
         FieldSchema(name="start_index", dtype=DataType.INT64),
         FieldSchema(name="page", dtype=DataType.INT64),
         FieldSchema(name="start_line", dtype=DataType.INT64),
@@ -90,9 +91,17 @@ def delete_by_source(*, client: MilvusClient, config: MilvusStoreConfig, source:
 
 
 def insert_chunks(*, client: MilvusClient, config: MilvusStoreConfig, rows: list[dict[str, Any]]) -> None:
+    """分批插入向量数据, 避免 gRPC 消息超限 (默认 64MB).
+
+    2560 维向量约 10KB + text 字段约 60KB => 每条 row 约 70KB.
+    取 200 条/批 => 约 14MB, 远低于 64MB 限制.
+    """
     if not rows:
         return
-    client.insert(collection_name=str(config.collection_name), data=rows)
+    batch_size = 200
+    for i in range(0, len(rows), batch_size):
+        batch = rows[i:i + batch_size]
+        client.insert(collection_name=str(config.collection_name), data=batch)
 
 
 def drop_collection(*, client: MilvusClient, config: MilvusStoreConfig) -> bool:
@@ -128,6 +137,7 @@ def search(*, client: MilvusClient, config: MilvusStoreConfig, vector: list[floa
             "file_type",
             "parent_id",
             "section_path",
+            "context_brief",
             "start_index",
             "page",
             "start_line",
@@ -143,7 +153,14 @@ def search(*, client: MilvusClient, config: MilvusStoreConfig, vector: list[floa
         entity = getattr(h, "entity", None) or {}
         score = getattr(h, "distance", None)
         if isinstance(entity, dict):
-            row = dict(entity)
+            # pymilvus MilvusClient.search() 返回的 Hit.entity 是嵌套结构:
+            # {id, distance, entity: {chunk_id, source, text, ...}}
+            # 真正的字段数据在 entity['entity'] 中
+            inner = entity.get("entity")
+            if isinstance(inner, dict):
+                row = dict(inner)
+            else:
+                row = dict(entity)
         else:
             row = {}
             for k in (
@@ -153,6 +170,7 @@ def search(*, client: MilvusClient, config: MilvusStoreConfig, vector: list[floa
                 "file_type",
                 "parent_id",
                 "section_path",
+                "context_brief",
                 "start_index",
                 "page",
                 "start_line",

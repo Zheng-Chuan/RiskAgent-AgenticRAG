@@ -92,54 +92,52 @@ METRIC_REQUIREMENTS = {
 
 
 def _get_ragas_llm() -> Any:
-    """创建 RAGAS 兼容的 LLM."""
-    from ragas.llms import llm_factory
-    
-    from openai import OpenAI
-    
-    api_key = settings.llm.api_key
-    if not api_key:
-        raise RuntimeError("Missing API key")
-    
-    client = OpenAI(
-        api_key=api_key,
-        base_url=settings.llm.base_url,
-    )
-    
+    """创建 RAGAS 兼容的 LLM.
+
+    直接构造 ChatOpenAI + LangchainLLMWrapper, 不依赖 llm_factory
+    (其签名在 ragas 0.1.x 各版本间不兼容: 早期支持 provider/client, 0.1.19 只支持 base_url).
+    """
+    from langchain_openai import ChatOpenAI
+    from ragas.llms import LangchainLLMWrapper
+
+    api_key = settings.llm.resolved_api_key
+
     model_name = settings.llm.model or "qwen3-8b"
-    extra_kwargs = {}
+    extra_kwargs: dict[str, Any] = {}
     if "qwen3" in model_name.lower():
         extra_kwargs["extra_body"] = {"enable_thinking": False}
-    
-    return llm_factory(
+
+    chat = ChatOpenAI(
         model=model_name,
-        provider="openai",
-        client=client,
+        api_key=api_key,
+        base_url=settings.llm.base_url,
         max_tokens=4096,
-        **extra_kwargs
+        timeout=120,
+        **extra_kwargs,
     )
+    return LangchainLLMWrapper(chat)
 
 
 def _get_ragas_embeddings() -> Any:
-    """创建 RAGAS 兼容的 Embeddings."""
-    from sentence_transformers import SentenceTransformer
-    
+    """创建 RAGAS 兼容的 Embeddings.
+
+    复用项目远程 embedding API (OpenAI 兼容), 与索引时同一模型保证语义一致;
+    容器内不下载本地 SentenceTransformer 模型 (如 Qwen3-Embedding-4B 达数 GB).
+    """
+    from langchain_openai import OpenAIEmbeddings
+    from ragas.embeddings import LangchainEmbeddingsWrapper
+
     model_name = settings.embeddings.model_name or "sentence-transformers/all-MiniLM-L6-v2"
-    
-    class RagasEmbeddingsWrapper:
-        def __init__(self, model_name: str):
-            self.model = SentenceTransformer(model_name)
-            self.model_name = model_name
-        
-        def embed_query(self, text: str) -> list[float]:
-            result = self.model.encode(text)
-            return result.tolist() if hasattr(result, 'tolist') else list(result)
-        
-        def embed_documents(self, texts: list[str]) -> list[list[float]]:
-            results = self.model.encode(texts)
-            return [r.tolist() if hasattr(r, 'tolist') else list(r) for r in results]
-    
-    return RagasEmbeddingsWrapper(model_name)
+    api_key = settings.embeddings.api_key or settings.llm.resolved_api_key
+    base_url = settings.embeddings.base_url or settings.llm.base_url
+
+    lc_emb = OpenAIEmbeddings(
+        model=model_name,
+        api_key=api_key,
+        base_url=base_url,
+        timeout=120,
+    )
+    return LangchainEmbeddingsWrapper(lc_emb)
 
 
 def compute_all_ragas_metrics(
@@ -170,19 +168,23 @@ def compute_all_ragas_metrics(
         )
     
     try:
-        # 全量导入 RAGAS 指标
-        from ragas.metrics import (
-            faithfulness,
-            answer_relevancy,
-            answer_correctness,
-            answer_similarity,
-            context_precision,
-            context_recall,
-            context_relevancy,
-            context_entity_recall,
-            noise_sensitivity,
-            response_completeness,
-        )
+        # 逐个导入 RAGAS 指标, 缺失的跳过 (不同 ragas 版本指标集合不同:
+        # 如 context_relevancy 仅 0.1.9 前存在, noise_sensitivity/response_completeness 为 0.2.x 新增)
+        import ragas.metrics as _ragas_metrics
+
+        def _metric(name: str) -> Any:
+            return getattr(_ragas_metrics, name, None)
+
+        faithfulness = _metric("faithfulness")
+        answer_relevancy = _metric("answer_relevancy")
+        answer_correctness = _metric("answer_correctness")
+        answer_similarity = _metric("answer_similarity")
+        context_precision = _metric("context_precision")
+        context_recall = _metric("context_recall")
+        context_relevancy = _metric("context_relevancy")
+        context_entity_recall = _metric("context_entity_recall")
+        noise_sensitivity = _metric("noise_sensitivity")
+        response_completeness = _metric("response_completeness")
     except ImportError as e:
         return RagasMetricsResult(
             enabled=True, ok=False, metrics={}, raw_scores={}, error=f"ragas metrics import failed: {e}"
@@ -230,10 +232,10 @@ def compute_all_ragas_metrics(
             enabled=True, ok=False, metrics={}, raw_scores={}, error=f"setup failed: {e}"
         )
     
-    # 构建指标列表
+    # 构建指标列表 (过滤当前 ragas 版本不存在的指标)
     metrics_list = []
     enabled_metrics = []
-    
+
     # 基础指标（始终启用）
     base_metrics = [
         (faithfulness, "faithfulness", ["llm"]),
@@ -241,7 +243,7 @@ def compute_all_ragas_metrics(
         (context_relevancy, "context_relevancy", ["llm"]),
         (response_completeness, "response_completeness", ["llm"]),
     ]
-    
+
     # 需要 ground_truth 的指标
     ground_truth_metrics = [
         (context_recall, "context_recall", ["llm"]),
@@ -268,8 +270,10 @@ def compute_all_ragas_metrics(
             (context_entity_recall, "context_entity_recall", ["llm"]),
         ]
 
-    # 添加基础指标
+    # 添加基础指标 (跳过当前版本缺失的指标)
     for metric_cls, name, deps in base_metrics:
+        if metric_cls is None:
+            continue
         m = metric_cls.__class__()
         m.llm = llm
         if "embeddings" in deps:
@@ -279,6 +283,8 @@ def compute_all_ragas_metrics(
 
     # 添加低优先级指标
     for metric_cls, name, deps in low_priority_metrics:
+        if metric_cls is None:
+            continue
         m = metric_cls.__class__()
         m.llm = llm
         if "embeddings" in deps:
@@ -289,6 +295,8 @@ def compute_all_ragas_metrics(
     # 添加需要 ground_truth 的指标
     if include_reference_based and has_ground_truth:
         for metric_cls, name, deps in ground_truth_metrics:
+            if metric_cls is None:
+                continue
             m = metric_cls.__class__()
             m.llm = llm
             if "embeddings" in deps:
@@ -299,6 +307,8 @@ def compute_all_ragas_metrics(
     # 添加需要 reference_contexts 的指标
     if include_context_precision and has_reference_contexts:
         for metric_cls, name, deps in reference_context_metrics:
+            if metric_cls is None:
+                continue
             m = metric_cls.__class__()
             m.llm = llm
             if "embeddings" in deps:
@@ -308,6 +318,8 @@ def compute_all_ragas_metrics(
 
     # 添加低优先级 reference 指标
     for metric_cls, name, deps in low_priority_reference_metrics:
+        if metric_cls is None:
+            continue
         m = metric_cls.__class__()
         m.llm = llm
         if "embeddings" in deps:
@@ -334,18 +346,38 @@ def compute_all_ragas_metrics(
             enabled=True, ok=False, metrics={}, raw_scores={}, error=f"evaluation failed: {e}"
         )
     
-    # 提取结果
+    # 提取结果 (兼容新旧 ragas: 0.1.x 早期为 _scores_dict, 0.1.19+ 的 Result 为 dict + scores Dataset)
     metrics_out = {}
     raw_scores = {}
-    
+
     try:
-        if hasattr(result, '_scores_dict'):
+        if hasattr(result, "_scores_dict"):
+            # 旧版 ragas: {metric_name: [per_sample_values]}
             for metric_name, values in result._scores_dict.items():
                 valid_values = [float(v) for v in values if v is not None]
                 if valid_values:
                     key = f"ragas_{metric_name}"
                     metrics_out[key] = sum(valid_values) / len(valid_values)
                     raw_scores[key] = valid_values
+        elif hasattr(result, "scores") and result.scores is not None:
+            # 新版 ragas 0.1.19+: Result(dict) 且 scores 为 HF Dataset (每行一题)
+            import math as _math
+
+            for col in result.scores.column_names:
+                vals = []
+                for v in result.scores[col]:
+                    if v is None:
+                        continue
+                    try:
+                        fv = float(v)
+                    except (TypeError, ValueError):
+                        continue
+                    if not _math.isnan(fv):
+                        vals.append(fv)
+                if vals:
+                    key = f"ragas_{col}"
+                    metrics_out[key] = sum(vals) / len(vals)
+                    raw_scores[key] = vals
     except Exception as e:
         return RagasMetricsResult(
             enabled=True, ok=False, metrics={}, raw_scores={}, error=f"result extraction failed: {e}"

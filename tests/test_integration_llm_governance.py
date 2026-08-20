@@ -70,9 +70,14 @@ class TestRealInfrastructureConnectivity(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls) -> None:
-        # Minimal sanity: at least API key should be present
+        # 真实基础设施检查: LLM API key + Milvus + Redis 三者必须同时可用
+        # 任一不可用则跳过整个类, 避免因环境缺失导致的失败
         if not _llm_api_key_present():
             raise unittest.SkipTest("LLM API key not configured; skipping infrastructure tests")
+        if not _milvus_available():
+            raise unittest.SkipTest("Milvus not reachable at 127.0.0.1:19530; skipping infrastructure tests")
+        if not _redis_available():
+            raise unittest.SkipTest("Redis not reachable at localhost:6379; skipping infrastructure tests")
 
     def test_redis_connection(self) -> None:
         """Connect to Redis, PING, set/get a test key."""

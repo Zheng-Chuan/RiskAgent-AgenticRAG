@@ -24,15 +24,16 @@
 - 已经新增一条外部 `LLM` 注入脚本 可在不改本项目 `.env` 的情况下运行 fresh eval
 - 已生成 `5` 题 smoke fresh report 证明当前统一主链和外部 `LLM` 配置可以真实跑通
 - 已正式生成 `50` 题 full baseline fresh report
-- 当前 full baseline 关键结果为 `passed=33/50` `citation_coverage=0.960` `faithfulness=0.591` `answer_relevancy=0.865` `retrieval_recall_at_5=0.500`
+- 当前 full baseline 关键结果为 `passed=38/50` `citation_coverage=0.960` `faithfulness=0.775` `answer_relevancy=0.848` `retrieval_recall_at_5=0.500`
+- 最新报告为 `after_judge_parallel_bugfix_20260718_065654` 已取代之前的 `after_judge_timeout_fix` 报告
 
 ## 当前仍未完成
 
 - 报告元信息里还没有稳定落入 `index version` 或 `schema_fingerprint`
 - gate_labels 样本量仍然偏小 统计显著性有限
 - 当前 `50` 题 full baseline 的 `threshold gate` 结果为 `fail`
-- 当前 `faithfulness=0.591` 低于阈值 `0.75`
-- 当前 `retrieval_recall_at_5=0.500` 低于阈值 `0.6`
+- `faithfulness=0.775` 已超过阈值 `0.75` 但裕度很薄 需要继续监控
+- 当前 `retrieval_recall_at_5=0.500` 低于阈值 `0.6` 是 threshold gate 唯一失败项
 - release acceptance 虽然已支持 fresh eval 但无 `LLM key` 时仍会回退到仓库内样例报告
 
 ## P0 必须先做

@@ -28,7 +28,7 @@ class MilvusConfig(BaseSettings):
     secure: bool = False
     collection_name: str = "riskagent_agenticrag"
     index_type: str = "IVF_FLAT"
-    metric_type: Literal["L2", "IP", "COSINE"] = "L2"
+    metric_type: Literal["L2", "IP", "COSINE"] = "COSINE"
     nlist: int = 128
     nprobe: int = 16
     wait_ready: bool = True
@@ -61,12 +61,20 @@ class RedisConfig(BaseSettings):
 
 
 class EmbeddingsConfig(BaseSettings):
-    """Embedding 模型配置."""
+    """Embedding 模型配置.
+
+    支持三种 provider:
+    - openai: 远程调用 OpenAI 兼容 API (如硅基流动), 不需要 torch (默认)
+    - hf: 本地 HuggingFace 模型, 需要 sentence-transformers + torch (可选安装)
+    - hash: 离线确定性 hash embedding, 用于回归测试
+    """
 
     model_config = SettingsConfigDict(env_prefix="EMBEDDINGS_", env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    provider: Literal["hf", "openai", "hash"] = "hf"
-    model_name: str = "BAAI/bge-large-zh-v1.5"
+    provider: Literal["hf", "openai", "hash"] = "openai"
+    model_name: str = "Qwen/Qwen3-Embedding-4B"
+    api_key: SecretStr | None = Field(default=None, alias="OPENROUTER_API_KEY")
+    base_url: str = "https://api.siliconflow.cn/v1"
 
 
 class LLMConfig(BaseSettings):
@@ -76,8 +84,8 @@ class LLMConfig(BaseSettings):
 
     api_key: SecretStr | None = Field(default=None, alias="LLM_API_KEY")
     openai_api_key: SecretStr | None = Field(default=None, alias="OPENAI_API_KEY")
-    base_url: str = "https://ark.cn-beijing.volces.com/api/coding/v3"
-    model: str = "ark-code-latest"
+    base_url: str = "https://api.siliconflow.cn/v1"
+    model: str = "deepseek-ai/DeepSeek-V3"
     provider: str = "openai_compatible"
 
     @property
@@ -128,6 +136,16 @@ class FeatureConfig(BaseSettings):
     retrieval_pipeline: str = "hybrid_query_intel_advanced_index"
     prompt_version: str = "v1"
     trace_snippet_chars: int = 240
+    # Agentic RAG (RFC-004 阶段一): 模型自主检索模式, 默认关闭, 不影响现有主链
+    agentic_mode: bool = Field(default=False, alias="AGENTIC_MODE")
+    # Agentic 模式最大工具调用次数, 防止模型无限检索
+    agentic_max_tool_calls: int = Field(default=5, alias="AGENTIC_MAX_TOOL_CALLS")
+    # SEAL-RAG (RFC-001 FR-12): 固定容量证据集, 新证据替换最弱的, 抑制 context dilution
+    seal_rag_budget: int = 5
+    # Contextual Retrieval (RFC-003 FR-9): 索引时为 chunk 生成 LLM 上下文摘要
+    # 实测 (2026-08): Qwen3-Embedding-4B 上 brief 前缀会稀释 chunk 专属词, hit@5 43.9% vs 51.2% (关闭)
+    # 换更强 embedding 模型后可再开启验证
+    contextual_briefs: bool = False
 
 
 class RateLimitConfig(BaseSettings):

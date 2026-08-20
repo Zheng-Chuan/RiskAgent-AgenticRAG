@@ -43,8 +43,14 @@ from riskagent_agenticrag.llm.token_tracker import get_token_tracker
 from riskagent_agenticrag.rag.embeddings import build_embeddings
 
 # ---- Prometheus 指标 ----
-_REQ_TOTAL = Counter("riskagent_http_requests_total", "Total HTTP requests", ["path", "method", "status"])
-_REQ_LAT_MS = Histogram("riskagent_http_request_latency_ms", "HTTP request latency ms", ["path", "method"])
+# 使用 try/except 避免模块被多次导入时重复注册
+try:
+    _REQ_TOTAL = Counter("riskagent_http_requests_total", "Total HTTP requests", ["path", "method", "status"])
+    _REQ_LAT_MS = Histogram("riskagent_http_request_latency_ms", "HTTP request latency ms", ["path", "method"])
+except ValueError:
+    from prometheus_client import REGISTRY
+    _REQ_TOTAL = REGISTRY._names_to_collectors["riskagent_http_requests_total"]
+    _REQ_LAT_MS = REGISTRY._names_to_collectors["riskagent_http_request_latency_ms"]
 
 # ---- 速率限制 ----
 limiter = Limiter(key_func=get_remote_address)

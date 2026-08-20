@@ -322,3 +322,272 @@ class TestHelperFunctions:
     def test_coverage_ratio(self):
         ratio = _coverage_ratio("hello world", "hello world foo bar")
         assert ratio >= 0.9
+
+    @pytest.mark.unit
+    def test_coverage_ratio_empty_statement(self):
+        """空 statement 应返回 0.0."""
+        assert _coverage_ratio("", "evidence text") == 0.0
+
+    @pytest.mark.unit
+    def test_coverage_ratio_empty_evidence(self):
+        """空 evidence 应返回 0.0."""
+        assert _coverage_ratio("some statement", "") == 0.0
+
+    @pytest.mark.unit
+    def test_collect_numbers_none(self):
+        """None 输入应返回空列表."""
+        from riskagent_agenticrag.validators.gates import _collect_numbers
+        assert _collect_numbers(None) == []
+
+    @pytest.mark.unit
+    def test_collect_numbers_int(self):
+        """int 输入应返回单元素列表."""
+        from riskagent_agenticrag.validators.gates import _collect_numbers
+        assert _collect_numbers(42) == [42.0]
+
+    @pytest.mark.unit
+    def test_collect_numbers_float(self):
+        """float 输入应返回单元素列表."""
+        from riskagent_agenticrag.validators.gates import _collect_numbers
+        assert _collect_numbers(3.14) == [3.14]
+
+    @pytest.mark.unit
+    def test_collect_numbers_string(self):
+        """string 输入应调用 _extract_numbers."""
+        from riskagent_agenticrag.validators.gates import _collect_numbers
+        assert _collect_numbers("value 100") == [100.0]
+
+    @pytest.mark.unit
+    def test_collect_numbers_dict(self):
+        """dict 输入应递归收集所有值中的数字."""
+        from riskagent_agenticrag.validators.gates import _collect_numbers
+        result = _collect_numbers({"a": "x 50", "b": 10, "c": [1, 2]})
+        assert 50.0 in result
+        assert 10.0 in result
+        assert 1.0 in result
+        assert 2.0 in result
+
+    @pytest.mark.unit
+    def test_collect_numbers_list(self):
+        """list 输入应递归收集所有元素中的数字."""
+        from riskagent_agenticrag.validators.gates import _collect_numbers
+        result = _collect_numbers(["x 5", 10, {"v": 20}])
+        assert 5.0 in result
+        assert 10.0 in result
+        assert 20.0 in result
+
+    @pytest.mark.unit
+    def test_collect_numbers_other_type(self):
+        """其它类型应返回空列表."""
+        from riskagent_agenticrag.validators.gates import _collect_numbers
+        assert _collect_numbers(object()) == []
+
+
+# ---------------------------------------------------------------------------
+# _evidence_anchor_complete 分支测试
+# ---------------------------------------------------------------------------
+
+
+class TestEvidenceAnchorComplete:
+
+    @pytest.mark.unit
+    def test_missing_source_returns_false(self):
+        from riskagent_agenticrag.validators.gates import _evidence_anchor_complete
+        assert _evidence_anchor_complete({"chunk_id": "c1", "snippet": "text"}) is False
+
+    @pytest.mark.unit
+    def test_missing_chunk_id_returns_false(self):
+        from riskagent_agenticrag.validators.gates import _evidence_anchor_complete
+        assert _evidence_anchor_complete({"source": "s", "snippet": "text"}) is False
+
+    @pytest.mark.unit
+    def test_missing_snippet_returns_false(self):
+        from riskagent_agenticrag.validators.gates import _evidence_anchor_complete
+        assert _evidence_anchor_complete({"source": "s", "chunk_id": "c1"}) is False
+
+    @pytest.mark.unit
+    def test_start_index_negative_returns_false(self):
+        from riskagent_agenticrag.validators.gates import _evidence_anchor_complete
+        assert _evidence_anchor_complete({"source": "s", "chunk_id": "c1", "snippet": "t", "start_index": -1}) is False
+
+    @pytest.mark.unit
+    def test_start_index_valid_returns_true(self):
+        from riskagent_agenticrag.validators.gates import _evidence_anchor_complete
+        assert _evidence_anchor_complete({"source": "s", "chunk_id": "c1", "snippet": "t", "start_index": 5}) is True
+
+    @pytest.mark.unit
+    def test_start_line_negative_returns_false(self):
+        from riskagent_agenticrag.validators.gates import _evidence_anchor_complete
+        assert _evidence_anchor_complete({"source": "s", "chunk_id": "c1", "snippet": "t", "start_line": -1}) is False
+
+    @pytest.mark.unit
+    def test_start_line_valid_returns_true(self):
+        from riskagent_agenticrag.validators.gates import _evidence_anchor_complete
+        assert _evidence_anchor_complete({"source": "s", "chunk_id": "c1", "snippet": "t", "start_line": 10}) is True
+
+    @pytest.mark.unit
+    def test_page_negative_returns_false(self):
+        from riskagent_agenticrag.validators.gates import _evidence_anchor_complete
+        assert _evidence_anchor_complete({"source": "s", "chunk_id": "c1", "snippet": "t", "page": -1}) is False
+
+    @pytest.mark.unit
+    def test_page_valid_returns_true(self):
+        from riskagent_agenticrag.validators.gates import _evidence_anchor_complete
+        assert _evidence_anchor_complete({"source": "s", "chunk_id": "c1", "snippet": "t", "page": 1}) is True
+
+    @pytest.mark.unit
+    def test_no_anchor_fields_returns_false(self):
+        from riskagent_agenticrag.validators.gates import _evidence_anchor_complete
+        assert _evidence_anchor_complete({"source": "s", "chunk_id": "c1", "snippet": "t"}) is False
+
+    @pytest.mark.unit
+    def test_invalid_start_index_returns_false(self):
+        from riskagent_agenticrag.validators.gates import _evidence_anchor_complete
+        assert _evidence_anchor_complete({"source": "s", "chunk_id": "c1", "snippet": "t", "start_index": "abc"}) is False
+
+
+# ---------------------------------------------------------------------------
+# _numbers_supported 分支测试
+# ---------------------------------------------------------------------------
+
+
+class TestNumbersSupported:
+
+    @pytest.mark.unit
+    def test_no_numbers_in_statement_passes(self):
+        from riskagent_agenticrag.validators.gates import _numbers_supported
+        assert _numbers_supported("no numbers here", "evidence text") is True
+
+    @pytest.mark.unit
+    def test_numbers_in_statement_no_evidence_numbers_fails(self):
+        from riskagent_agenticrag.validators.gates import _numbers_supported
+        assert _numbers_supported("value 100", "no numbers") is False
+
+    @pytest.mark.unit
+    def test_exact_match_passes(self):
+        from riskagent_agenticrag.validators.gates import _numbers_supported
+        assert _numbers_supported("value 100", "the value 100") is True
+
+    @pytest.mark.unit
+    def test_relative_match_passes(self):
+        from riskagent_agenticrag.validators.gates import _numbers_supported
+        # 100 vs 100.5, 0.5% difference <= 1%
+        assert _numbers_supported("value 100", "the value 100.5") is True
+
+    @pytest.mark.unit
+    def test_mismatch_fails(self):
+        from riskagent_agenticrag.validators.gates import _numbers_supported
+        assert _numbers_supported("value 100", "the value 200") is False
+
+
+# ---------------------------------------------------------------------------
+# _classify_number_context 分支测试
+# ---------------------------------------------------------------------------
+
+
+class TestClassifyNumberContext:
+
+    @pytest.mark.unit
+    def test_calculated_keyword(self):
+        from riskagent_agenticrag.validators.gates import _classify_number_context
+        result = _classify_number_context("the total is calculated as 500", 500.0)
+        assert result == "calculated"
+
+    @pytest.mark.unit
+    def test_stated_with_citation(self):
+        from riskagent_agenticrag.validators.gates import _classify_number_context
+        result = _classify_number_context("the value [source=doc] is 500", 500.0)
+        assert result == "stated"
+
+    @pytest.mark.unit
+    def test_unknown_when_number_not_found(self):
+        from riskagent_agenticrag.validators.gates import _classify_number_context
+        result = _classify_number_context("no such number here", 999.0)
+        assert result == "unknown"
+
+    @pytest.mark.unit
+    def test_default_stated(self):
+        from riskagent_agenticrag.validators.gates import _classify_number_context
+        result = _classify_number_context("the value 500 is reported", 500.0)
+        assert result == "stated"
+
+    @pytest.mark.unit
+    def test_float_number_match(self):
+        from riskagent_agenticrag.validators.gates import _classify_number_context
+        result = _classify_number_context("total equals 3.14", 3.14)
+        assert result == "calculated"
+
+
+# ---------------------------------------------------------------------------
+# evidence_gate: 非字典 evidence 处理
+# ---------------------------------------------------------------------------
+
+
+class TestEvidenceGateEdgeCases:
+
+    @pytest.mark.unit
+    def test_evidence_without_id_skipped(self):
+        """无 evidence_id 的 evidence 应在 evidence_text_by_id 构建时被跳过."""
+        # 该 evidence 有完整锚点但无 evidence_id, 不影响有 id 的 evidence 校验
+        no_id_evidence = {
+            "source": "s", "chunk_id": "c2", "snippet": "text", "start_index": 0,
+        }
+        evidence = _make_evidence("e1", "The total delta exposure is 500 million")
+        claim = _make_claim("total delta exposure is 500 million", ["e1"])
+        result = evidence_gate(claims=[claim], evidence_set=[no_id_evidence, evidence])
+        assert result is None
+
+
+# ---------------------------------------------------------------------------
+# numeric_consistency_gate: 分类数字路径
+# ---------------------------------------------------------------------------
+
+
+class TestNumericConsistencyClassification:
+
+    @pytest.mark.unit
+    def test_stated_numbers_without_tools_passes(self):
+        """有 tool_traces 但数字是陈述型 (非计算型) 时应通过."""
+        evidence = _make_evidence("e1", "The value is 500 million as stated")
+        claim = _make_claim("value is 500 million", ["e1"])
+        result = numeric_consistency_gate(
+            report="The value is 500 million as stated.",
+            claims=[claim],
+            tool_traces=[{"tool_output": {"value": 999}}],
+            evidence_set=[evidence],
+        )
+        assert result is None
+
+    @pytest.mark.unit
+    def test_calculated_numbers_match_tool_output(self):
+        """计算型数字与 tool 输出匹配时应通过."""
+        result = numeric_consistency_gate(
+            report="the calculated total equals 100",
+            claims=[],
+            tool_traces=[{"tool_output": {"value": 100}}],
+            evidence_set=[],
+        )
+        assert result is None
+
+    @pytest.mark.unit
+    def test_calculated_numbers_with_no_tool_numbers_passes(self):
+        """计算型数字但 tool 无数字时应通过 (tool_numbers 为空)."""
+        result = numeric_consistency_gate(
+            report="the calculated total equals 100",
+            claims=[],
+            tool_traces=[{"tool_output": "no numbers here"}],
+            evidence_set=[],
+        )
+        assert result is None
+
+    @pytest.mark.unit
+    def test_calculated_numbers_mismatch_fails(self):
+        """计算型数字与 tool 输出不匹配时应失败."""
+        result = numeric_consistency_gate(
+            report="the calculated total equals 100",
+            claims=[],
+            tool_traces=[{"tool_output": {"value": 200}}],
+            evidence_set=[],
+        )
+        assert result is not None
+        assert result["category"] == "numeric_calculated_mismatch"

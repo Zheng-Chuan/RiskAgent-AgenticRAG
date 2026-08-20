@@ -8,6 +8,7 @@
 - 产品战略与长期方向: [docs/STRATEGY.md](./STRATEGY.md)
 - 技术决策记录: [docs/decisions/](./decisions/)
 - 分阶段规划: [docs/phases/](./phases/)
+- 评测结果台账: [docs/evaluations/EVALUATION_LOG.md](./evaluations/EVALUATION_LOG.md)
 - 系统架构: [docs/ARCHITECTURE.md](./ARCHITECTURE.md)
 - 对外表述: [docs/RESUME.md](./RESUME.md)
 
@@ -94,6 +95,10 @@
 | 证据优先和后置 gate | Decided | [ADR-002](./decisions/ADR-002-evidence-first-validation.md) |
 | 评测优先于演示口径 | Decided | [ADR-003](./decisions/ADR-003-evaluation-first-release-gate.md) |
 | 下一阶段检索强化提案 | Proposed | [RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md) |
+| 全链路可观测性 | Proposed | [RFC-002](./decisions/RFC-002-observability-full-chain-trace.md) |
+| Contextual Retrieval | Proposed | [RFC-003](./decisions/RFC-003-contextual-retrieval.md) |
+| Agentic RAG 范式迁移 | Proposed | [RFC-004](./decisions/RFC-004-agentic-rag-paradigm.md) |
+| RAPTOR 递归摘要树索引 | Proposed | [RFC-005](./decisions/RFC-005-raptor-recursive-abstractive-tree.md) |
 
 ---
 
@@ -108,6 +113,13 @@
 | FR-5 | 系统必须支持 refusal evidence numeric 三类 gate | [Phase 3](./phases/phase-3-evaluation-hardening.md) |
 | FR-6 | 系统必须支持 retrieval eval 与 answer eval 分离统计 | [Phase 3](./phases/phase-3-evaluation-hardening.md) |
 | FR-7 | 系统必须支持离线回归和最小发布验收 | [Phase 4](./phases/phase-4-release-readiness.md) |
+| FR-8 | 系统必须支持全链路 trace 可追踪可回放可诊断 | [RFC-002](./decisions/RFC-002-observability-full-chain-trace.md) |
+| FR-9 | 系统必须支持 Contextual Retrieval 索引时上下文注入 | [RFC-003](./decisions/RFC-003-contextual-retrieval.md) |
+| FR-10 | 系统必须支持 CRAG 三档纠错检索 (sufficient/insufficient/irrelevant) | [RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md) |
+| FR-11 | 系统必须支持 TARG 自适应检索门控 (简单查询跳过检索) | [RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md) |
+| FR-12 | 系统必须支持 SEAL-RAG 替换式检索 (固定 budget 避免膨胀) | [RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md) |
+| FR-13 | 系统必须支持 Agentic RAG 模型自主检索 (长期) | [RFC-004](./decisions/RFC-004-agentic-rag-paradigm.md) |
+| FR-14 | 系统必须支持 RAPTOR 递归摘要树索引 (长期) | [RFC-005](./decisions/RFC-005-raptor-recursive-abstractive-tree.md) |
 
 ---
 

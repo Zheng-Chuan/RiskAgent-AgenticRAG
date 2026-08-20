@@ -23,7 +23,7 @@
 ## 当前仍未完成
 
 - full dataset 的 fresh baseline 已经正式落盘 但 `threshold gate` 结果仍是 `fail`
-- 当前 full baseline 的关键失败项是 `faithfulness=0.591 < 0.75` 和 `retrieval_recall_at_5=0.500 < 0.6`
+- 当前 full baseline 的关键失败项是 `retrieval_recall_at_5=0.500 < 0.6` (`faithfulness=0.775` 已达标)
 - release acceptance 在无 `LLM key` 环境下仍会回退到仓库内样例报告
 - `release acceptance` 还没有基于这次最新 full baseline 结果重新执行
 

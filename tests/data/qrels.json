@@ -4,11 +4,13 @@
     "qrels": [
       {
         "qrel_id": "q01_r1",
-        "chunk_id": "Background.md:52ecd236d3e8",
+        "chunk_id": "Background.md:bc6363266872",
         "source": "corpus/Background.md",
         "section_path": "Background / 4. FRTB overview",
         "text": "FRTB stands for Fundamental Review of the Trading Book. High level goals: Improve market risk capital framework after 2008. Increase risk sensitivity and model risk governance.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:997e0e39da23",
+        "match_score": 1.0
       }
     ]
   },
@@ -17,19 +19,65 @@
     "qrels": [
       {
         "qrel_id": "q02_r1",
-        "chunk_id": "Background.md:a87505a01dca",
+        "chunk_id": "Background.md:c3b63eeae655",
         "source": "corpus/Background.md",
         "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Delta: sensitivity to the underlying price level.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:a82ac4e9e0c7",
+        "match_score": 1.0
       },
       {
-        "qrel_id": "q02_r2",
-        "chunk_id": "Background.md:a87505a01dca",
+        "qrel_id": "q02_x1",
+        "chunk_id": "Background.md:fd45c5591da7",
         "source": "corpus/Background.md",
         "section_path": "Background / 3. Risk sensitivities (Greeks)",
-        "text": "Greeks are sensitivities of a derivative value to small changes in risk factors.",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:",
         "relevance": 1
+      },
+      {
+        "qrel_id": "q02_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Implied volatility: the market's expectation of future volatility, derived from option prices and implied by the Black-Scholes model.\n- Historical volatility: a backward-looking measure based on pas",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q02_x1",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "s in the underlying price.\n- Charm: sensitivity of Delta to the passage of time (also known as delta decay or DdeltaDtime).\n\nRelated concepts:\n\n- Implied volatility: the market's expectation of future",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:2955e615eb94",
+        "match_score": 0.706
+      },
+      {
+        "qrel_id": "q02_x4",
+        "chunk_id": "Background.md:b9fdc24e3bfc",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Gamma hedging: adjusting a portfolio to reduce gamma exposure, making the hedge more stable to larger moves in the underlying asset price.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q02_x5",
+        "chunk_id": "Background.md:35fccb4108e3",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "In risk systems, Greeks are often aggregated by dimensions such as desk, book, trader, and risk factor.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q02_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Delta-neutral portfolio: a portfolio whose total delta is zero, making it insensitive to small changes in the underlying price; often used by market makers to hedge directional risk.\n- Gamma hedging",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:4e70df3c2251",
+        "match_score": 0.92
       }
     ]
   },
@@ -38,19 +86,65 @@
     "qrels": [
       {
         "qrel_id": "q03_r1",
-        "chunk_id": "Background.md:a87505a01dca",
+        "chunk_id": "Background.md:c3b63eeae655",
         "source": "corpus/Background.md",
         "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Gamma: sensitivity of Delta to the underlying price.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:a82ac4e9e0c7",
+        "match_score": 1.0
       },
       {
-        "qrel_id": "q03_r2",
-        "chunk_id": "Background.md:a87505a01dca",
+        "qrel_id": "q03_x1",
+        "chunk_id": "Background.md:fd45c5591da7",
         "source": "corpus/Background.md",
         "section_path": "Background / 3. Risk sensitivities (Greeks)",
-        "text": "Delta: sensitivity to the underlying price level.",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:",
         "relevance": 1
+      },
+      {
+        "qrel_id": "q03_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Implied volatility: the market's expectation of future volatility, derived from option prices and implied by the Black-Scholes model.\n- Historical volatility: a backward-looking measure based on pas",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q03_x1",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "s in the underlying price.\n- Charm: sensitivity of Delta to the passage of time (also known as delta decay or DdeltaDtime).\n\nRelated concepts:\n\n- Implied volatility: the market's expectation of future",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:2955e615eb94",
+        "match_score": 0.706
+      },
+      {
+        "qrel_id": "q03_x4",
+        "chunk_id": "Background.md:b9fdc24e3bfc",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Gamma hedging: adjusting a portfolio to reduce gamma exposure, making the hedge more stable to larger moves in the underlying asset price.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q03_x5",
+        "chunk_id": "Background.md:35fccb4108e3",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "In risk systems, Greeks are often aggregated by dimensions such as desk, book, trader, and risk factor.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q03_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Delta-neutral portfolio: a portfolio whose total delta is zero, making it insensitive to small changes in the underlying price; often used by market makers to hedge directional risk.\n- Gamma hedging",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:4e70df3c2251",
+        "match_score": 0.92
       }
     ]
   },
@@ -59,19 +153,65 @@
     "qrels": [
       {
         "qrel_id": "q04_r1",
-        "chunk_id": "Background.md:a87505a01dca",
+        "chunk_id": "Background.md:c3b63eeae655",
         "source": "corpus/Background.md",
         "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Vega: sensitivity to volatility.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:a82ac4e9e0c7",
+        "match_score": 1.0
       },
       {
-        "qrel_id": "q04_r2",
-        "chunk_id": "Background.md:a87505a01dca",
+        "qrel_id": "q04_x1",
+        "chunk_id": "Background.md:fd45c5591da7",
         "source": "corpus/Background.md",
         "section_path": "Background / 3. Risk sensitivities (Greeks)",
-        "text": "Greeks are sensitivities of a derivative value to small changes in risk factors.",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:",
         "relevance": 1
+      },
+      {
+        "qrel_id": "q04_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Implied volatility: the market's expectation of future volatility, derived from option prices and implied by the Black-Scholes model.\n- Historical volatility: a backward-looking measure based on pas",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q04_x1",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "s in the underlying price.\n- Charm: sensitivity of Delta to the passage of time (also known as delta decay or DdeltaDtime).\n\nRelated concepts:\n\n- Implied volatility: the market's expectation of future",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:2955e615eb94",
+        "match_score": 0.706
+      },
+      {
+        "qrel_id": "q04_x4",
+        "chunk_id": "Background.md:b9fdc24e3bfc",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Gamma hedging: adjusting a portfolio to reduce gamma exposure, making the hedge more stable to larger moves in the underlying asset price.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q04_x5",
+        "chunk_id": "Background.md:35fccb4108e3",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "In risk systems, Greeks are often aggregated by dimensions such as desk, book, trader, and risk factor.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q04_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Delta-neutral portfolio: a portfolio whose total delta is zero, making it insensitive to small changes in the underlying price; often used by market makers to hedge directional risk.\n- Gamma hedging",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:4e70df3c2251",
+        "match_score": 0.92
       }
     ]
   },
@@ -80,11 +220,31 @@
     "qrels": [
       {
         "qrel_id": "q05_r1",
-        "chunk_id": "Background.md:df5b209ec049",
+        "chunk_id": "Background.md:56c9a05b3925",
         "source": "corpus/Background.md",
         "section_path": "Background / 5. Counterparty risk and CVA",
         "text": "CVA stands for Credit Valuation Adjustment.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:a23c7e9d7a6a",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q05_x1",
+        "chunk_id": "Background.md:5fff2a592a58",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 5. Counterparty risk and CVA",
+        "text": "- Netting set: a group of trades with a single counterparty that can be netted under a single master agreement (e.g., ISDA Master Agreement), reducing overall exposure by offsetting positive and negat",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q05_x1",
+        "chunk_id": "Background.md:5fff2a592a58",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 5. Counterparty risk and CVA",
+        "text": "Support Annex): a legal document that supplements the ISDA Master Agreement, governing the terms for posting and receiving collateral between counterparties to mitigate credit risk.\n- Wrong-way risk: ",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:7cbb377809fc",
+        "match_score": 1.0
       }
     ]
   },
@@ -93,11 +253,13 @@
     "qrels": [
       {
         "qrel_id": "q06_r1",
-        "chunk_id": "Background.md:52ecd236d3e8",
+        "chunk_id": "Background.md:bc6363266872",
         "source": "corpus/Background.md",
         "section_path": "Background / 4. FRTB overview",
         "text": "FRTB stands for Fundamental Review of the Trading Book.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:997e0e39da23",
+        "match_score": 1.0
       }
     ]
   },
@@ -106,11 +268,13 @@
     "qrels": [
       {
         "qrel_id": "q07_r1",
-        "chunk_id": "Background.md:52ecd236d3e8",
+        "chunk_id": "Background.md:bc6363266872",
         "source": "corpus/Background.md",
         "section_path": "Background / 4. FRTB overview",
         "text": "High level goals: Improve market risk capital framework after 2008. Increase risk sensitivity and model risk governance.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:997e0e39da23",
+        "match_score": 1.0
       }
     ]
   },
@@ -119,11 +283,31 @@
     "qrels": [
       {
         "qrel_id": "q08_r1",
-        "chunk_id": "cva_cfi.md:a1f51bafb979",
+        "chunk_id": "cva_cfi.md:a23e2a5ff587",
         "source": "corpus/acceptance/cva_cfi.md",
         "section_path": "CVA overview(CFI)",
         "text": "Credit Valuation Adjustment (CVA) is the price that an investor would pay to hedge the counterparty credit risk of a derivative instrument.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "cva_cfi.md:15a972d4e195",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q08_x1",
+        "chunk_id": "cva_cfi.md:4b22997a3d2f",
+        "source": "corpus/acceptance/cva_cfi.md",
+        "section_path": "CVA overview(CFI)",
+        "text": "The formula for calculating CVA is written with terms including maturity, discount factors, loss given default, default probability, and exposure over time.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q08_x1",
+        "chunk_id": "cva_cfi.md:a23e2a5ff587",
+        "source": "corpus_fix/acceptance/cva_cfi.md",
+        "section_path": "CVA overview(CFI)",
+        "text": "-adjustment-cva/)\n\nCredit Valuation Adjustment (CVA) is the price that an investor would pay to hedge the counterparty credit risk of a derivative instrument. It reduces the mark to market value of an",
+        "relevance": 1,
+        "old_chunk_id": "cva_cfi.md:a0960d250ea0",
+        "match_score": 1.0
       }
     ]
   },
@@ -132,11 +316,31 @@
     "qrels": [
       {
         "qrel_id": "q09_r1",
-        "chunk_id": "cva_cfi.md:a1f51bafb979",
+        "chunk_id": "cva_cfi.md:a23e2a5ff587",
         "source": "corpus/acceptance/cva_cfi.md",
         "section_path": "CVA overview(CFI)",
         "text": "CVA was introduced as a new requirement for fair value accounting during the 2007/08 Global Financial Crisis.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "cva_cfi.md:a0960d250ea0",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q09_x1",
+        "chunk_id": "cva_cfi.md:4b22997a3d2f",
+        "source": "corpus/acceptance/cva_cfi.md",
+        "section_path": "CVA overview(CFI)",
+        "text": "The formula for calculating CVA is written with terms including maturity, discount factors, loss given default, default probability, and exposure over time.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q09_x1",
+        "chunk_id": "cva_cfi.md:a23e2a5ff587",
+        "source": "corpus_fix/acceptance/cva_cfi.md",
+        "section_path": "CVA overview(CFI)",
+        "text": "# CVA overview(CFI)\n\nSource: [https://corporatefinanceinstitute.com/resources/derivatives/credit-valuation-adjustment-cva/](https://corporatefinanceinstitute.com/resources/derivatives/credit-valuation",
+        "relevance": 1,
+        "old_chunk_id": "cva_cfi.md:15a972d4e195",
+        "match_score": 1.0
       }
     ]
   },
@@ -145,11 +349,81 @@
     "qrels": [
       {
         "qrel_id": "q10_r1",
-        "chunk_id": "wikipedia_xva.md:6ee4b73ebca4",
+        "chunk_id": "wikipedia_xva.md:d7ad072656c9",
         "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
         "section_path": "Text",
         "text": "XVA is an umbrella term for valuation adjustments including CVA, DVA, FVA, etc.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "wikipedia_xva.md:041785001080",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q10_x1",
+        "chunk_id": "wikipedia_xva.md:a5c34485096b",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "# Text\n\nXVA - Wikipedia\n\nJump to content\n\nMain menu\n\nMain menu\n\nmove to sidebar\n\nhide\n\n Navigation\n\t\n\nMain page\nContents\nCurrent events\nRandom article\nAbout Wikipedia\nContact us\n\n Contribute\n\t\n\nHelp\nL",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q10_x2",
+        "chunk_id": "wikipedia_xva.md:4d0101ba4020",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Print/export\n\t\n\nDownload as PDF\nPrintable version\n\n In other projects\n\t\n\nWikidata item\n\nAppearance\n\nmove to sidebar\n\nhide\n\nFrom Wikipedia, the free encyclopedia\n\nBanking valuation adjustments\n\nPart of",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q10_x1",
+        "chunk_id": "wikipedia_xva.md:a5c34485096b",
+        "source": "corpus_fix/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "# Text\n\nXVA - Wikipedia\n\nJump to content\n\nMain menu\n\nMain menu\n\nmove to sidebar\n\nhide\n\n Navigation\n\t\n\nMain page\nContents\nCurrent events\nRandom article\nAbout Wikipedia\nContact us\n\n Contribute\n\t\n\nHelp\nL",
+        "relevance": 1,
+        "old_chunk_id": "wikipedia_xva.md:ae9206f93f8e",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q10_x4",
+        "chunk_id": "wikipedia_xva.md:89bf6f9c0904",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Offshore financial centres\n\nConduit and sink OFCs\n\nInstruments\n\nBond\n\nCash\n\nCollateralised debt obligation\n\nCredit default swap\n\nTime deposit\n (\ncertificate of deposit\n)\n\nCredit line\n\nDeposit\n\nDerivat",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q10_x5",
+        "chunk_id": "wikipedia_xva.md:adc485c3c1c2",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Leveraged buyout\n\nMergers and acquisitions\n\nStructured finance\n\nVenture capital\n\nTaxation\n\nBase erosion and profit shifting\n (BEPS)\n\nCorporate tax haven\n\nTax inversion\n\nTax haven\n\nTransfer pricing\n\nPe",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q10_x2",
+        "chunk_id": "wikipedia_xva.md:4d0101ba4020",
+        "source": "corpus_fix/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "le\nPermanent link\nPage information\nCite this page\nGet shortened URL\nDownload QR code\n\n Print/export\n\t\n\nDownload as PDF\nPrintable version\n\n In other projects\n\t\n\nWikidata item\n\nAppearance\n\nmove to sideb",
+        "relevance": 1,
+        "old_chunk_id": "wikipedia_xva.md:b1bf34f450bf",
+        "match_score": 0.611
+      },
+      {
+        "qrel_id": "q10_x7",
+        "chunk_id": "wikipedia_xva.md:f8b4719038c8",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Bank regulation\n\nBanking license\n\nBasel Accords\n\nBank for International Settlements\n\nFinancial Stability Board\n\nDeposit insurance\n\nSeparation of investment and retail banking\n\nRegulation\n \n·\n \nFinanci",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q10_x8",
+        "chunk_id": "wikipedia_xva.md:9776cf803e4c",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Context\n\nHistorically,\n\n (\nOTC\n) \nderivative pricing\n has relied on the \nBlack–Scholes\n \nrisk neutral pricing framework\n which assumes that funding is available at the risk free rate and that traders ",
+        "relevance": 1
       }
     ]
   },
@@ -158,11 +432,31 @@
     "qrels": [
       {
         "qrel_id": "q11_r1",
-        "chunk_id": "frtb_icma.md:006c0294481c",
+        "chunk_id": "frtb_icma.md:6b018f26318f",
         "source": "corpus/acceptance/frtb_icma.md",
         "section_path": "FRTB overview(ICMA)",
         "text": "The Fundamental Review of the Trading Book (FRTB) is a comprehensive suite of capital rules developed by the Basel Committee on Banking Supervision (BCBS).",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "frtb_icma.md:0b970bc1b15a",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q11_x1",
+        "chunk_id": "frtb_icma.md:1a3564e07721",
+        "source": "corpus/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
+        "text": "While FRTB was not intended to increase banks' capital costs beyond those imposed by Basel II.5, it is clear from both BCBS and industry analysis that banks will see significant increases in their cos",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q11_x1",
+        "chunk_id": "frtb_icma.md:6b018f26318f",
+        "source": "corpus_fix/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
+        "text": "comprehensive suite of capital rules developed by the Basel Committee on Banking Supervision (BCBS) as part of Basel III, intended to be applied to banks' wholesale trading activities. Finalised in Ja",
+        "relevance": 1,
+        "old_chunk_id": "frtb_icma.md:26665d4366a0",
+        "match_score": 1.0
       }
     ]
   },
@@ -171,11 +465,31 @@
     "qrels": [
       {
         "qrel_id": "q12_r1",
-        "chunk_id": "frtb_icma.md:006c0294481c",
+        "chunk_id": "frtb_icma.md:6b018f26318f",
         "source": "corpus/acceptance/frtb_icma.md",
         "section_path": "FRTB overview(ICMA)",
         "text": "Finalised in January 2016 as the Minimum Capital Requirements for Market Risk.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "frtb_icma.md:26665d4366a0",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q12_x1",
+        "chunk_id": "frtb_icma.md:1a3564e07721",
+        "source": "corpus/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
+        "text": "While FRTB was not intended to increase banks' capital costs beyond those imposed by Basel II.5, it is clear from both BCBS and industry analysis that banks will see significant increases in their cos",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q12_x1",
+        "chunk_id": "frtb_icma.md:6b018f26318f",
+        "source": "corpus_fix/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
+        "text": "# FRTB overview(ICMA)\n\nSource: [https://www.icmagroup.org/market-practice-and-regulatory-policy/secondary-markets/secondary-markets-regulation/fundamental-review-of-the-trading-book-frtb/](https://www",
+        "relevance": 1,
+        "old_chunk_id": "frtb_icma.md:0b970bc1b15a",
+        "match_score": 1.0
       }
     ]
   },
@@ -184,11 +498,31 @@
     "qrels": [
       {
         "qrel_id": "q13_r1",
-        "chunk_id": "frtb_icma.md:006c0294481c",
+        "chunk_id": "frtb_icma.md:6b018f26318f",
         "source": "corpus/acceptance/frtb_icma.md",
         "section_path": "FRTB overview(ICMA)",
         "text": "as part of Basel III",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "frtb_icma.md:26665d4366a0",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q13_x1",
+        "chunk_id": "frtb_icma.md:1a3564e07721",
+        "source": "corpus/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
+        "text": "While FRTB was not intended to increase banks' capital costs beyond those imposed by Basel II.5, it is clear from both BCBS and industry analysis that banks will see significant increases in their cos",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q13_x1",
+        "chunk_id": "frtb_icma.md:6b018f26318f",
+        "source": "corpus_fix/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
+        "text": "# FRTB overview(ICMA)\n\nSource: [https://www.icmagroup.org/market-practice-and-regulatory-policy/secondary-markets/secondary-markets-regulation/fundamental-review-of-the-trading-book-frtb/](https://www",
+        "relevance": 1,
+        "old_chunk_id": "frtb_icma.md:0b970bc1b15a",
+        "match_score": 1.0
       }
     ]
   },
@@ -197,11 +531,13 @@
     "qrels": [
       {
         "qrel_id": "q14_r1",
-        "chunk_id": "Background.md:52ecd236d3e8",
+        "chunk_id": "Background.md:bc6363266872",
         "source": "corpus/Background.md",
         "section_path": "Background / 4. FRTB overview",
         "text": "Common concepts used in interviews and systems: Trading book vs banking book",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:997e0e39da23",
+        "match_score": 1.0
       }
     ]
   },
@@ -210,11 +546,13 @@
     "qrels": [
       {
         "qrel_id": "q15_r1",
-        "chunk_id": "Background.md:52ecd236d3e8",
+        "chunk_id": "Background.md:bc6363266872",
         "source": "corpus/Background.md",
         "section_path": "Background / 4. FRTB overview",
         "text": "Common concepts used in interviews and systems: ... PnL attribution",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:997e0e39da23",
+        "match_score": 1.0
       }
     ]
   },
@@ -223,11 +561,13 @@
     "qrels": [
       {
         "qrel_id": "q16_r1",
-        "chunk_id": "Background.md:52ecd236d3e8",
+        "chunk_id": "Background.md:bc6363266872",
         "source": "corpus/Background.md",
         "section_path": "Background / 4. FRTB overview",
         "text": "Common concepts used in interviews and systems: ... Backtesting",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:997e0e39da23",
+        "match_score": 1.0
       }
     ]
   },
@@ -236,11 +576,13 @@
     "qrels": [
       {
         "qrel_id": "q17_r1",
-        "chunk_id": "Background.md:52ecd236d3e8",
+        "chunk_id": "Background.md:bc6363266872",
         "source": "corpus/Background.md",
         "section_path": "Background / 4. FRTB overview",
         "text": "Common concepts used in interviews and systems: Risk factor eligibility",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:997e0e39da23",
+        "match_score": 1.0
       }
     ]
   },
@@ -249,11 +591,81 @@
     "qrels": [
       {
         "qrel_id": "q18_r1",
-        "chunk_id": "wikipedia_xva.md:e7cb1cf8fc74",
+        "chunk_id": "wikipedia_xva.md:9776cf803e4c",
         "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
         "section_path": "Text",
         "text": "DVA (Debt Valuation Adjustment) is the valuation adjustment for own credit risk.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "wikipedia_xva.md:421e72883b91",
+        "match_score": 0.8
+      },
+      {
+        "qrel_id": "q18_x1",
+        "chunk_id": "wikipedia_xva.md:a5c34485096b",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "# Text\n\nXVA - Wikipedia\n\nJump to content\n\nMain menu\n\nMain menu\n\nmove to sidebar\n\nhide\n\n Navigation\n\t\n\nMain page\nContents\nCurrent events\nRandom article\nAbout Wikipedia\nContact us\n\n Contribute\n\t\n\nHelp\nL",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q18_x2",
+        "chunk_id": "wikipedia_xva.md:4d0101ba4020",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Print/export\n\t\n\nDownload as PDF\nPrintable version\n\n In other projects\n\t\n\nWikidata item\n\nAppearance\n\nmove to sidebar\n\nhide\n\nFrom Wikipedia, the free encyclopedia\n\nBanking valuation adjustments\n\nPart of",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q18_x1",
+        "chunk_id": "wikipedia_xva.md:a5c34485096b",
+        "source": "corpus_fix/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "# Text\n\nXVA - Wikipedia\n\nJump to content\n\nMain menu\n\nMain menu\n\nmove to sidebar\n\nhide\n\n Navigation\n\t\n\nMain page\nContents\nCurrent events\nRandom article\nAbout Wikipedia\nContact us\n\n Contribute\n\t\n\nHelp\nL",
+        "relevance": 1,
+        "old_chunk_id": "wikipedia_xva.md:ae9206f93f8e",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q18_x4",
+        "chunk_id": "wikipedia_xva.md:89bf6f9c0904",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Offshore financial centres\n\nConduit and sink OFCs\n\nInstruments\n\nBond\n\nCash\n\nCollateralised debt obligation\n\nCredit default swap\n\nTime deposit\n (\ncertificate of deposit\n)\n\nCredit line\n\nDeposit\n\nDerivat",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q18_x5",
+        "chunk_id": "wikipedia_xva.md:adc485c3c1c2",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Leveraged buyout\n\nMergers and acquisitions\n\nStructured finance\n\nVenture capital\n\nTaxation\n\nBase erosion and profit shifting\n (BEPS)\n\nCorporate tax haven\n\nTax inversion\n\nTax haven\n\nTransfer pricing\n\nPe",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q18_x2",
+        "chunk_id": "wikipedia_xva.md:4d0101ba4020",
+        "source": "corpus_fix/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "le\nPermanent link\nPage information\nCite this page\nGet shortened URL\nDownload QR code\n\n Print/export\n\t\n\nDownload as PDF\nPrintable version\n\n In other projects\n\t\n\nWikidata item\n\nAppearance\n\nmove to sideb",
+        "relevance": 1,
+        "old_chunk_id": "wikipedia_xva.md:b1bf34f450bf",
+        "match_score": 0.611
+      },
+      {
+        "qrel_id": "q18_x7",
+        "chunk_id": "wikipedia_xva.md:f8b4719038c8",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Bank regulation\n\nBanking license\n\nBasel Accords\n\nBank for International Settlements\n\nFinancial Stability Board\n\nDeposit insurance\n\nSeparation of investment and retail banking\n\nRegulation\n \n·\n \nFinanci",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q18_x8",
+        "chunk_id": "wikipedia_xva.md:d7ad072656c9",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Accounting scandals\n\nOutline\n\n \nBusiness and Economics portal\n\n \nMoney portal\nv\nt\ne\n\nX-Value Adjustment\n (\nXVA\n, \nxVA\n) is an \numbrella term\n referring to a number of different \"valuation adjustments\"",
+        "relevance": 1
       }
     ]
   },
@@ -262,11 +674,81 @@
     "qrels": [
       {
         "qrel_id": "q19_r1",
-        "chunk_id": "wikipedia_xva.md:e7cb1cf8fc74",
+        "chunk_id": "wikipedia_xva.md:ce7b30b639e8",
         "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
         "section_path": "Text",
         "text": "FVA (Funding Valuation Adjustment) is the valuation adjustment for funding costs.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "wikipedia_xva.md:10e6520c35db",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q19_x1",
+        "chunk_id": "wikipedia_xva.md:a5c34485096b",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "# Text\n\nXVA - Wikipedia\n\nJump to content\n\nMain menu\n\nMain menu\n\nmove to sidebar\n\nhide\n\n Navigation\n\t\n\nMain page\nContents\nCurrent events\nRandom article\nAbout Wikipedia\nContact us\n\n Contribute\n\t\n\nHelp\nL",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q19_x2",
+        "chunk_id": "wikipedia_xva.md:4d0101ba4020",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Print/export\n\t\n\nDownload as PDF\nPrintable version\n\n In other projects\n\t\n\nWikidata item\n\nAppearance\n\nmove to sidebar\n\nhide\n\nFrom Wikipedia, the free encyclopedia\n\nBanking valuation adjustments\n\nPart of",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q19_x1",
+        "chunk_id": "wikipedia_xva.md:a5c34485096b",
+        "source": "corpus_fix/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "# Text\n\nXVA - Wikipedia\n\nJump to content\n\nMain menu\n\nMain menu\n\nmove to sidebar\n\nhide\n\n Navigation\n\t\n\nMain page\nContents\nCurrent events\nRandom article\nAbout Wikipedia\nContact us\n\n Contribute\n\t\n\nHelp\nL",
+        "relevance": 1,
+        "old_chunk_id": "wikipedia_xva.md:ae9206f93f8e",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q19_x4",
+        "chunk_id": "wikipedia_xva.md:89bf6f9c0904",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Offshore financial centres\n\nConduit and sink OFCs\n\nInstruments\n\nBond\n\nCash\n\nCollateralised debt obligation\n\nCredit default swap\n\nTime deposit\n (\ncertificate of deposit\n)\n\nCredit line\n\nDeposit\n\nDerivat",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q19_x5",
+        "chunk_id": "wikipedia_xva.md:adc485c3c1c2",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Leveraged buyout\n\nMergers and acquisitions\n\nStructured finance\n\nVenture capital\n\nTaxation\n\nBase erosion and profit shifting\n (BEPS)\n\nCorporate tax haven\n\nTax inversion\n\nTax haven\n\nTransfer pricing\n\nPe",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q19_x2",
+        "chunk_id": "wikipedia_xva.md:4d0101ba4020",
+        "source": "corpus_fix/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "le\nPermanent link\nPage information\nCite this page\nGet shortened URL\nDownload QR code\n\n Print/export\n\t\n\nDownload as PDF\nPrintable version\n\n In other projects\n\t\n\nWikidata item\n\nAppearance\n\nmove to sideb",
+        "relevance": 1,
+        "old_chunk_id": "wikipedia_xva.md:b1bf34f450bf",
+        "match_score": 0.611
+      },
+      {
+        "qrel_id": "q19_x7",
+        "chunk_id": "wikipedia_xva.md:f8b4719038c8",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Bank regulation\n\nBanking license\n\nBasel Accords\n\nBank for International Settlements\n\nFinancial Stability Board\n\nDeposit insurance\n\nSeparation of investment and retail banking\n\nRegulation\n \n·\n \nFinanci",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q19_x8",
+        "chunk_id": "wikipedia_xva.md:d7ad072656c9",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Accounting scandals\n\nOutline\n\n \nBusiness and Economics portal\n\n \nMoney portal\nv\nt\ne\n\nX-Value Adjustment\n (\nXVA\n, \nxVA\n) is an \numbrella term\n referring to a number of different \"valuation adjustments\"",
+        "relevance": 1
       }
     ]
   },
@@ -275,11 +757,81 @@
     "qrels": [
       {
         "qrel_id": "q20_r1",
-        "chunk_id": "wikipedia_xva.md:09651a61ad82",
+        "chunk_id": "wikipedia_xva.md:ce7b30b639e8",
         "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
         "section_path": "Text",
         "text": "KVA (Capital Valuation Adjustment) is the valuation adjustment for capital costs.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "wikipedia_xva.md:10e6520c35db",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q20_x1",
+        "chunk_id": "wikipedia_xva.md:a5c34485096b",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "# Text\n\nXVA - Wikipedia\n\nJump to content\n\nMain menu\n\nMain menu\n\nmove to sidebar\n\nhide\n\n Navigation\n\t\n\nMain page\nContents\nCurrent events\nRandom article\nAbout Wikipedia\nContact us\n\n Contribute\n\t\n\nHelp\nL",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q20_x2",
+        "chunk_id": "wikipedia_xva.md:4d0101ba4020",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Print/export\n\t\n\nDownload as PDF\nPrintable version\n\n In other projects\n\t\n\nWikidata item\n\nAppearance\n\nmove to sidebar\n\nhide\n\nFrom Wikipedia, the free encyclopedia\n\nBanking valuation adjustments\n\nPart of",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q20_x1",
+        "chunk_id": "wikipedia_xva.md:a5c34485096b",
+        "source": "corpus_fix/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "# Text\n\nXVA - Wikipedia\n\nJump to content\n\nMain menu\n\nMain menu\n\nmove to sidebar\n\nhide\n\n Navigation\n\t\n\nMain page\nContents\nCurrent events\nRandom article\nAbout Wikipedia\nContact us\n\n Contribute\n\t\n\nHelp\nL",
+        "relevance": 1,
+        "old_chunk_id": "wikipedia_xva.md:ae9206f93f8e",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q20_x4",
+        "chunk_id": "wikipedia_xva.md:89bf6f9c0904",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Offshore financial centres\n\nConduit and sink OFCs\n\nInstruments\n\nBond\n\nCash\n\nCollateralised debt obligation\n\nCredit default swap\n\nTime deposit\n (\ncertificate of deposit\n)\n\nCredit line\n\nDeposit\n\nDerivat",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q20_x5",
+        "chunk_id": "wikipedia_xva.md:adc485c3c1c2",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Leveraged buyout\n\nMergers and acquisitions\n\nStructured finance\n\nVenture capital\n\nTaxation\n\nBase erosion and profit shifting\n (BEPS)\n\nCorporate tax haven\n\nTax inversion\n\nTax haven\n\nTransfer pricing\n\nPe",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q20_x2",
+        "chunk_id": "wikipedia_xva.md:4d0101ba4020",
+        "source": "corpus_fix/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "le\nPermanent link\nPage information\nCite this page\nGet shortened URL\nDownload QR code\n\n Print/export\n\t\n\nDownload as PDF\nPrintable version\n\n In other projects\n\t\n\nWikidata item\n\nAppearance\n\nmove to sideb",
+        "relevance": 1,
+        "old_chunk_id": "wikipedia_xva.md:b1bf34f450bf",
+        "match_score": 0.611
+      },
+      {
+        "qrel_id": "q20_x7",
+        "chunk_id": "wikipedia_xva.md:f8b4719038c8",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Bank regulation\n\nBanking license\n\nBasel Accords\n\nBank for International Settlements\n\nFinancial Stability Board\n\nDeposit insurance\n\nSeparation of investment and retail banking\n\nRegulation\n \n·\n \nFinanci",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q20_x8",
+        "chunk_id": "wikipedia_xva.md:d7ad072656c9",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Accounting scandals\n\nOutline\n\n \nBusiness and Economics portal\n\n \nMoney portal\nv\nt\ne\n\nX-Value Adjustment\n (\nXVA\n, \nxVA\n) is an \numbrella term\n referring to a number of different \"valuation adjustments\"",
+        "relevance": 1
       }
     ]
   },
@@ -288,11 +840,81 @@
     "qrels": [
       {
         "qrel_id": "q21_r1",
-        "chunk_id": "wikipedia_xva.md:09651a61ad82",
+        "chunk_id": "wikipedia_xva.md:ce7b30b639e8",
         "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
         "section_path": "Text",
         "text": "MVA (Margin Valuation Adjustment) is the valuation adjustment for margin costs.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "wikipedia_xva.md:10e6520c35db",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q21_x1",
+        "chunk_id": "wikipedia_xva.md:a5c34485096b",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "# Text\n\nXVA - Wikipedia\n\nJump to content\n\nMain menu\n\nMain menu\n\nmove to sidebar\n\nhide\n\n Navigation\n\t\n\nMain page\nContents\nCurrent events\nRandom article\nAbout Wikipedia\nContact us\n\n Contribute\n\t\n\nHelp\nL",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q21_x2",
+        "chunk_id": "wikipedia_xva.md:4d0101ba4020",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Print/export\n\t\n\nDownload as PDF\nPrintable version\n\n In other projects\n\t\n\nWikidata item\n\nAppearance\n\nmove to sidebar\n\nhide\n\nFrom Wikipedia, the free encyclopedia\n\nBanking valuation adjustments\n\nPart of",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q21_x1",
+        "chunk_id": "wikipedia_xva.md:a5c34485096b",
+        "source": "corpus_fix/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "# Text\n\nXVA - Wikipedia\n\nJump to content\n\nMain menu\n\nMain menu\n\nmove to sidebar\n\nhide\n\n Navigation\n\t\n\nMain page\nContents\nCurrent events\nRandom article\nAbout Wikipedia\nContact us\n\n Contribute\n\t\n\nHelp\nL",
+        "relevance": 1,
+        "old_chunk_id": "wikipedia_xva.md:ae9206f93f8e",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q21_x4",
+        "chunk_id": "wikipedia_xva.md:89bf6f9c0904",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Offshore financial centres\n\nConduit and sink OFCs\n\nInstruments\n\nBond\n\nCash\n\nCollateralised debt obligation\n\nCredit default swap\n\nTime deposit\n (\ncertificate of deposit\n)\n\nCredit line\n\nDeposit\n\nDerivat",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q21_x5",
+        "chunk_id": "wikipedia_xva.md:adc485c3c1c2",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Leveraged buyout\n\nMergers and acquisitions\n\nStructured finance\n\nVenture capital\n\nTaxation\n\nBase erosion and profit shifting\n (BEPS)\n\nCorporate tax haven\n\nTax inversion\n\nTax haven\n\nTransfer pricing\n\nPe",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q21_x2",
+        "chunk_id": "wikipedia_xva.md:4d0101ba4020",
+        "source": "corpus_fix/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "le\nPermanent link\nPage information\nCite this page\nGet shortened URL\nDownload QR code\n\n Print/export\n\t\n\nDownload as PDF\nPrintable version\n\n In other projects\n\t\n\nWikidata item\n\nAppearance\n\nmove to sideb",
+        "relevance": 1,
+        "old_chunk_id": "wikipedia_xva.md:b1bf34f450bf",
+        "match_score": 0.611
+      },
+      {
+        "qrel_id": "q21_x7",
+        "chunk_id": "wikipedia_xva.md:f8b4719038c8",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Bank regulation\n\nBanking license\n\nBasel Accords\n\nBank for International Settlements\n\nFinancial Stability Board\n\nDeposit insurance\n\nSeparation of investment and retail banking\n\nRegulation\n \n·\n \nFinanci",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q21_x8",
+        "chunk_id": "wikipedia_xva.md:d7ad072656c9",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Accounting scandals\n\nOutline\n\n \nBusiness and Economics portal\n\n \nMoney portal\nv\nt\ne\n\nX-Value Adjustment\n (\nXVA\n, \nxVA\n) is an \numbrella term\n referring to a number of different \"valuation adjustments\"",
+        "relevance": 1
       }
     ]
   },
@@ -301,11 +923,81 @@
     "qrels": [
       {
         "qrel_id": "q22_r1",
-        "chunk_id": "wikipedia_xva.md:66013361c3a9",
+        "chunk_id": "wikipedia_xva.md:445683ed1cce",
         "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
         "section_path": "Text",
         "text": "ColVA (Collateral Valuation Adjustment) is the valuation adjustment for collateral.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "wikipedia_xva.md:421e72883b91",
+        "match_score": 0.75
+      },
+      {
+        "qrel_id": "q22_x1",
+        "chunk_id": "wikipedia_xva.md:a5c34485096b",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "# Text\n\nXVA - Wikipedia\n\nJump to content\n\nMain menu\n\nMain menu\n\nmove to sidebar\n\nhide\n\n Navigation\n\t\n\nMain page\nContents\nCurrent events\nRandom article\nAbout Wikipedia\nContact us\n\n Contribute\n\t\n\nHelp\nL",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q22_x2",
+        "chunk_id": "wikipedia_xva.md:4d0101ba4020",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Print/export\n\t\n\nDownload as PDF\nPrintable version\n\n In other projects\n\t\n\nWikidata item\n\nAppearance\n\nmove to sidebar\n\nhide\n\nFrom Wikipedia, the free encyclopedia\n\nBanking valuation adjustments\n\nPart of",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q22_x1",
+        "chunk_id": "wikipedia_xva.md:a5c34485096b",
+        "source": "corpus_fix/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "# Text\n\nXVA - Wikipedia\n\nJump to content\n\nMain menu\n\nMain menu\n\nmove to sidebar\n\nhide\n\n Navigation\n\t\n\nMain page\nContents\nCurrent events\nRandom article\nAbout Wikipedia\nContact us\n\n Contribute\n\t\n\nHelp\nL",
+        "relevance": 1,
+        "old_chunk_id": "wikipedia_xva.md:ae9206f93f8e",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q22_x4",
+        "chunk_id": "wikipedia_xva.md:89bf6f9c0904",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Offshore financial centres\n\nConduit and sink OFCs\n\nInstruments\n\nBond\n\nCash\n\nCollateralised debt obligation\n\nCredit default swap\n\nTime deposit\n (\ncertificate of deposit\n)\n\nCredit line\n\nDeposit\n\nDerivat",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q22_x5",
+        "chunk_id": "wikipedia_xva.md:adc485c3c1c2",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Leveraged buyout\n\nMergers and acquisitions\n\nStructured finance\n\nVenture capital\n\nTaxation\n\nBase erosion and profit shifting\n (BEPS)\n\nCorporate tax haven\n\nTax inversion\n\nTax haven\n\nTransfer pricing\n\nPe",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q22_x2",
+        "chunk_id": "wikipedia_xva.md:4d0101ba4020",
+        "source": "corpus_fix/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "le\nPermanent link\nPage information\nCite this page\nGet shortened URL\nDownload QR code\n\n Print/export\n\t\n\nDownload as PDF\nPrintable version\n\n In other projects\n\t\n\nWikidata item\n\nAppearance\n\nmove to sideb",
+        "relevance": 1,
+        "old_chunk_id": "wikipedia_xva.md:b1bf34f450bf",
+        "match_score": 0.611
+      },
+      {
+        "qrel_id": "q22_x7",
+        "chunk_id": "wikipedia_xva.md:f8b4719038c8",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Bank regulation\n\nBanking license\n\nBasel Accords\n\nBank for International Settlements\n\nFinancial Stability Board\n\nDeposit insurance\n\nSeparation of investment and retail banking\n\nRegulation\n \n·\n \nFinanci",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q22_x8",
+        "chunk_id": "wikipedia_xva.md:d7ad072656c9",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Accounting scandals\n\nOutline\n\n \nBusiness and Economics portal\n\n \nMoney portal\nv\nt\ne\n\nX-Value Adjustment\n (\nXVA\n, \nxVA\n) is an \numbrella term\n referring to a number of different \"valuation adjustments\"",
+        "relevance": 1
       }
     ]
   },
@@ -313,12 +1005,24 @@
     "id": "q23",
     "qrels": [
       {
-        "qrel_id": "q23_r1",
-        "chunk_id": "cva_cfi.md:4ac08b62a0e8",
+        "qrel_id": "q23_gap1",
+        "chunk_id": "cva_cfi.md:4b22997a3d2f",
         "source": "corpus/acceptance/cva_cfi.md",
         "section_path": "CVA overview(CFI)",
-        "text": "The formula for calculating CVA is written with terms including ... default probability",
-        "relevance": 2
+        "text": "The formula for calculating CVA is written with terms including maturity, discount factors, loss given default, default probability, and exposure over time.",
+        "relevance": 2,
+        "match_score": 0.667,
+        "origin": "keyword_gap_fill"
+      },
+      {
+        "qrel_id": "q23_gap2",
+        "chunk_id": "bis_bcbs_d488.pdf:5cf8fe9e47e7",
+        "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d488.pdf",
+        "section_path": "",
+        "text": "(1) Regulatory CVA must be calculated as the expectation of future losses resulting from default of the counterparty under the assumption that the bank itself is free from the default risk. \n(2) The c",
+        "relevance": 1,
+        "match_score": 0.667,
+        "origin": "keyword_gap_fill"
       }
     ]
   },
@@ -326,12 +1030,24 @@
     "id": "q24",
     "qrels": [
       {
-        "qrel_id": "q24_r1",
-        "chunk_id": "cva_cfi.md:4ac08b62a0e8",
-        "source": "corpus/acceptance/cva_cfi.md",
-        "section_path": "CVA overview(CFI)",
-        "text": "The formula for calculating CVA is written with terms including ... loss given default",
-        "relevance": 2
+        "qrel_id": "q24_gap1",
+        "chunk_id": "isda_afme_cva_position_paper.docx:ede15051f14b",
+        "source": "corpus/regulatory_seed/docx/en/isda_afme_cva_position_paper.docx",
+        "section_path": "",
+        "text": "Furthermore, since banks hedge their exposures based on economic CVA risk rather than regulatory CVA the impact of hedges is reduced in the regulatory CVA charge compared to how hedges would mitigate ",
+        "relevance": 2,
+        "match_score": 1.0,
+        "origin": "keyword_gap_fill"
+      },
+      {
+        "qrel_id": "q24_gap2",
+        "chunk_id": "wikipedia_cva.md:3680a8f9fa98",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_cva.md",
+        "section_path": "Text",
+        "text": "{\\displaystyle T}\n\n  is the \nmaturity\n of the longest transaction in the portfolio, \n\nB\n\nt\n\n{\\displaystyle B_{t}}\n\n is the future value of one unit of the \nbase currency\n invested today at the prevail",
+        "relevance": 1,
+        "match_score": 1.0,
+        "origin": "keyword_gap_fill"
       }
     ]
   },
@@ -339,12 +1055,14 @@
     "id": "q25",
     "qrels": [
       {
-        "qrel_id": "q25_r1",
-        "chunk_id": "cva_cfi.md:4ac08b62a0e8",
-        "source": "corpus/acceptance/cva_cfi.md",
-        "section_path": "CVA overview(CFI)",
-        "text": "The formula for calculating CVA is written with terms including ... exposure over time",
-        "relevance": 2
+        "qrel_id": "q25_gap1",
+        "chunk_id": "bis_bcbs_d488.pdf:27458f786630",
+        "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d488.pdf",
+        "section_path": "",
+        "text": "(2) MNS is the effective maturity for the netting set NS . For banks that have supervisory \napproval to use the IMM, MNS is calculated as per [ CRE53.20] and [ CRE53.21], with the \nexception that the ",
+        "relevance": 2,
+        "match_score": 1.0,
+        "origin": "keyword_gap_fill"
       }
     ]
   },
@@ -352,12 +1070,14 @@
     "id": "q26",
     "qrels": [
       {
-        "qrel_id": "q26_r1",
-        "chunk_id": "cva_cfi.md:4ac08b62a0e8",
-        "source": "corpus/acceptance/cva_cfi.md",
-        "section_path": "CVA overview(CFI)",
-        "text": "The formula for calculating CVA is written with terms including maturity, discount factors",
-        "relevance": 2
+        "qrel_id": "q26_gap1",
+        "chunk_id": "bis_bcbs_d488.pdf:778a4b3ba48a",
+        "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d488.pdf",
+        "section_path": "",
+        "text": "and is 0.051\n0.05NSM\nNSe\nM−⋅−\n⋅ for banks not using the IMM. \n(5) α = 1.4. \n \nα= ⋅⋅ ⋅ ⋅∑1\nC C NS NS NS\nNSSCVA RW M EAD DF \nFootnotes \n DF is the supervisory discount factor averaged over time between ",
+        "relevance": 2,
+        "match_score": 1.0,
+        "origin": "keyword_gap_fill"
       }
     ]
   },
@@ -366,11 +1086,31 @@
     "qrels": [
       {
         "qrel_id": "q27_r1",
-        "chunk_id": "frtb_icma.md:acc70e825c4e",
+        "chunk_id": "frtb_icma.md:1a3564e07721",
         "source": "corpus/acceptance/frtb_icma.md",
         "section_path": "FRTB overview(ICMA)",
         "text": "In the EU, FRTB is being implemented as part of the Revised Capital Requirements Regulation (CRR II)",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "frtb_icma.md:26665d4366a0",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q27_x1",
+        "chunk_id": "frtb_icma.md:6b018f26318f",
+        "source": "corpus/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
+        "text": "# FRTB overview(ICMA)\n\nSource: [https://www.icmagroup.org/market-practice-and-regulatory-policy/secondary-markets/secondary-markets-regulation/fundamental-review-of-the-trading-book-frtb/](https://www",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q27_x1",
+        "chunk_id": "frtb_icma.md:6b018f26318f",
+        "source": "corpus_fix/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
+        "text": "# FRTB overview(ICMA)\n\nSource: [https://www.icmagroup.org/market-practice-and-regulatory-policy/secondary-markets/secondary-markets-regulation/fundamental-review-of-the-trading-book-frtb/](https://www",
+        "relevance": 1,
+        "old_chunk_id": "frtb_icma.md:0b970bc1b15a",
+        "match_score": 1.0
       }
     ]
   },
@@ -379,11 +1119,31 @@
     "qrels": [
       {
         "qrel_id": "q28_r1",
-        "chunk_id": "frtb_icma.md:acc70e825c4e",
+        "chunk_id": "frtb_icma.md:6b018f26318f",
         "source": "corpus/acceptance/frtb_icma.md",
         "section_path": "FRTB overview(ICMA)",
         "text": "it aims to address a number of identified shortcomings in the existing Basel II.5 framework",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "frtb_icma.md:26665d4366a0",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q28_x1",
+        "chunk_id": "frtb_icma.md:1a3564e07721",
+        "source": "corpus/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
+        "text": "While FRTB was not intended to increase banks' capital costs beyond those imposed by Basel II.5, it is clear from both BCBS and industry analysis that banks will see significant increases in their cos",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q28_x1",
+        "chunk_id": "frtb_icma.md:6b018f26318f",
+        "source": "corpus_fix/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
+        "text": "# FRTB overview(ICMA)\n\nSource: [https://www.icmagroup.org/market-practice-and-regulatory-policy/secondary-markets/secondary-markets-regulation/fundamental-review-of-the-trading-book-frtb/](https://www",
+        "relevance": 1,
+        "old_chunk_id": "frtb_icma.md:0b970bc1b15a",
+        "match_score": 1.0
       }
     ]
   },
@@ -392,11 +1152,31 @@
     "qrels": [
       {
         "qrel_id": "q29_r1",
-        "chunk_id": "frtb_icma.md:acc70e825c4e",
+        "chunk_id": "frtb_icma.md:1a3564e07721",
         "source": "corpus/acceptance/frtb_icma.md",
         "section_path": "FRTB overview(ICMA)",
         "text": "While FRTB was not intended to increase banks' capital costs beyond those imposed by Basel II.5, it is clear ... that banks will see significant increases in their cost of capital, in particular to support their trading activities.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "frtb_icma.md:26665d4366a0",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q29_x1",
+        "chunk_id": "frtb_icma.md:6b018f26318f",
+        "source": "corpus/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
+        "text": "# FRTB overview(ICMA)\n\nSource: [https://www.icmagroup.org/market-practice-and-regulatory-policy/secondary-markets/secondary-markets-regulation/fundamental-review-of-the-trading-book-frtb/](https://www",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q29_x1",
+        "chunk_id": "frtb_icma.md:6b018f26318f",
+        "source": "corpus_fix/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
+        "text": "# FRTB overview(ICMA)\n\nSource: [https://www.icmagroup.org/market-practice-and-regulatory-policy/secondary-markets/secondary-markets-regulation/fundamental-review-of-the-trading-book-frtb/](https://www",
+        "relevance": 1,
+        "old_chunk_id": "frtb_icma.md:0b970bc1b15a",
+        "match_score": 1.0
       }
     ]
   },
@@ -405,11 +1185,31 @@
     "qrels": [
       {
         "qrel_id": "q30_r1",
-        "chunk_id": "frtb_icma.md:006c0294481c",
+        "chunk_id": "frtb_icma.md:6b018f26318f",
         "source": "corpus/acceptance/frtb_icma.md",
         "section_path": "FRTB overview(ICMA)",
         "text": "developed by the Basel Committee on Banking Supervision (BCBS)",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "frtb_icma.md:0b970bc1b15a",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q30_x1",
+        "chunk_id": "frtb_icma.md:1a3564e07721",
+        "source": "corpus/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
+        "text": "While FRTB was not intended to increase banks' capital costs beyond those imposed by Basel II.5, it is clear from both BCBS and industry analysis that banks will see significant increases in their cos",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q30_x1",
+        "chunk_id": "frtb_icma.md:6b018f26318f",
+        "source": "corpus_fix/acceptance/frtb_icma.md",
+        "section_path": "FRTB overview(ICMA)",
+        "text": "comprehensive suite of capital rules developed by the Basel Committee on Banking Supervision (BCBS) as part of Basel III, intended to be applied to banks' wholesale trading activities. Finalised in Ja",
+        "relevance": 1,
+        "old_chunk_id": "frtb_icma.md:26665d4366a0",
+        "match_score": 1.0
       }
     ]
   },
@@ -418,11 +1218,65 @@
     "qrels": [
       {
         "qrel_id": "q31_r1",
-        "chunk_id": "Background.md:222936993a67",
+        "chunk_id": "Background.md:c3b63eeae655",
         "source": "corpus/Background.md",
         "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Theta: sensitivity of a derivative's value to the passage of time (also known as time decay).",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:a82ac4e9e0c7",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q31_x1",
+        "chunk_id": "Background.md:fd45c5591da7",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q31_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Implied volatility: the market's expectation of future volatility, derived from option prices and implied by the Black-Scholes model.\n- Historical volatility: a backward-looking measure based on pas",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q31_x1",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "s in the underlying price.\n- Charm: sensitivity of Delta to the passage of time (also known as delta decay or DdeltaDtime).\n\nRelated concepts:\n\n- Implied volatility: the market's expectation of future",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:2955e615eb94",
+        "match_score": 0.706
+      },
+      {
+        "qrel_id": "q31_x4",
+        "chunk_id": "Background.md:b9fdc24e3bfc",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Gamma hedging: adjusting a portfolio to reduce gamma exposure, making the hedge more stable to larger moves in the underlying asset price.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q31_x5",
+        "chunk_id": "Background.md:35fccb4108e3",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "In risk systems, Greeks are often aggregated by dimensions such as desk, book, trader, and risk factor.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q31_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Delta-neutral portfolio: a portfolio whose total delta is zero, making it insensitive to small changes in the underlying price; often used by market makers to hedge directional risk.\n- Gamma hedging",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:4e70df3c2251",
+        "match_score": 0.92
       }
     ]
   },
@@ -431,11 +1285,65 @@
     "qrels": [
       {
         "qrel_id": "q32_r1",
-        "chunk_id": "Background.md:222936993a67",
+        "chunk_id": "Background.md:c3b63eeae655",
         "source": "corpus/Background.md",
         "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Rho: sensitivity of a derivative's value to changes in interest rates.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:a82ac4e9e0c7",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q32_x1",
+        "chunk_id": "Background.md:fd45c5591da7",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q32_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Implied volatility: the market's expectation of future volatility, derived from option prices and implied by the Black-Scholes model.\n- Historical volatility: a backward-looking measure based on pas",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q32_x1",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "s in the underlying price.\n- Charm: sensitivity of Delta to the passage of time (also known as delta decay or DdeltaDtime).\n\nRelated concepts:\n\n- Implied volatility: the market's expectation of future",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:2955e615eb94",
+        "match_score": 0.706
+      },
+      {
+        "qrel_id": "q32_x4",
+        "chunk_id": "Background.md:b9fdc24e3bfc",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Gamma hedging: adjusting a portfolio to reduce gamma exposure, making the hedge more stable to larger moves in the underlying asset price.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q32_x5",
+        "chunk_id": "Background.md:35fccb4108e3",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "In risk systems, Greeks are often aggregated by dimensions such as desk, book, trader, and risk factor.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q32_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Delta-neutral portfolio: a portfolio whose total delta is zero, making it insensitive to small changes in the underlying price; often used by market makers to hedge directional risk.\n- Gamma hedging",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:4e70df3c2251",
+        "match_score": 0.92
       }
     ]
   },
@@ -444,11 +1352,65 @@
     "qrels": [
       {
         "qrel_id": "q33_r1",
-        "chunk_id": "Background.md:222936993a67",
+        "chunk_id": "Background.md:c3b63eeae655",
         "source": "corpus/Background.md",
         "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Volga: second-order Greek measuring the sensitivity of Vega to changes in implied volatility (also called vomma).",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:a82ac4e9e0c7",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q33_x1",
+        "chunk_id": "Background.md:fd45c5591da7",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q33_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Implied volatility: the market's expectation of future volatility, derived from option prices and implied by the Black-Scholes model.\n- Historical volatility: a backward-looking measure based on pas",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q33_x1",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "s in the underlying price.\n- Charm: sensitivity of Delta to the passage of time (also known as delta decay or DdeltaDtime).\n\nRelated concepts:\n\n- Implied volatility: the market's expectation of future",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:2955e615eb94",
+        "match_score": 0.706
+      },
+      {
+        "qrel_id": "q33_x4",
+        "chunk_id": "Background.md:b9fdc24e3bfc",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Gamma hedging: adjusting a portfolio to reduce gamma exposure, making the hedge more stable to larger moves in the underlying asset price.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q33_x5",
+        "chunk_id": "Background.md:35fccb4108e3",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "In risk systems, Greeks are often aggregated by dimensions such as desk, book, trader, and risk factor.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q33_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Delta-neutral portfolio: a portfolio whose total delta is zero, making it insensitive to small changes in the underlying price; often used by market makers to hedge directional risk.\n- Gamma hedging",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:4e70df3c2251",
+        "match_score": 0.92
       }
     ]
   },
@@ -457,11 +1419,65 @@
     "qrels": [
       {
         "qrel_id": "q34_r1",
-        "chunk_id": "Background.md:222936993a67",
+        "chunk_id": "Background.md:c3b63eeae655",
         "source": "corpus/Background.md",
         "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Vanna: second-order Greek measuring the sensitivity of Delta to changes in implied volatility, equivalently the sensitivity of Vega to changes in the underlying price.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:a82ac4e9e0c7",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q34_x1",
+        "chunk_id": "Background.md:fd45c5591da7",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q34_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Implied volatility: the market's expectation of future volatility, derived from option prices and implied by the Black-Scholes model.\n- Historical volatility: a backward-looking measure based on pas",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q34_x1",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "s in the underlying price.\n- Charm: sensitivity of Delta to the passage of time (also known as delta decay or DdeltaDtime).\n\nRelated concepts:\n\n- Implied volatility: the market's expectation of future",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:2955e615eb94",
+        "match_score": 0.706
+      },
+      {
+        "qrel_id": "q34_x4",
+        "chunk_id": "Background.md:b9fdc24e3bfc",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Gamma hedging: adjusting a portfolio to reduce gamma exposure, making the hedge more stable to larger moves in the underlying asset price.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q34_x5",
+        "chunk_id": "Background.md:35fccb4108e3",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "In risk systems, Greeks are often aggregated by dimensions such as desk, book, trader, and risk factor.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q34_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Delta-neutral portfolio: a portfolio whose total delta is zero, making it insensitive to small changes in the underlying price; often used by market makers to hedge directional risk.\n- Gamma hedging",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:4e70df3c2251",
+        "match_score": 0.92
       }
     ]
   },
@@ -470,11 +1486,65 @@
     "qrels": [
       {
         "qrel_id": "q35_r1",
-        "chunk_id": "Background.md:222936993a67",
+        "chunk_id": "Background.md:c3b63eeae655",
         "source": "corpus/Background.md",
         "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Charm: sensitivity of Delta to the passage of time (also known as delta decay or DdeltaDtime).",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:2955e615eb94",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q35_x1",
+        "chunk_id": "Background.md:fd45c5591da7",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q35_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Implied volatility: the market's expectation of future volatility, derived from option prices and implied by the Black-Scholes model.\n- Historical volatility: a backward-looking measure based on pas",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q35_x1",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:\n\n- Delta: sensitivity to the underlying price level.\n- Gamma: sensitivi",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:a82ac4e9e0c7",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q35_x4",
+        "chunk_id": "Background.md:b9fdc24e3bfc",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Gamma hedging: adjusting a portfolio to reduce gamma exposure, making the hedge more stable to larger moves in the underlying asset price.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q35_x5",
+        "chunk_id": "Background.md:35fccb4108e3",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "In risk systems, Greeks are often aggregated by dimensions such as desk, book, trader, and risk factor.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q35_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Delta-neutral portfolio: a portfolio whose total delta is zero, making it insensitive to small changes in the underlying price; often used by market makers to hedge directional risk.\n- Gamma hedging",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:4e70df3c2251",
+        "match_score": 0.92
       }
     ]
   },
@@ -483,19 +1553,65 @@
     "qrels": [
       {
         "qrel_id": "q36_r1",
-        "chunk_id": "Background.md:402e6913648a",
+        "chunk_id": "Background.md:031933e1362b",
         "source": "corpus/Background.md",
         "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Implied volatility: the market's expectation of future volatility, derived from option prices and implied by the Black-Scholes model.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:2955e615eb94",
+        "match_score": 1.0
       },
       {
-        "qrel_id": "q36_r2",
-        "chunk_id": "Background.md:402e6913648a",
+        "qrel_id": "q36_x1",
+        "chunk_id": "Background.md:fd45c5591da7",
         "source": "corpus/Background.md",
         "section_path": "Background / 3. Risk sensitivities (Greeks)",
-        "text": "Historical volatility: a backward-looking measure based on past price movements of the underlying asset.",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:",
         "relevance": 1
+      },
+      {
+        "qrel_id": "q36_x2",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Greeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:\n\n- Delta: sensitivity to the underlying price level.\n- Gamma: sensitivity of Delta to the underlying price",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q36_x1",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:\n\n- Delta: sensitivity to the underlying price level.\n- Gamma: sensitivi",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:a82ac4e9e0c7",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q36_x4",
+        "chunk_id": "Background.md:b9fdc24e3bfc",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Gamma hedging: adjusting a portfolio to reduce gamma exposure, making the hedge more stable to larger moves in the underlying asset price.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q36_x5",
+        "chunk_id": "Background.md:35fccb4108e3",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "In risk systems, Greeks are often aggregated by dimensions such as desk, book, trader, and risk factor.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q36_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Delta-neutral portfolio: a portfolio whose total delta is zero, making it insensitive to small changes in the underlying price; often used by market makers to hedge directional risk.\n- Gamma hedging",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:4e70df3c2251",
+        "match_score": 0.92
       }
     ]
   },
@@ -504,11 +1620,65 @@
     "qrels": [
       {
         "qrel_id": "q37_r1",
-        "chunk_id": "Background.md:402e6913648a",
+        "chunk_id": "Background.md:031933e1362b",
         "source": "corpus/Background.md",
         "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Delta-neutral portfolio: a portfolio whose total delta is zero, making it insensitive to small changes in the underlying price; often used by market makers to hedge directional risk.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:2955e615eb94",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q37_x1",
+        "chunk_id": "Background.md:fd45c5591da7",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q37_x2",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Greeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:\n\n- Delta: sensitivity to the underlying price level.\n- Gamma: sensitivity of Delta to the underlying price",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q37_x1",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:\n\n- Delta: sensitivity to the underlying price level.\n- Gamma: sensitivi",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:a82ac4e9e0c7",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q37_x4",
+        "chunk_id": "Background.md:b9fdc24e3bfc",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Gamma hedging: adjusting a portfolio to reduce gamma exposure, making the hedge more stable to larger moves in the underlying asset price.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q37_x5",
+        "chunk_id": "Background.md:35fccb4108e3",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "In risk systems, Greeks are often aggregated by dimensions such as desk, book, trader, and risk factor.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q37_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Delta-neutral portfolio: a portfolio whose total delta is zero, making it insensitive to small changes in the underlying price; often used by market makers to hedge directional risk.\n- Gamma hedging",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:4e70df3c2251",
+        "match_score": 0.92
       }
     ]
   },
@@ -517,11 +1687,65 @@
     "qrels": [
       {
         "qrel_id": "q38_r1",
-        "chunk_id": "Background.md:0e189bafb653",
+        "chunk_id": "Background.md:b9fdc24e3bfc",
         "source": "corpus/Background.md",
         "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Gamma hedging: adjusting a portfolio to reduce gamma exposure, making the hedge more stable to larger moves in the underlying asset price.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:4e70df3c2251",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q38_x1",
+        "chunk_id": "Background.md:fd45c5591da7",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q38_x2",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Greeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:\n\n- Delta: sensitivity to the underlying price level.\n- Gamma: sensitivity of Delta to the underlying price",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q38_x1",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:\n\n- Delta: sensitivity to the underlying price level.\n- Gamma: sensitivi",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:a82ac4e9e0c7",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q38_x4",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Implied volatility: the market's expectation of future volatility, derived from option prices and implied by the Black-Scholes model.\n- Historical volatility: a backward-looking measure based on pas",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q38_x5",
+        "chunk_id": "Background.md:35fccb4108e3",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "In risk systems, Greeks are often aggregated by dimensions such as desk, book, trader, and risk factor.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q38_x2",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "s in the underlying price.\n- Charm: sensitivity of Delta to the passage of time (also known as delta decay or DdeltaDtime).\n\nRelated concepts:\n\n- Implied volatility: the market's expectation of future",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:2955e615eb94",
+        "match_score": 0.706
       }
     ]
   },
@@ -530,11 +1754,65 @@
     "qrels": [
       {
         "qrel_id": "q39_r1",
-        "chunk_id": "Background.md:402e6913648a",
+        "chunk_id": "Background.md:031933e1362b",
         "source": "corpus/Background.md",
         "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Volatility skew: the pattern where implied volatility varies across strike prices, typically with lower strikes having higher volatility (common in equity index options).",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:2955e615eb94",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q39_x1",
+        "chunk_id": "Background.md:fd45c5591da7",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q39_x2",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Greeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:\n\n- Delta: sensitivity to the underlying price level.\n- Gamma: sensitivity of Delta to the underlying price",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q39_x1",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:\n\n- Delta: sensitivity to the underlying price level.\n- Gamma: sensitivi",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:a82ac4e9e0c7",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q39_x4",
+        "chunk_id": "Background.md:b9fdc24e3bfc",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Gamma hedging: adjusting a portfolio to reduce gamma exposure, making the hedge more stable to larger moves in the underlying asset price.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q39_x5",
+        "chunk_id": "Background.md:35fccb4108e3",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "In risk systems, Greeks are often aggregated by dimensions such as desk, book, trader, and risk factor.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q39_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Delta-neutral portfolio: a portfolio whose total delta is zero, making it insensitive to small changes in the underlying price; often used by market makers to hedge directional risk.\n- Gamma hedging",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:4e70df3c2251",
+        "match_score": 0.92
       }
     ]
   },
@@ -543,11 +1821,65 @@
     "qrels": [
       {
         "qrel_id": "q40_r1",
-        "chunk_id": "Background.md:402e6913648a",
+        "chunk_id": "Background.md:031933e1362b",
         "source": "corpus/Background.md",
         "section_path": "Background / 3. Risk sensitivities (Greeks)",
         "text": "Volatility smile: a pattern where both out-of-the-money and in-the-money options have higher implied volatility than at-the-money options.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:2955e615eb94",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q40_x1",
+        "chunk_id": "Background.md:fd45c5591da7",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q40_x2",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "Greeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:\n\n- Delta: sensitivity to the underlying price level.\n- Gamma: sensitivity of Delta to the underlying price",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q40_x1",
+        "chunk_id": "Background.md:c3b63eeae655",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "## 3. Risk sensitivities (Greeks)\n\nGreeks are sensitivities of a derivative value to small changes in risk factors.\n\nKey Greeks:\n\n- Delta: sensitivity to the underlying price level.\n- Gamma: sensitivi",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:a82ac4e9e0c7",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q40_x4",
+        "chunk_id": "Background.md:b9fdc24e3bfc",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Gamma hedging: adjusting a portfolio to reduce gamma exposure, making the hedge more stable to larger moves in the underlying asset price.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q40_x5",
+        "chunk_id": "Background.md:35fccb4108e3",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "In risk systems, Greeks are often aggregated by dimensions such as desk, book, trader, and risk factor.",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q40_x2",
+        "chunk_id": "Background.md:031933e1362b",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 3. Risk sensitivities (Greeks)",
+        "text": "- Delta-neutral portfolio: a portfolio whose total delta is zero, making it insensitive to small changes in the underlying price; often used by market makers to hedge directional risk.\n- Gamma hedging",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:4e70df3c2251",
+        "match_score": 0.92
       }
     ]
   },
@@ -556,11 +1888,13 @@
     "qrels": [
       {
         "qrel_id": "q41_r1",
-        "chunk_id": "Background.md:7921838e696d",
+        "chunk_id": "Background.md:f45caa8e5787",
         "source": "corpus/Background.md",
         "section_path": "Background / 1. Market risk basics",
         "text": "A risk factor is a market variable (e.g., interest rate, equity price, FX rate) that drives the value of a portfolio.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:18c3566fca1f",
+        "match_score": 0.636
       }
     ]
   },
@@ -568,12 +1902,24 @@
     "id": "q42",
     "qrels": [
       {
-        "qrel_id": "q42_r1",
-        "chunk_id": "Background.md:52ecd236d3e8",
-        "source": "corpus/Background.md",
+        "qrel_id": "q42_gap1",
+        "chunk_id": "bis_bcbs_d457_note.pdf:b391a9e9d4fe",
+        "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457_note.pdf",
         "section_path": "Background / 4. FRTB overview",
-        "text": "Model risk is the risk that a valuation or risk model produces incorrect results, which FRTB aims to address through governance.",
-        "relevance": 2
+        "text": "(manually corrected gold)",
+        "relevance": 2,
+        "match_score": 1.0,
+        "origin": "keyword_gap_fill_manual_fix"
+      },
+      {
+        "qrel_id": "q42_gap2",
+        "chunk_id": "isda_afme_cva_position_paper.docx:fbecd6ba3d8d",
+        "source": "corpus/regulatory_seed/docx/en/isda_afme_cva_position_paper.docx",
+        "section_path": "",
+        "text": "1 https://www.bis.org/bcbs/publ/d424.pdf\n2 https://www.bis.org/bcbs/publ/d507.htm\naccount for model risk, to 1 – to address calibration issues in the framework. This also takes into account the fact t",
+        "relevance": 1,
+        "match_score": 1.0,
+        "origin": "keyword_gap_fill"
       }
     ]
   },
@@ -582,11 +1928,31 @@
     "qrels": [
       {
         "qrel_id": "q43_r1",
-        "chunk_id": "Background.md:df5b209ec049",
+        "chunk_id": "Background.md:56c9a05b3925",
         "source": "corpus/Background.md",
         "section_path": "Background / 5. Counterparty risk and CVA",
         "text": "Counterparty credit risk is the risk that a counterparty will default on its obligations, which is addressed by CVA.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:a23c7e9d7a6a",
+        "match_score": 0.667
+      },
+      {
+        "qrel_id": "q43_x1",
+        "chunk_id": "Background.md:5fff2a592a58",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 5. Counterparty risk and CVA",
+        "text": "- Netting set: a group of trades with a single counterparty that can be netted under a single master agreement (e.g., ISDA Master Agreement), reducing overall exposure by offsetting positive and negat",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q43_x1",
+        "chunk_id": "Background.md:5fff2a592a58",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 5. Counterparty risk and CVA",
+        "text": "Support Annex): a legal document that supplements the ISDA Master Agreement, governing the terms for posting and receiving collateral between counterparties to mitigate credit risk.\n- Wrong-way risk: ",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:7cbb377809fc",
+        "match_score": 1.0
       }
     ]
   },
@@ -595,11 +1961,31 @@
     "qrels": [
       {
         "qrel_id": "q44_r1",
-        "chunk_id": "Background.md:df5b209ec049",
+        "chunk_id": "Background.md:5fff2a592a58",
         "source": "corpus/Background.md",
         "section_path": "Background / 5. Counterparty risk and CVA",
         "text": "Wrong-way risk occurs when exposure to a counterparty increases as the counterparty's credit quality deteriorates.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:7cbb377809fc",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q44_x1",
+        "chunk_id": "Background.md:56c9a05b3925",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 5. Counterparty risk and CVA",
+        "text": "## 5. Counterparty risk and CVA\n\nCounterparty risk is the risk that the counterparty defaults before final settlement.\n\nCVA stands for Credit Valuation Adjustment.\n\nA simplified intuition:\n\n- CVA is a",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q44_x1",
+        "chunk_id": "Background.md:56c9a05b3925",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 5. Counterparty risk and CVA",
+        "text": "## 5. Counterparty risk and CVA\n\nCounterparty risk is the risk that the counterparty defaults before final settlement.\n\nCVA stands for Credit Valuation Adjustment.\n\nA simplified intuition:\n\n- CVA is a",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:a23c7e9d7a6a",
+        "match_score": 1.0
       }
     ]
   },
@@ -608,11 +1994,31 @@
     "qrels": [
       {
         "qrel_id": "q45_r1",
-        "chunk_id": "Background.md:dba00c31cda3",
+        "chunk_id": "Background.md:5fff2a592a58",
         "source": "corpus/Background.md",
         "section_path": "Background / 5. Counterparty risk and CVA",
         "text": "Right-way risk: the opposite of wrong-way risk; occurs when exposure to a counterparty decreases as the counterparty's credit quality deteriorates, reducing overall counterparty risk.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "Background.md:7cbb377809fc",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q45_x1",
+        "chunk_id": "Background.md:56c9a05b3925",
+        "source": "corpus/Background.md",
+        "section_path": "Background / 5. Counterparty risk and CVA",
+        "text": "## 5. Counterparty risk and CVA\n\nCounterparty risk is the risk that the counterparty defaults before final settlement.\n\nCVA stands for Credit Valuation Adjustment.\n\nA simplified intuition:\n\n- CVA is a",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q45_x1",
+        "chunk_id": "Background.md:56c9a05b3925",
+        "source": "corpus_fix/Background.md",
+        "section_path": "Background / 5. Counterparty risk and CVA",
+        "text": "## 5. Counterparty risk and CVA\n\nCounterparty risk is the risk that the counterparty defaults before final settlement.\n\nCVA stands for Credit Valuation Adjustment.\n\nA simplified intuition:\n\n- CVA is a",
+        "relevance": 1,
+        "old_chunk_id": "Background.md:a23c7e9d7a6a",
+        "match_score": 1.0
       }
     ]
   },
@@ -621,11 +2027,81 @@
     "qrels": [
       {
         "qrel_id": "q46_r1",
-        "chunk_id": "wikipedia_xva.md:e7cb1cf8fc74",
+        "chunk_id": "wikipedia_xva.md:c2aef29bf24a",
         "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
         "section_path": "Text",
         "text": "A CSA is a legal document that governs collateral arrangements between counterparties to mitigate counterparty risk.",
-        "relevance": 2
+        "relevance": 2,
+        "old_chunk_id": "wikipedia_xva.md:421e72883b91",
+        "match_score": 0.4
+      },
+      {
+        "qrel_id": "q46_x1",
+        "chunk_id": "wikipedia_xva.md:a5c34485096b",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "# Text\n\nXVA - Wikipedia\n\nJump to content\n\nMain menu\n\nMain menu\n\nmove to sidebar\n\nhide\n\n Navigation\n\t\n\nMain page\nContents\nCurrent events\nRandom article\nAbout Wikipedia\nContact us\n\n Contribute\n\t\n\nHelp\nL",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q46_x2",
+        "chunk_id": "wikipedia_xva.md:4d0101ba4020",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Print/export\n\t\n\nDownload as PDF\nPrintable version\n\n In other projects\n\t\n\nWikidata item\n\nAppearance\n\nmove to sidebar\n\nhide\n\nFrom Wikipedia, the free encyclopedia\n\nBanking valuation adjustments\n\nPart of",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q46_x1",
+        "chunk_id": "wikipedia_xva.md:a5c34485096b",
+        "source": "corpus_fix/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "# Text\n\nXVA - Wikipedia\n\nJump to content\n\nMain menu\n\nMain menu\n\nmove to sidebar\n\nhide\n\n Navigation\n\t\n\nMain page\nContents\nCurrent events\nRandom article\nAbout Wikipedia\nContact us\n\n Contribute\n\t\n\nHelp\nL",
+        "relevance": 1,
+        "old_chunk_id": "wikipedia_xva.md:ae9206f93f8e",
+        "match_score": 1.0
+      },
+      {
+        "qrel_id": "q46_x4",
+        "chunk_id": "wikipedia_xva.md:89bf6f9c0904",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Offshore financial centres\n\nConduit and sink OFCs\n\nInstruments\n\nBond\n\nCash\n\nCollateralised debt obligation\n\nCredit default swap\n\nTime deposit\n (\ncertificate of deposit\n)\n\nCredit line\n\nDeposit\n\nDerivat",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q46_x5",
+        "chunk_id": "wikipedia_xva.md:adc485c3c1c2",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Leveraged buyout\n\nMergers and acquisitions\n\nStructured finance\n\nVenture capital\n\nTaxation\n\nBase erosion and profit shifting\n (BEPS)\n\nCorporate tax haven\n\nTax inversion\n\nTax haven\n\nTransfer pricing\n\nPe",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q46_x2",
+        "chunk_id": "wikipedia_xva.md:4d0101ba4020",
+        "source": "corpus_fix/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "le\nPermanent link\nPage information\nCite this page\nGet shortened URL\nDownload QR code\n\n Print/export\n\t\n\nDownload as PDF\nPrintable version\n\n In other projects\n\t\n\nWikidata item\n\nAppearance\n\nmove to sideb",
+        "relevance": 1,
+        "old_chunk_id": "wikipedia_xva.md:b1bf34f450bf",
+        "match_score": 0.611
+      },
+      {
+        "qrel_id": "q46_x7",
+        "chunk_id": "wikipedia_xva.md:f8b4719038c8",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Bank regulation\n\nBanking license\n\nBasel Accords\n\nBank for International Settlements\n\nFinancial Stability Board\n\nDeposit insurance\n\nSeparation of investment and retail banking\n\nRegulation\n \n·\n \nFinanci",
+        "relevance": 1
+      },
+      {
+        "qrel_id": "q46_x8",
+        "chunk_id": "wikipedia_xva.md:d7ad072656c9",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "Accounting scandals\n\nOutline\n\n \nBusiness and Economics portal\n\n \nMoney portal\nv\nt\ne\n\nX-Value Adjustment\n (\nXVA\n, \nxVA\n) is an \numbrella term\n referring to a number of different \"valuation adjustments\"",
+        "relevance": 1
       }
     ]
   },
@@ -633,11 +2109,24 @@
     "id": "q47",
     "qrels": [
       {
-        "qrel_id": "q47_r1",
-        "chunk_id": "cftc_2020_27736_margin_uncleared_swaps.pdf:8b05121133ed",
-        "source": "corpus/regulatory_seed/pdf/en/cftc_2020_27736_margin_uncleared_swaps.pdf",
-        "text": "Initial margin is collateral posted upfront to cover potential future exposure.",
-        "relevance": 2
+        "qrel_id": "q47_gap1",
+        "chunk_id": "wikipedia_xva.md:ce7b30b639e8",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "MVA\n, Margin Valuation Adjustment, refers to the funding costs of the \ninitial margin\n specific to \ncentrally cleared transactions\n. It may be calculated according to the global rules for non-centrall",
+        "relevance": 2,
+        "match_score": 1.0,
+        "origin": "keyword_gap_fill"
+      },
+      {
+        "qrel_id": "q47_gap2",
+        "chunk_id": "bis_bcbs_d488.pdf:2c42d000eaf4",
+        "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d488.pdf",
+        "section_path": "",
+        "text": "conducted sufficient legal review to verify this and have a we ll founded legal \nbasis to reach this conclusion, and undertake such further review as necessary \nto ensure continuing enforceability. \n(",
+        "relevance": 1,
+        "match_score": 1.0,
+        "origin": "keyword_gap_fill"
       }
     ]
   },
@@ -645,11 +2134,24 @@
     "id": "q48",
     "qrels": [
       {
-        "qrel_id": "q48_r1",
-        "chunk_id": "cftc_2020_27736_margin_uncleared_swaps.pdf:8b05121133ed",
+        "qrel_id": "q48_gap1",
+        "chunk_id": "wikipedia_xva.md:c2aef29bf24a",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_xva.md",
+        "section_path": "Text",
+        "text": "and will require\n\n careful and correct aggregation to avoid \ndouble counting\n:\n\nDVA\n, Debit Valuation Adjustment: analogous to CVA, the adjustment (increment) to a derivative price due to the institut",
+        "relevance": 2,
+        "match_score": 1.0,
+        "origin": "keyword_gap_fill"
+      },
+      {
+        "qrel_id": "q48_gap2",
+        "chunk_id": "cftc_2020_27736_margin_uncleared_swaps.pdf:e1d0122efcb7",
         "source": "corpus/regulatory_seed/pdf/en/cftc_2020_27736_margin_uncleared_swaps.pdf",
-        "text": "Variation margin is collateral exchanged daily to mark-to-market current exposure.",
-        "relevance": 2
+        "section_path": "",
+        "text": "DATES : This rule is effective February 4, \n2021. \nFOR FURTHER INFORMATION CONTACT : \nJoshua B. Sterling, Director, 202–418– 6056, jsterling@cftc.gov; Thomas J. \nSmith, Deputy Director, 202–418–5495, ",
+        "relevance": 1,
+        "match_score": 1.0,
+        "origin": "keyword_gap_fill"
       }
     ]
   },
@@ -657,11 +2159,14 @@
     "id": "q49",
     "qrels": [
       {
-        "qrel_id": "q49_r1",
-        "chunk_id": "bis_bcbs_d457.pdf:6edb51caa992",
+        "qrel_id": "q49_gap1",
+        "chunk_id": "bis_bcbs_d457.pdf:058a832ce8f2",
         "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
-        "text": "VaR is a measure of potential loss over a given horizon at a given confidence level.",
-        "relevance": 2
+        "section_path": "",
+        "text": "it is based on two stress scenarios involving an upward shock and a downward shock to each \nregulatory risk factor . \n10.17 Value at risk (VaR): a measure of the wor st expected loss on a portfolio of",
+        "relevance": 2,
+        "match_score": 1.0,
+        "origin": "keyword_gap_fill"
       }
     ]
   },
@@ -669,11 +2174,24 @@
     "id": "q50",
     "qrels": [
       {
-        "qrel_id": "q50_r1",
-        "chunk_id": "bis_bcbs_d457.pdf:be87fa7d8ed2",
-        "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
-        "text": "Expected shortfall is the expected loss given that VaR is exceeded, a more conservative measure than VaR.",
-        "relevance": 2
+        "qrel_id": "q50_gap1",
+        "chunk_id": "bis_bcbs_d457_note.pdf:56d85fa955aa",
+        "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457_note.pdf",
+        "section_path": "Text",
+        "text": "(manually corrected gold)",
+        "relevance": 2,
+        "match_score": 1.0,
+        "origin": "keyword_gap_fill_manual_fix"
+      },
+      {
+        "qrel_id": "q50_gap2",
+        "chunk_id": "wikipedia_frtb.md:ef5089341b0b",
+        "source": "corpus/regulatory_seed/md/en/wikipedia_frtb.md",
+        "section_path": "Text",
+        "text": "Under the \nInternal Models\n approach,\n\n the minimum capital requirement \n\n uses \nexpected shortfall\n (i.e. as opposed to VaR) at a 97.5% quantile, with differentiated “liquidity horizons” for five cat",
+        "relevance": 1,
+        "match_score": 1.0,
+        "origin": "keyword_gap_fill"
       }
     ]
   }

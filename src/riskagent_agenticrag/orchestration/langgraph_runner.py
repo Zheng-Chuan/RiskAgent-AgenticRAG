@@ -11,6 +11,7 @@ from riskagent_agenticrag.orchestration.nodes import (
     node_rewrite,
     node_synthesize_answer,
     node_validate_and_save,
+    route_after_rewrite,
     should_continue_retrieval,
 )
 from riskagent_agenticrag.orchestration.state import AgenticState
@@ -51,7 +52,15 @@ def build_langgraph_agentic_loop() -> Any:
     workflow.add_node("validate_and_save", node_validate_and_save)
 
     workflow.set_entry_point("rewrite")
-    workflow.add_edge("rewrite", "retrieve_and_critique")
+    # TARG (FR-11): rewrite 后按查询复杂性分流 -- simple 查询跳过检索直接合成
+    workflow.add_conditional_edges(
+        "rewrite",
+        route_after_rewrite,
+        {
+            "synthesize_answer": "synthesize_answer",
+            "retrieve_and_critique": "retrieve_and_critique",
+        },
+    )
     workflow.add_conditional_edges(
         "retrieve_and_critique",
         should_continue_retrieval,
@@ -110,6 +119,16 @@ def run_langgraph_agentic_chat(
 
     final_state = graph.invoke(initial_state)
 
+    # 汇总所有 node 的 token_usage 到 total_token_usage
+    total_token_usage: dict[str, int] = {"prompt_tokens": 0, "completion_tokens": 0}
+    trace = final_state.get("trace") or {}
+    for node_entry in trace.get("nodes", []) or []:
+        if isinstance(node_entry, dict):
+            tu = node_entry.get("token_usage")
+            if isinstance(tu, dict):
+                total_token_usage["prompt_tokens"] += int(tu.get("prompt_tokens", 0))
+                total_token_usage["completion_tokens"] += int(tu.get("completion_tokens", 0))
+
     return {
         "request_id": final_state.get("request_id", ""),
         "answer": final_state["answer"],
@@ -124,4 +143,5 @@ def run_langgraph_agentic_chat(
         "status": final_state["status"],
         "failure_reason": final_state["failure_reason"],
         "debug": final_state["debug"],
+        "total_token_usage": total_token_usage,
     }

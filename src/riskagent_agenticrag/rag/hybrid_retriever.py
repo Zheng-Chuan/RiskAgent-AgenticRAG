@@ -10,14 +10,8 @@ from typing import Any
 
 from langchain_core.documents import Document
 from rank_bm25 import BM25Okapi
-from sentence_transformers import CrossEncoder
 
 from riskagent_agenticrag.rag.utils import doc_key, rrf_scores, tokenize
-
-# 强制离线模式
-os.environ["HF_HUB_OFFLINE"] = "1"
-os.environ["TRANSFORMERS_OFFLINE"] = "1"
-os.environ["HF_DATASETS_OFFLINE"] = "1"
 
 
 def _resolve_hf_model_path(model_name: str) -> str:
@@ -128,22 +122,50 @@ class HybridRetriever:
             self._init_reranker()
 
     def _init_reranker(self) -> None:
+        provider = str(os.getenv("RISKAGENT_RERANKER_PROVIDER", "auto")).strip().lower()
         last_error = ""
+
+        # 远程优先模式: 直接用远程 reranker (零本地依赖)
+        if provider == "remote":
+            if self._init_remote_reranker():
+                return
+
+        # 本地 CrossEncoder (需 sentence_transformers + 模型文件)
         for idx, model_name in enumerate(self._reranker_candidates):
             local_path = _resolve_hf_model_path(model_name)
             try:
+                # 延迟导入: sentence_transformers 是可选依赖 (仅 hf provider 需要)
+                from sentence_transformers import CrossEncoder
                 self._reranker = CrossEncoder(local_path, local_files_only=True, trust_remote_code=True)
                 self._active_reranker_model = model_name
-                if idx == 0:
-                    self._reranker_status = "enabled"
-                else:
-                    self._reranker_status = "fallback_enabled"
+                self._reranker_status = "enabled" if idx == 0 else "fallback_enabled"
                 return
             except Exception as exc:
                 last_error = f"{model_name}: {type(exc).__name__}"
                 self._reranker_init_errors.append(last_error)
+
+        # auto 模式: 本地全部失败时 fallback 到远程 reranker
+        if provider in {"auto", ""} and self._init_remote_reranker():
+            self._reranker_status = "remote_enabled"
+            return
+
         self._reranker = None
         self._reranker_status = "unavailable" if last_error else "disabled"
+
+    def _init_remote_reranker(self) -> bool:
+        """尝试初始化远程 reranker, 成功返回 True."""
+        try:
+            from riskagent_agenticrag.rag.remote_reranker import build_remote_reranker
+
+            rr = build_remote_reranker()
+            # 冒烟验证: 单次小请求确认端点/密钥可用
+            rr.predict([("probe", "probe document")])
+            self._reranker = rr
+            self._active_reranker_model = rr.model
+            return True
+        except Exception as exc:
+            self._reranker_init_errors.append(f"remote: {type(exc).__name__}")
+            return False
 
     # ---- 内部方法 ----
 

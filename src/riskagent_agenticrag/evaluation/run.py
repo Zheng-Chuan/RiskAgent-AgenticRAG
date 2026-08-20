@@ -2,7 +2,9 @@
 
 中文注释
 - 离线评测入口
-- 当前只实现 citations coverage
+- 已实现完整评测链路: citations coverage + RAGAS + domain consistency + retrieval metrics + gate metrics + reliability metrics + threshold gate
+- 支持多 profile: all / retrieval / gate / reliability
+- 支持 baseline diff 和 threshold gate 强制校验
 """
 
 from __future__ import annotations
@@ -24,6 +26,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from riskagent_agenticrag.config.settings import settings
 from riskagent_agenticrag.evaluation.advanced_metrics import (
     compute_gate_metrics,
     compute_reliability_cost_metrics,
@@ -237,6 +240,48 @@ def _debug_emit(hypothesis_id: str, msg: str, *, data: dict[str, Any] | None = N
     # #endregion
 
 
+def _verify_index_ready(*, corpus_dir: Path, persist_dir: Path) -> None:
+    """只读校验索引可用性: manifest 存在且 schema fingerprint 与当前配置一致.
+
+    背景: 评测曾无条件调用 incremental_index, 当 schema (如分块策略开关) 变化时
+    会静默 drop 生产索引并触发全量重建 (LLM 分块可达数小时), 破坏现网数据.
+    现在默认只校验不写入, 重建需显式传 reindex=True.
+    """
+    from riskagent_agenticrag.indexing.indexer import (
+        MANIFEST_FILENAME,
+        MANIFEST_VERSION,
+        _current_index_schema,
+        _load_manifest,
+        _manifest_has_schema_mismatch,
+    )
+    from riskagent_agenticrag.indexing.milvus_store import MilvusStoreConfig
+    from riskagent_agenticrag.rag.embeddings import build_embeddings
+
+    manifest = _load_manifest(persist_dir=persist_dir)
+    if not manifest:
+        raise RuntimeError(
+            f"索引不存在 ({persist_dir / MANIFEST_FILENAME}). "
+            "请先运行: python -m riskagent_agenticrag.cli index --persist-dir <dir>"
+        )
+
+    embeddings = build_embeddings()
+    dim = len(embeddings.embed_query("dim_probe"))
+    cfg = MilvusStoreConfig(
+        collection_name=settings.milvus.collection_name,
+        metric_type=settings.milvus.metric_type,
+        index_type=settings.milvus.index_type,
+        nlist=settings.milvus.nlist,
+        nprobe=settings.milvus.nprobe,
+    )
+    schema = _current_index_schema(dim=int(dim), milvus_config=cfg)
+    if _manifest_has_schema_mismatch(manifest=manifest, schema=schema):
+        raise RuntimeError(
+            f"索引 schema 与当前配置不一致 (manifest version={manifest.get('version')}, "
+            f"expected={MANIFEST_VERSION}). 索引可能由不同的分块策略/模型构建. "
+            "如需重建请显式传 --reindex (注意: schema 变化会触发全量重建)."
+        )
+
+
 def run_evaluation(
     *,
     corpus_dir: Path,
@@ -248,6 +293,7 @@ def run_evaluation(
     include_cost: bool,
     include_latency: bool,
     with_gate: bool,
+    reindex: bool = False,
 ) -> dict[str, Any]:
     os.environ.setdefault("EMBEDDINGS_PROVIDER", "hf")
 
@@ -255,7 +301,10 @@ def run_evaluation(
     # 中文注释: 评测需要覆盖最大的 k, 否则 `recall@5` 会被 `final_k=4` 人为压低.
     eval_final_k = max([4, *[int(k) for k in retrieval_ks or []]])
 
-    incremental_index(corpus_dir=corpus_dir, persist_dir=persist_dir, include_paths=None)
+    if reindex:
+        incremental_index(corpus_dir=corpus_dir, persist_dir=persist_dir, include_paths=None)
+    else:
+        _verify_index_ready(corpus_dir=corpus_dir, persist_dir=persist_dir)
     retriever = build_retriever(persist_dir=persist_dir, final_k=eval_final_k)
     retriever_debug = {}
     if hasattr(retriever, "debug_stats"):
@@ -585,6 +634,7 @@ def main() -> None:
     parser.add_argument("--include-cost", action="store_true")
     parser.add_argument("--include-latency", action="store_true")
     parser.add_argument("--with-gate", action="store_true")
+    parser.add_argument("--reindex", action="store_true", help="评测前增量重建索引 (默认只读校验, 防止误触发全量重建)")
     parser.add_argument("--enforce-thresholds", action="store_true")
     parser.add_argument("--thresholds", default="config/eval_thresholds.json")
     parser.add_argument("--reranker-model", default="")
@@ -631,6 +681,7 @@ def main() -> None:
         include_cost=include_cost,
         include_latency=include_latency,
         with_gate=bool(args.with_gate),
+        reindex=bool(args.reindex),
     )
     if args.stage or args.stage_notes:
         report["stage"] = {

@@ -8,6 +8,7 @@ import os
 import re
 import subprocess
 import tempfile
+import threading
 import time
 from typing import Any, Iterable
 
@@ -216,6 +217,8 @@ def _call_llm_core(
     if cached is not None:
         tracker = get_token_tracker()
         tracker.record(resolved_model, cached.prompt_tokens, cached.completion_tokens, 0.0, cached=True)
+        # 缓存命中时也存储 token 用量到线程本地
+        _set_last_token_usage({"prompt_tokens": cached.prompt_tokens, "completion_tokens": cached.completion_tokens})
         return cached.content
 
     # --- (c) Retry with backoff ---
@@ -281,7 +284,10 @@ def _call_llm_core(
     tracker = get_token_tracker()
     tracker.record(resolved_model, prompt_tokens, completion_tokens, latency_ms, cached=False)
 
-    # --- (f) Cache the response (deterministic only) ---
+    # --- (f) 存储到线程本地, 供 trace 模块采集 ---
+    _set_last_token_usage({"prompt_tokens": prompt_tokens, "completion_tokens": completion_tokens})
+
+    # --- (g) Cache the response (deterministic only) ---
     if temperature == 0.0 or temperature is None:
         cache.put(cache_key, CachedResponse(
             content=content,
@@ -518,3 +524,21 @@ def _parse_json_response(text: str) -> dict[str, Any]:
         return data
 
     raise RuntimeError("LLM did not return valid JSON") from last_exc
+
+
+# ---------------------------------------------------------------------------
+# 线程本地 token 用量存储 -- 用于 trace 模块采集每次 LLM 调用的 token 统计
+# ---------------------------------------------------------------------------
+
+# 线程本地存储, 确保并发安全
+_last_token_usage: threading.local = threading.local()
+
+
+def _set_last_token_usage(usage: dict[str, int]) -> None:
+    """存储当前线程最近一次 LLM 调用的 token 用量."""
+    _last_token_usage.value = dict(usage)
+
+
+def get_last_token_usage() -> dict[str, int]:
+    """获取当前线程最近一次 LLM 调用的 token 用量."""
+    return getattr(_last_token_usage, "value", {"prompt_tokens": 0, "completion_tokens": 0})

@@ -31,13 +31,35 @@ from riskagent_agenticrag.rag.sparse_index import SPARSE_CORPUS_FILENAME
 
 
 MANIFEST_FILENAME = "index_manifest.json"
-MANIFEST_VERSION = 2
-DEFAULT_CHUNKING_CONFIG = {
-    "use_llm_chunking": True,
-    "max_chunk_size": 800,
-    "overlap": 100,
-    "policy_version": "split_documents_v1",
-}
+# v3: +context_brief 字段; v4: chunking 循环 bug 修复 + 碎片/噪声过滤 (chunk 集合整体变化, 需全量重建)
+# 注意: _NAV_RE 维基导航 pattern 扩展未 bump 版本 -- 仅影响 28 个垃圾 chunk (占 1.2%),
+# 且垃圾 qrels 已通过 relevance 口径修正豁免, 不构成全量重建的理由;
+# 新规则将在后续增量索引 (新文档接入) 时自然生效.
+MANIFEST_VERSION = 4
+
+
+def _env_use_llm_chunking() -> bool:
+    """是否启用 LLM 语义分块, 可用 RISKAGENT_USE_LLM_CHUNKING=false 关闭.
+
+    大 PDF 的 LLM 分块为串行调用, 单文档可能耗时数小时; 规则分块 (fallback)
+    秒级完成, 质量略低但可接受, 适合快速重建索引.
+    """
+    import os
+
+    return os.getenv("RISKAGENT_USE_LLM_CHUNKING", "true").strip().lower() not in {"false", "0", "no"}
+
+
+def _chunking_config() -> dict[str, Any]:
+    """当前生效的分块配置, 计入 schema fingerprint 以便切换开关时触发全量重建."""
+    use_llm = _env_use_llm_chunking()
+    return {
+        "use_llm_chunking": use_llm,
+        "max_chunk_size": 800,
+        "overlap": 100,
+        "policy_version": "split_documents_v1" if use_llm else "split_documents_rule_v1",
+    }
+
+
 DEFAULT_ADVANCED_INDEX_CONFIG = {
     "summary_strategy": "extractive_head_or_sentence_v1",
     "summary_max_chars": 900,
@@ -122,7 +144,7 @@ def _current_index_schema(*, dim: int, milvus_config: MilvusStoreConfig) -> dict
             "nlist": int(milvus_config.nlist),
             "nprobe": int(milvus_config.nprobe),
         },
-        "chunking": dict(DEFAULT_CHUNKING_CONFIG),
+        "chunking": _chunking_config(),
         "advanced_index": dict(DEFAULT_ADVANCED_INDEX_CONFIG),
         "features": {
             "retrieval_pipeline": str(settings.features.retrieval_pipeline),
@@ -187,6 +209,45 @@ def _upsert_jsonl(*, path: Path, source: str, docs: Iterable[Document]) -> None:
 
     out = kept + added
     path.write_text("\n".join(out) + ("\n" if out else ""), encoding="utf-8")
+
+
+def _generate_context_briefs(*, chunks: list[Document], parent_doc: Document) -> list[str]:
+    """为每个 chunk 生成上下文摘要, 用于 Contextual Retrieval.
+
+    利用 LLM 为每个 chunk 生成 50-100 字的上下文摘要, 把 chunk 放回文档整体语境中,
+    消除独立 chunk 的语义歧义, 提升检索命中率.
+
+    Args:
+        chunks: 拆分后的 chunk 列表
+        parent_doc: 完整的父文档 (未拆分)
+
+    Returns:
+        与 chunks 一一对应的上下文摘要列表, 空字符串表示生成失败
+    """
+    from riskagent_agenticrag.llm.generate import call_llm_text
+
+    whole_doc = parent_doc.page_content or ""
+    if not whole_doc:
+        return [""] * len(chunks)
+
+    briefs: list[str] = []
+    for chunk in chunks:
+        chunk_text = chunk.page_content or ""
+        prompt = (
+            f"<document>\n{whole_doc[:8000]}\n</document>\n"
+            f"Here is the chunk we want to situate within the whole document:\n"
+            f"<chunk>\n{chunk_text}\n</chunk>\n"
+            f"Please give a short succinct context to situate this chunk within the overall document "
+            f"for the purposes of improving search retrieval of the chunk. "
+            f"Answer only with the succinct context and nothing else."
+        )
+        try:
+            resp = call_llm_text(prompt, temperature=0.0)
+            brief = str(resp).strip()
+            briefs.append(brief[:200])
+        except Exception:
+            briefs.append("")
+    return briefs
 
 
 def incremental_index(
@@ -256,11 +317,33 @@ def incremental_index(
             continue
 
         parents = build_parent_documents(docs)
-        chunks = split_documents(docs)
+        chunks = split_documents(docs, use_llm_chunking=_env_use_llm_chunking())
+
+        # Contextual Retrieval: 为每个 chunk 生成上下文摘要, 消除独立 chunk 的语义歧义
+        # 可通过 RISKAGENT_CONTEXTUAL_BRIEFS=false 关闭以加速索引重建
+        try:
+            parent_doc = parents[0] if parents else None
+            if parent_doc and settings.features.contextual_briefs:
+                briefs = _generate_context_briefs(chunks=chunks, parent_doc=parent_doc)
+            else:
+                briefs = [""] * len(chunks)
+        except Exception:
+            briefs = [""] * len(chunks)
+
+        for c, brief in zip(chunks, briefs):
+            c.metadata["context_brief"] = brief
 
         delete_by_source(client=client, config=cfg, source=src)
 
-        texts = [c.page_content or "" for c in chunks]
+        # 使用 context_brief + chunk_text 拼接做 embedding
+        texts = []
+        for c in chunks:
+            brief = str(c.metadata.get("context_brief", "")).strip()
+            chunk_text = str(c.page_content or "")
+            if brief:
+                texts.append(f"{brief}\n{chunk_text}")
+            else:
+                texts.append(chunk_text)
         vecs = embeddings.embed_documents(texts) if texts else []
         rows: list[dict[str, Any]] = []
         for c, v in zip(chunks, vecs):
@@ -274,6 +357,7 @@ def incremental_index(
                     "file_type": str(meta.get("file_type", "")),
                     "parent_id": str(meta.get("parent_id", "")),
                     "section_path": str(meta.get("section_path", "")),
+                    "context_brief": str(meta.get("context_brief", "")),
                     "start_index": int(meta.get("start_index", 0) or 0),
                     "page": int(meta.get("page", 0) or 0),
                     "start_line": int(meta.get("start_line", 0) or 0),

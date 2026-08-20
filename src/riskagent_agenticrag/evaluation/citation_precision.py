@@ -42,6 +42,23 @@ def _to_text(x: Any) -> str:
     return str(x)
 
 
+def _strip_markdown_json(text: str) -> str:
+    """去除 LLM 响应中的 markdown 代码块标记, 提取纯 JSON.
+
+    deepseek-chat 等模型可能在 JSON 外包裹 ```json ... ``` 标记.
+    """
+    text = text.strip()
+    # 移除开头的 ```json 或 ```
+    if text.startswith("```"):
+        first_newline = text.find("\n")
+        if first_newline != -1:
+            text = text[first_newline + 1:]
+    # 移除结尾的 ```
+    if text.endswith("```"):
+        text = text[:-3]
+    return text.strip()
+
+
 def _read_content(x: Any) -> str:
     if hasattr(x, "content"):
         return _to_text(getattr(x, "content"))
@@ -238,7 +255,8 @@ def _judge_prompt(*, question: str, answer: str, contexts: list[str]) -> str:
             "instruction": (
                 "You are a strict evaluator for grounded QA. "
                 "Decide how much of the answer is supported by the provided contexts. "
-                "Return JSON only and no markdown."
+                "Return ONLY valid JSON, no markdown, no backticks, no explanations outside the JSON. "
+                "Your entire response must be a single JSON object."
             ),
             "schema": {
                 "total_sentences": "int >= 1",
@@ -286,7 +304,7 @@ def _judge_one_sample(*, index: int, sample: dict[str, Any], used_mode: str) -> 
             )
             raw = _thread_local_judge_llm().invoke(_judge_prompt(question=question, answer=answer, contexts=contexts))
             _debug_emit("B", "judge_sample_returned", data={"index": index, "id": sid})
-            content = _read_content(raw).strip()
+            content = _strip_markdown_json(_read_content(raw))
             parsed = json.loads(content)
             total_sentences = int(parsed.get("total_sentences", 0))
             supported_sentences = int(parsed.get("supported_sentences", 0))

@@ -46,6 +46,7 @@ class DenseMilvusRetriever:
                 "file_type": str(r.get("file_type", "")),
                 "parent_id": str(r.get("parent_id", "")),
                 "section_path": str(r.get("section_path", "")),
+                "context_brief": str(r.get("context_brief", "")),
                 "start_index": int(r.get("start_index", 0) or 0),
                 "page": int(r.get("page", 0) or 0),
                 "start_line": int(r.get("start_line", 0) or 0),

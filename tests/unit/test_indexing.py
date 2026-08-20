@@ -119,9 +119,10 @@ class TestManifest:
 
     @pytest.mark.unit
     def test_load_manifest_missing_file(self, tmp_path):
-        from riskagent_agenticrag.indexing.indexer import _load_manifest
+        from riskagent_agenticrag.indexing.indexer import MANIFEST_VERSION, _load_manifest
         result = _load_manifest(persist_dir=tmp_path)
-        assert result["version"] == 2
+        # 缺失时返回当前代码版本的空 manifest 骨架
+        assert result["version"] == MANIFEST_VERSION
         assert result["sources"] == {}
         assert result["schema"] == {}
         assert result["schema_fingerprint"] == ""
@@ -153,11 +154,11 @@ class TestManifest:
 
     @pytest.mark.unit
     def test_load_manifest_corrupted_file(self, tmp_path):
-        from riskagent_agenticrag.indexing.indexer import _load_manifest
+        from riskagent_agenticrag.indexing.indexer import MANIFEST_VERSION, _load_manifest
         manifest_path = tmp_path / "index_manifest.json"
         manifest_path.write_text("not valid json {{{{", encoding="utf-8")
         result = _load_manifest(persist_dir=tmp_path)
-        assert result["version"] == 2
+        assert result["version"] == MANIFEST_VERSION
         assert result["sources"] == {}
         assert result["schema"] == {}
 
@@ -197,7 +198,7 @@ class TestManifest:
         monkeypatch.setattr("riskagent_agenticrag.indexing.indexer.load_sources", lambda _: [raw_doc])
         monkeypatch.setattr("riskagent_agenticrag.indexing.indexer.build_embeddings", lambda: FakeEmbeddings())
         monkeypatch.setattr("riskagent_agenticrag.indexing.indexer.build_parent_documents", lambda _: [parent_doc])
-        monkeypatch.setattr("riskagent_agenticrag.indexing.indexer.split_documents", lambda _: [chunk_doc])
+        monkeypatch.setattr("riskagent_agenticrag.indexing.indexer.split_documents", lambda _docs, **_kw: [chunk_doc])
         monkeypatch.setattr("riskagent_agenticrag.indexing.indexer.build_summary_docs", lambda _: [])
         monkeypatch.setattr("riskagent_agenticrag.indexing.indexer.build_hyde_docs", lambda _: [])
         monkeypatch.setattr("riskagent_agenticrag.indexing.indexer.build_milvus_client", lambda persist_dir: mock_client)
@@ -219,7 +220,9 @@ class TestManifest:
         assert drop_calls, "schema change should trigger full persisted index reset"
 
         manifest = json.loads((persist_dir / "index_manifest.json").read_text(encoding="utf-8"))
-        assert manifest["version"] == 2
+        from riskagent_agenticrag.indexing.indexer import MANIFEST_VERSION
+
+        assert manifest["version"] == MANIFEST_VERSION
         assert manifest["schema_fingerprint"]
         assert manifest["sources"][str(source_path)]["chunks"] == 1
 

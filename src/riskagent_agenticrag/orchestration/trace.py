@@ -35,7 +35,13 @@ def _trace_node_start(state: AgenticState, name: str, payload: dict[str, Any]) -
     return float(entry["start_ms"])
 
 
-def _trace_node_end(state: AgenticState, name: str, start_ms: float, payload: dict[str, Any]) -> None:
+def _trace_node_end(
+    state: AgenticState,
+    name: str,
+    start_ms: float,
+    payload: dict[str, Any],
+    token_usage: dict[str, int] | None = None,
+) -> None:
     trace = _ensure_trace(state)
     nodes = trace.get("nodes") or []
     end_ms = _ms()
@@ -45,6 +51,9 @@ def _trace_node_end(state: AgenticState, name: str, start_ms: float, payload: di
             n["end_ms"] = end_ms
             n["latency_ms"] = float(end_ms) - float(start_ms)
             n["result"] = dict(payload)
+            # 写入 token 用量统计
+            if token_usage is not None:
+                n["token_usage"] = dict(token_usage)
             break
     trace["nodes"] = nodes
 
@@ -75,3 +84,61 @@ def _doc_trace_row(d: Any, *, snippet_chars: int) -> dict[str, Any]:
         "rerank_score": meta.get("rerank_score"),
         "snippet": snippet,
     }
+
+
+# ---------------------------------------------------------------------------
+# 检索诊断埋点
+# ---------------------------------------------------------------------------
+
+def _trace_retrieval_diag(state: AgenticState, debug_stats: dict[str, Any]) -> None:
+    """从 retriever.debug_stats 中提取检索诊断信息写入 trace.
+
+    参数:
+        state: AgenticState, trace 信息写入 state["trace"]
+        debug_stats: 检索器 debug_stats() 返回的字典
+    """
+    trace = _ensure_trace(state)
+    diag: dict[str, Any] = {}
+
+    try:
+        # ---- dense search ----
+        diag["dense"] = {
+            "count": int(debug_stats.get("dense_count", debug_stats.get("dense_k", 0))),
+            "latency_ms": debug_stats.get("dense_latency_ms"),
+            "top1_score": debug_stats.get("dense_top1_score"),
+        }
+
+        # ---- sparse search ----
+        diag["sparse"] = {
+            "count": int(debug_stats.get("sparse_count", debug_stats.get("sparse_k", 0))),
+            "latency_ms": debug_stats.get("sparse_latency_ms"),
+        }
+
+        # ---- rerank ----
+        diag["rerank"] = {
+            "input_count": int(debug_stats.get("rerank_input_count", debug_stats.get("rerank_k", 0))),
+            "output_count": int(debug_stats.get("rerank_output_count", debug_stats.get("rerank_k", 0))),
+            "latency_ms": debug_stats.get("rerank_latency_ms"),
+        }
+
+        # ---- MMR diversity ----
+        diag["mmr"] = {
+            "before_count": debug_stats.get("mmr_before_count"),
+            "after_count": debug_stats.get("mmr_after_count"),
+        }
+
+        # ---- 其他配置信息 ----
+        diag["config"] = {
+            "dense_k": debug_stats.get("dense_k"),
+            "sparse_k": debug_stats.get("sparse_k"),
+            "candidate_k": debug_stats.get("candidate_k"),
+            "rerank_k": debug_stats.get("rerank_k"),
+            "final_k": debug_stats.get("final_k"),
+            "rrf_k": debug_stats.get("rrf_k"),
+            "reranker_model": debug_stats.get("reranker_model"),
+            "has_bm25": debug_stats.get("has_bm25"),
+        }
+    except Exception:
+        diag = {"fallback": str(debug_stats)[:500]}
+
+    trace["retrieval_diag"] = diag

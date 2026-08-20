@@ -1,4 +1,10 @@
-"""Embeddings -- Embedding 模型加载与缓存."""
+"""Embeddings -- Embedding 模型加载与缓存.
+
+支持三种 provider:
+- openai: 远程调用 OpenAI 兼容 API (如硅基流动), 不需要 torch (默认)
+- hf: 本地 HuggingFace 模型, 需要 sentence-transformers + torch (可选安装)
+- hash: 离线确定性 hash embedding, 用于回归测试
+"""
 
 from __future__ import annotations
 
@@ -13,13 +19,6 @@ from math import sqrt
 from langchain_core.embeddings import Embeddings
 
 from riskagent_agenticrag.config.settings import settings
-
-# 强制离线模式, 避免 HuggingFace 网络请求
-os.environ["HF_HUB_OFFLINE"] = "1"
-os.environ["TRANSFORMERS_OFFLINE"] = "1"
-os.environ["HF_DATASETS_OFFLINE"] = "1"
-os.environ["CURL_CA_BUNDLE"] = ""
-os.environ["REQUESTS_CA_BUNDLE"] = ""
 
 
 def _ensure_project_hf_cache_env() -> None:
@@ -67,20 +66,36 @@ class HashEmbeddings(Embeddings):
         return self._embed_text(text)
 
 
-def build_embeddings() -> Embeddings:
+def _build_openai_embeddings() -> Embeddings:
+    """构建 OpenAI 兼容的远程 Embeddings 实例."""
+    from langchain_openai import OpenAIEmbeddings
+
+    api_key = settings.embeddings.api_key
+    if not api_key:
+        raise RuntimeError(
+            "Embeddings provider=openai 需要设置 OPENROUTER_API_KEY 环境变量"
+        )
+
+    return OpenAIEmbeddings(
+        model=settings.embeddings.model_name,
+        api_key=api_key.get_secret_value(),
+        base_url=settings.embeddings.base_url,
+    )
+
+
+def _build_hf_embeddings() -> Embeddings:
     """构建 HuggingFace Embeddings 实例.
 
+    需要 sentence-transformers + torch (可选安装).
     优先使用 langchain_huggingface, 回退到 langchain_community.
-    导入时抑制 langchain_core.pydantic_v1 弃用警告.
     """
     model_name = settings.embeddings.model_name
     _ensure_project_hf_cache_env()
 
-    provider = str(settings.embeddings.provider or "hf").lower().strip()
-    if provider == "hash":
-        return HashEmbeddings()
-    if provider != "hf":
-        raise RuntimeError(f"Unsupported embeddings provider: {provider}")
+    # 强制离线模式, 避免 HuggingFace 网络请求
+    os.environ["HF_HUB_OFFLINE"] = "1"
+    os.environ["TRANSFORMERS_OFFLINE"] = "1"
+    os.environ["HF_DATASETS_OFFLINE"] = "1"
 
     local_dir = _local_embeddings_dir(model_name)
     resolved_model = str(local_dir) if local_dir.exists() else model_name
@@ -102,19 +117,50 @@ def build_embeddings() -> Embeddings:
         )
 
 
+def build_embeddings() -> Embeddings:
+    """构建 Embeddings 实例.
+
+    根据 settings.embeddings.provider 选择:
+    - openai: 远程调用 OpenAI 兼容 API (默认, 不需要 torch)
+    - hf: 本地 HuggingFace 模型 (需要 torch + sentence-transformers)
+    - hash: 离线确定性 hash embedding (用于回归测试)
+    """
+    provider = str(settings.embeddings.provider or "openai").lower().strip()
+
+    if provider == "hash":
+        return HashEmbeddings()
+    if provider == "openai":
+        return _build_openai_embeddings()
+    if provider == "hf":
+        return _build_hf_embeddings()
+    raise RuntimeError(f"Unsupported embeddings provider: {provider}")
+
+
 def preload_embeddings_model() -> dict[str, str]:
-    """预下载 embeddings 模型到项目目录, 返回模型名与缓存路径."""
+    """预加载 embeddings 模型, 返回模型名与缓存路径.
+
+    对于 openai provider, 只做一次 warmup 调用.
+    对于 hf provider, 预下载模型到项目目录.
+    """
     model_name = settings.embeddings.model_name
-    _ensure_project_hf_cache_env()
+    provider = str(settings.embeddings.provider or "openai").lower().strip()
+
+    if provider == "hf":
+        _ensure_project_hf_cache_env()
+
     try:
         build_embeddings().embed_query("warmup")
     except Exception:
         pass
-    return {"model": model_name, "hf_home": str(settings.paths.hf_cache_dir)}
+
+    return {"model": model_name, "provider": provider}
 
 
 def export_embeddings_model_to_repo_dir() -> dict[str, str]:
-    """将 HF 模型导出为稳定目录结构, 用于提交到仓库."""
+    """将 HF 模型导出为稳定目录结构, 用于提交到仓库.
+
+    仅适用于 hf provider.
+    """
     model_name = settings.embeddings.model_name
     _ensure_project_hf_cache_env()
     target_dir = _local_embeddings_dir(model_name)

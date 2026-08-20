@@ -55,7 +55,20 @@ def _embeddings_available() -> bool:
         return False
 
 
-HF_AVAILABLE = _embeddings_available()
+def _milvus_available() -> bool:
+    """Check if Milvus is reachable at localhost:19530 (acceptance tests 需要)."""
+    import socket
+    try:
+        with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
+            sock.settimeout(3)
+            return sock.connect_ex(("127.0.0.1", 19530)) == 0
+    except Exception:
+        return False
+
+
+# HF_AVAILABLE: acceptance tests 同时需要 HF embedding 模型和 Milvus 向量库
+# 两者任一不可用都应跳过 acceptance tests, 避免因环境缺失导致的失败
+HF_AVAILABLE = _embeddings_available() and _milvus_available()
 
 
 @pytest.fixture

@@ -1,0 +1,8 @@
+# RiskAgent-AgenticRAG k8s 命名空间
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: riskagent
+  labels:
+    app.kubernetes.io/name: riskagent-agenticrag
+    app.kubernetes.io/part-of: riskagent-agenticrag

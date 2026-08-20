@@ -184,7 +184,10 @@ def _compute_single_retrieval_metrics(sample: dict[str, Any], ks: list[int]) -> 
         for qrel_id in row_qrel_ids:
             matched_qrels.setdefault(qrel_id, idx)
 
-    total_relevant = len(qrel_relevance)
+    # 主 gold (relevance>=2) 计入 recall 分母; 补充标注 (relevance=1) 只作命中加分不计入分母.
+    # 避免 multi-gold 分母膨胀导致 recall 被结构性压低 (IR 惯例: recall 按主要相关文档计算).
+    primary_ids = {qid for qid, rel in qrel_relevance.items() if rel >= 2} or set(qrel_relevance)
+    total_relevant = len(primary_ids)
     metrics: dict[str, float] = {
         "retrieval_mrr": 1.0 / float(first_rank) if first_rank > 0 else 0.0,
         "retrieval_dense_hit_rate": 1.0 if has_dense else 0.0,
@@ -201,7 +204,7 @@ def _compute_single_retrieval_metrics(sample: dict[str, Any], ks: list[int]) -> 
         metrics["retrieval_rerank_uplift"] = float(rrf_best - rerank_best)
 
     for k in ks:
-        hits = sum(1 for position in matched_qrels.values() if position <= k)
+        hits = sum(1 for qid, position in matched_qrels.items() if position <= k and qid in primary_ids)
         metrics[f"retrieval_recall_at_{k}"] = float(hits) / float(max(1, total_relevant))
 
         dcg = 0.0

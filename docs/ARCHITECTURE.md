@@ -1,81 +1,79 @@
 ## 目录
 
-- [1. 系统 Query 流程](#system-query-flow)
-  - [1.1 入口与上下文收敛](#system-query-flow)
-  - [1.2 LangGraph 工作流](#system-query-flow)
-  - [1.3 统一检索主链](#system-query-flow)
-  - [1.4 Query Intelligence](#system-query-flow)
-  - [1.5 Hybrid Retrieval](#system-query-flow)
-  - [1.6 Advanced Index](#system-query-flow)
-  - [1.7 数值型风险工具](#system-query-flow)
-  - [1.8 Critique 与 Query 修正](#system-query-flow)
-  - [1.9 Answer Synthesis 与 Gate 校验](#system-query-flow)
-  - [1.10 Artifacts 与 API 返回](#system-query-flow)
-  - [1.11 系统 Index 流程](#system-index-flow)
-  - [1.12 Source Loader 与 Ingestion](#system-index-flow)
-  - [1.13 Embeddings 初始化](#system-index-flow)
-  - [1.14 Milvus 与 Collection 准备](#system-index-flow)
-  - [1.15 增量更新判定](#system-index-flow)
-  - [1.16 Dense 与 Sparse 语料写入](#system-index-flow)
-  - [1.17 Summary 与 HyDE 产物构建](#system-index-flow)
-  - [1.18 Index Manifest 更新](#system-index-flow)
-- [2. 查询重写模块](#query-rewrite-module)
-  - [2.1 模块定位](#query-rewrite-positioning)
-  - [2.2 两层结构](#query-rewrite-layers)
-  - [2.3 技术与问题映射](#query-rewrite-techniques)
-  - [2.4 路由策略与触发条件](#query-rewrite-routing)
-  - [2.5 组合收益与局限](#query-rewrite-tradeoffs)
-- [3. 混合检索架构](#hybrid-retrieval-architecture)
-  - [3.1 架构目标](#hybrid-retrieval-goals)
-  - [3.2 调用链路](#hybrid-retrieval-call-chain)
-  - [3.3 核心算法与分数计算](#hybrid-retrieval-scoring)
-  - [3.4 关键技术与优缺点](#hybrid-retrieval-techniques)
-  - [3.5 为什么这样设计](#hybrid-retrieval-rationale)
-  - [3.6 与 Numeric Consistency 和 Domain Consistency 的关系](#hybrid-retrieval-downstream-impact)
-- [4. 多级索引架构](#multi-level-index-architecture)
-  - [4.1 架构目标](#multi-level-index-goals)
-  - [4.2 Small-to-Big 索引分层](#multi-level-index-layers)
-  - [4.3 关键技术与作用分工](#multi-level-index-techniques)
-  - [4.4 调用链与打分逻辑](#multi-level-index-call-chain)
-  - [4.5 为什么要这样做](#multi-level-index-rationale)
-  - [4.6 优缺点与局限](#multi-level-index-tradeoffs)
-  - [4.7 有什么更好的做法](#multi-level-index-better-ways)
-- [5. 自适应检索策略](#adaptive-retrieval-strategy)
-  - [5.1 策略定位](#adaptive-retrieval-positioning)
-  - [5.2 具体技术组成](#adaptive-retrieval-techniques)
-  - [5.3 决策流程与停止条件](#adaptive-retrieval-decision-flow)
-  - [5.4 为什么这样设计](#adaptive-retrieval-rationale)
-  - [5.5 解决了什么问题](#adaptive-retrieval-problems)
-  - [5.6 缺点与风险](#adaptive-retrieval-drawbacks)
-  - [5.7 怎么改进](#adaptive-retrieval-improvements)
-- [6. 质量门禁](#quality-gates)
-  - [6.1 门禁边界](#quality-gates-scope)
-  - [6.2 运行时门禁链](#quality-gates-runtime)
-  - [6.3 具体做了哪些门禁](#quality-gates-types)
-  - [6.4 为什么这样设计](#quality-gates-rationale)
-  - [6.5 优缺点](#quality-gates-tradeoffs)
-  - [6.6 怎么改进](#quality-gates-improvements)
-- [7. 评估体系](#evaluation-framework)
-  - [7.1 为什么单独设计评估体系](#evaluation-framework-why)
-  - [7.2 参考了业界哪些成果](#evaluation-framework-industry)
-  - [7.3 三层评估结构](#evaluation-framework-layers)
-  - [7.4 具体指标与计算方式](#evaluation-framework-metrics)
-  - [7.5 Threshold Gate 与 Baseline Regression](#evaluation-framework-gates)
-  - [7.6 这个体系的缺点](#evaluation-framework-limitations)
-  - [7.7 系统 Evaluation 流程](#system-evaluation-flow)
-  - [7.8 数据集加载](#system-evaluation-flow)
-  - [7.9 Evaluation Run 初始化](#system-evaluation-flow)
-  - [7.10 评测前准备](#system-evaluation-flow)
-  - [7.11 样本执行主链](#system-evaluation-flow)
-  - [7.12 Retrieval Metrics](#system-evaluation-flow)
-  - [7.13 Citation Precision 与 Answer Eval](#system-evaluation-flow)
-  - [7.14 Domain Consistency 与 Gate Metrics](#system-evaluation-flow)
-  - [7.15 Threshold Gate](#system-evaluation-flow)
-  - [7.16 Reporting 与 Baseline Compare](#system-evaluation-flow)
+- [1. 系统 Query 流程](#1-系统-query-流程)
+  - [1.1 入口与上下文收敛](#1-系统-query-流程)
+  - [1.2 LangGraph 工作流](#1-系统-query-流程)
+  - [1.3 统一检索主链](#1-系统-query-流程)
+  - [1.4 Query Intelligence](#1-系统-query-流程)
+  - [1.5 Hybrid Retrieval](#1-系统-query-流程)
+  - [1.6 Advanced Index](#1-系统-query-流程)
+  - [1.7 数值型风险工具](#1-系统-query-流程)
+  - [1.8 Critique 与 Query 修正](#1-系统-query-流程)
+  - [1.9 Answer Synthesis 与 Gate 校验](#1-系统-query-流程)
+  - [1.10 Artifacts 与 API 返回](#1-系统-query-流程)
+  - [1.11 系统 Index 流程](#111-系统-index-流程)
+  - [1.12 Source Loader 与 Ingestion](#111-系统-index-流程)
+  - [1.13 Embeddings 初始化](#111-系统-index-流程)
+  - [1.14 Milvus 与 Collection 准备](#111-系统-index-流程)
+  - [1.15 增量更新判定](#111-系统-index-流程)
+  - [1.16 Dense 与 Sparse 语料写入](#111-系统-index-流程)
+  - [1.17 Summary 与 HyDE 产物构建](#111-系统-index-流程)
+  - [1.18 Index Manifest 更新](#111-系统-index-流程)
+- [2. 查询重写模块](#2-查询重写模块)
+  - [2.1 模块定位](#21-模块定位)
+  - [2.2 两层结构](#22-两层结构)
+  - [2.3 技术与问题映射](#23-技术与问题映射)
+  - [2.4 路由策略与触发条件](#24-路由策略与触发条件)
+  - [2.5 组合收益与局限](#25-组合收益与局限)
+- [3. 混合检索架构](#3-混合检索架构)
+  - [3.1 架构目标](#31-架构目标)
+  - [3.2 调用链路](#32-调用链路)
+  - [3.3 核心算法与分数计算](#33-核心算法与分数计算)
+  - [3.4 关键技术与优缺点](#34-关键技术与优缺点)
+  - [3.5 为什么这样设计](#35-为什么这样设计)
+  - [3.6 与 Numeric Consistency 和 Domain Consistency 的关系](#36-与-numeric-consistency-和-domain-consistency-的关系)
+- [4. 多级索引架构](#4-多级索引架构)
+  - [4.1 架构目标](#41-架构目标)
+  - [4.2 Small-to-Big 索引分层](#42-small-to-big-索引分层)
+  - [4.3 关键技术与作用分工](#43-关键技术与作用分工)
+  - [4.4 调用链与打分逻辑](#44-调用链与打分逻辑)
+  - [4.5 为什么要这样做](#45-为什么要这样做)
+  - [4.6 优缺点与局限](#46-优缺点与局限)
+  - [4.7 有什么更好的做法](#47-有什么更好的做法)
+- [5. 自适应检索策略](#5-自适应检索策略)
+  - [5.1 策略定位](#51-策略定位)
+  - [5.2 具体技术组成](#52-具体技术组成)
+  - [5.3 决策流程与停止条件](#53-决策流程与停止条件)
+  - [5.4 为什么这样设计](#54-为什么这样设计)
+  - [5.5 解决了什么问题](#55-解决了什么问题)
+  - [5.6 缺点与风险](#56-缺点与风险)
+  - [5.7 怎么改进](#57-怎么改进)
+- [6. 质量门禁](#6-质量门禁)
+  - [6.1 门禁边界](#61-门禁边界)
+  - [6.2 运行时门禁链](#62-运行时门禁链)
+  - [6.3 具体做了哪些门禁](#63-具体做了哪些门禁)
+  - [6.4 为什么这样设计](#64-为什么这样设计)
+  - [6.5 优缺点](#65-优缺点)
+  - [6.6 怎么改进](#66-怎么改进)
+- [7. 评估体系](#7-评估体系)
+  - [7.1 为什么单独设计评估体系](#71-为什么单独设计评估体系)
+  - [7.2 参考了业界哪些成果](#72-参考了业界哪些成果)
+  - [7.3 三层评估结构](#73-三层评估结构)
+  - [7.4 具体指标与计算方式](#74-具体指标与计算方式)
+  - [7.5 Threshold Gate 与 Baseline Regression](#75-threshold-gate-与-baseline-regression)
+  - [7.6 这个体系的缺点](#76-这个体系的缺点)
+  - [7.7 系统 Evaluation 流程](#77-系统-evaluation-流程)
+  - [7.8 数据集加载](#77-系统-evaluation-流程)
+  - [7.9 Evaluation Run 初始化](#77-系统-evaluation-流程)
+  - [7.10 评测前准备](#77-系统-evaluation-流程)
+  - [7.11 样本执行主链](#77-系统-evaluation-流程)
+  - [7.12 Retrieval Metrics](#77-系统-evaluation-流程)
+  - [7.13 Citation Precision 与 Answer Eval](#77-系统-evaluation-流程)
+  - [7.14 Domain Consistency 与 Gate Metrics](#77-系统-evaluation-流程)
+  - [7.15 Threshold Gate](#77-系统-evaluation-流程)
+  - [7.16 Reporting 与 Baseline Compare](#77-系统-evaluation-流程)
 
-<a id="system-query-flow"></a>
-
-# 系统 Query 流程
+# 1. 系统 Query 流程
 ```text
 [用户]
     | 发起 query
@@ -202,9 +200,7 @@
 [用户]
 ```
 
-<a id="system-index-flow"></a>
-
-## 系统 Index 流程
+## 1.11 系统 Index 流程
 ```text
 [corpus]
     | md / pdf 等原始文档
@@ -266,13 +262,9 @@
          记录每个 source 的 sha1 和 chunks parents summaries hydes
 ```
 
-<a id="query-rewrite-module"></a>
+# 2. 查询重写模块
 
-# 查询重写模块
-
-<a id="query-rewrite-positioning"></a>
-
-## 模块定位
+## 2.1 模块定位
 
 查询重写模块的目标不是直接回答问题. 它的职责是把用户语言变成更适合检索系统消费的查询表达. 在这个项目里, 它主要解决 4 类断层.
 
@@ -283,9 +275,7 @@
 
 这也是为什么主链不是只做一次 `rewrite_query`. 当前实现实际上分成两层.
 
-<a id="query-rewrite-layers"></a>
-
-## 两层结构
+## 2.2 两层结构
 
 ### 第一层. 主检索 Query Rewrite
 
@@ -306,9 +296,7 @@
 - 第一层负责把问题改写成一个可检索的主查询
 - 第二层负责按题型补充搜索视角, 降低单 query 漏召回
 
-<a id="query-rewrite-techniques"></a>
-
-## 技术与问题映射
+## 2.3 技术与问题映射
 
 下面这张表对应图片里提到的几种关键技术. 其中 `step back` 在本项目里不是重型 LLM prompting, 而是规则化生成一个更泛化的背景查询, 这样写和当前实现是一致的.
 
@@ -322,9 +310,7 @@
 | Route recognition | 根据 query 判断 `compare` `background` `procedure` `default` | 不是每题都值得全量扩写, 盲目 fanout 会增加噪声和成本 | 让扩写强度和题型绑定, 控制预算, 提高稳定性 | 规则路由有误判风险, 特别是中文口语化问句和混合表达 |
 | Variant fusion | 每个 variant 独立检索后, 用 RRF 做结果融合 | 单一路径检索结果脆弱, 某个 query 偏掉就会漏掉关键证据 | 对多视角召回很稳, 不依赖单个 variant 绝对正确 | fanout 越多, 计算成本越高, 也更依赖后续 rerank 和 diversity select 控噪 |
 
-<a id="query-rewrite-routing"></a>
-
-## 路由策略与触发条件
+## 2.4 路由策略与触发条件
 
 当前不是每个问题都跑全套扩写. 这是这个模块最关键的工程 trade off.
 
@@ -341,9 +327,7 @@
 - `background` 和 `procedure` 最怕只命中碎片 chunk, 却拿不到背景定义
 - `compare` 最怕把多个问题硬塞进一次检索
 
-<a id="query-rewrite-tradeoffs"></a>
-
-## 组合收益与局限
+## 2.5 组合收益与局限
 
 把这些技术组合起来之后, 查询重写模块解决的不是某一个点问题, 而是一整条检索链前端的意图对齐问题.
 
@@ -370,13 +354,9 @@
 - 它比只做一次 rewrite 更能处理金融缩写, compare 问题, 跨文档背景问题
 - 它也保留了继续演进的空间, 比如后面可以补缩写词典, variant level ablation, learned router
 
-<a id="hybrid-retrieval-architecture"></a>
+# 3. 混合检索架构
 
-# 混合检索架构
-
-<a id="hybrid-retrieval-goals"></a>
-
-## 架构目标
+## 3.1 架构目标
 
 混合检索架构的核心目标是同时解决 dense 检索和 sparse 检索各自的偏科问题.
 
@@ -388,9 +368,7 @@
 
 `Dense Milvus -> Sparse BM25 -> RRF -> metadata boost -> coarse ranking -> Cross-Encoder rerank -> diversity select`
 
-<a id="hybrid-retrieval-call-chain"></a>
-
-## 调用链路
+## 3.2 调用链路
 
 当前调用链是分层包装的.
 
@@ -421,9 +399,7 @@
 
 这 3 个参数把召回广度, 精排成本, 结果收口拆开了, 这样可调性更强.
 
-<a id="hybrid-retrieval-scoring"></a>
-
-## 核心算法与分数计算
+## 3.3 核心算法与分数计算
 
 ### 1. Dense 召回
 
@@ -572,9 +548,7 @@ rerank_score = CrossEncoder.predict(query, chunk_text)
 - 严格来说这不是经典 MMR 的相似度优化版本
 - 对 very local 的条款问题, 多样性约束可能伤害 recall
 
-<a id="hybrid-retrieval-techniques"></a>
-
-## 关键技术与优缺点
+## 3.4 关键技术与优缺点
 
 | 技术 | 在当前架构里的作用 | 优点 | 缺点 |
 | --- | --- | --- | --- |
@@ -585,9 +559,7 @@ rerank_score = CrossEncoder.predict(query, chunk_text)
 | Cross-Encoder | 对小候选池做精排 | Top few 相关性明显更强, 对最终回答帮助大 | 推理成本高, 无法替代大规模召回 |
 | Diversity Select | 限制 source 和 section 重复 | 提高证据覆盖, 缓解同源堆叠 | 对局部精确问答可能带来误伤 |
 
-<a id="hybrid-retrieval-rationale"></a>
-
-## 为什么这样设计
+## 3.5 为什么这样设计
 
 这个组合方案本质上是在平衡 4 件事.
 
@@ -624,9 +596,7 @@ rerank_score = CrossEncoder.predict(query, chunk_text)
 - 用 Cross-Encoder 只精排小池子
 - 用 diversity select 给最终答案保留多源证据
 
-<a id="hybrid-retrieval-downstream-impact"></a>
-
-## 与 Numeric Consistency 和 Domain Consistency 的关系
+## 3.6 与 Numeric Consistency 和 Domain Consistency 的关系
 
 图里提到 `Numeric Consistency Score` 和 `Domain Consistency`. 这里需要特别说明边界.
 
@@ -646,13 +616,9 @@ rerank_score = CrossEncoder.predict(query, chunk_text)
 - 它们是整条证据链变稳之后的评测结果
 - 具体提升幅度, 比如图里写的百分比, 应该被当成实验观察值, 不是算法保证
 
-<a id="multi-level-index-architecture"></a>
+# 4. 多级索引架构
 
-# 多级索引架构
-
-<a id="multi-level-index-goals"></a>
-
-## 架构目标
+## 4.1 架构目标
 
 多级索引架构的核心目标是解决 chunk 检索天然存在的 3 个问题.
 
@@ -668,9 +634,7 @@ rerank_score = CrossEncoder.predict(query, chunk_text)
 - 再用 parent summary 和 HyDE 补主题信号与表达信号
 - 最后在必要时回填 parent 上下文, 把证据从小片段拉回可回答的语境
 
-<a id="multi-level-index-layers"></a>
-
-## Small-to-Big 索引分层
+## 4.2 Small-to-Big 索引分层
 
 当前索引侧会物化 4 类核心语料.
 
@@ -695,9 +659,7 @@ rerank_score = CrossEncoder.predict(query, chunk_text)
 - `advanced index` 再用 summary 和 hyde 给 parent 级别补信号
 - `parent expand` 最后把证据从 small 拉回 big
 
-<a id="multi-level-index-techniques"></a>
-
-## 关键技术与作用分工
+## 4.3 关键技术与作用分工
 
 ### 1. Parent-Child
 
@@ -805,9 +767,7 @@ rerank_score = CrossEncoder.predict(query, chunk_text)
 - 当前仍是启发式规则
 - 可能出现该扩没扩, 或不该扩却扩了的边界样本
 
-<a id="multi-level-index-call-chain"></a>
-
-## 调用链与打分逻辑
+## 4.4 调用链与打分逻辑
 
 多级索引不是独立跑一套检索, 而是叠在混合检索之后.
 
@@ -867,9 +827,7 @@ Parent expand 的触发也不是拍脑袋.
 - `numeric` 问题更怕把无关解释扩进来, 所以阈值更严
 - `default` 问题默认尽量克制, 只在 evidence signal 足够强时才扩
 
-<a id="multi-level-index-rationale"></a>
-
-## 为什么要这样做
+## 4.5 为什么要这样做
 
 这套架构的根本原因是, 单层索引很难同时满足下面几个目标.
 
@@ -903,9 +861,7 @@ Parent expand 的触发也不是拍脑袋.
 
 所以当前方案不是追求某一个点最强, 而是把 retrieval pipeline 拆成多阶段和多粒度协同.
 
-<a id="multi-level-index-tradeoffs"></a>
-
-## 优缺点与局限
+## 4.6 优缺点与局限
 
 ### 优点
 
@@ -928,9 +884,7 @@ Parent expand 的触发也不是拍脑袋.
 - parent expand 还不是 learned policy
 - 多级索引提升的是 evidence coverage, 不是对所有题型都一定有收益
 
-<a id="multi-level-index-better-ways"></a>
-
-## 有什么更好的做法
+## 4.7 有什么更好的做法
 
 如果后面继续演进, 我认为有 4 条路会比当前方案更强.
 
@@ -991,13 +945,9 @@ advanced_index_score = base_score + 0.35 * summary_score + 0.35 * hyde_score
 - 先用低风险和高可解释性的方式解决 chunk 碎片化
 - 再给后续 learned routing learned fusion 和 query aware summarization 留出升级空间
 
-<a id="adaptive-retrieval-strategy"></a>
+# 5. 自适应检索策略
 
-# 自适应检索策略
-
-<a id="adaptive-retrieval-positioning"></a>
-
-## 策略定位
+## 5.1 策略定位
 
 这里说的自适应检索, 在当前项目里不是指运行时在很多检索 mode 之间来回切换. 更准确地说, 它是统一主链上的动态决策层.
 
@@ -1014,9 +964,7 @@ advanced_index_score = base_score + 0.35 * summary_score + 0.35 * hyde_score
 - 也不默认把所有轮次跑满
 - 只在证据充分时停, 不充分时才进入 revise loop
 
-<a id="adaptive-retrieval-techniques"></a>
-
-## 具体技术组成
+## 5.2 具体技术组成
 
 当前自适应检索策略主要由 4 个技术部件组成.
 
@@ -1104,9 +1052,7 @@ retrieval_sufficient = critique_sufficient and self_rag_sufficient
 
 `retrieve -> self_rag + critique -> continue or stop -> revise_query -> retrieve`
 
-<a id="adaptive-retrieval-decision-flow"></a>
-
-## 决策流程与停止条件
+## 5.3 决策流程与停止条件
 
 当前决策流程可以概括成下面这样.
 
@@ -1161,9 +1107,7 @@ retrieval_sufficient = critique_sufficient and self_rag_sufficient
 
 这也是为什么图里会强调平均检索轮次下降这件事, 但它应该被理解成策略结果, 不是硬编码目标.
 
-<a id="adaptive-retrieval-rationale"></a>
-
-## 为什么这样设计
+## 5.4 为什么这样设计
 
 这套设计想平衡 3 件事.
 
@@ -1199,9 +1143,7 @@ retrieval_sufficient = critique_sufficient and self_rag_sufficient
 - 宁可少量多跑一轮
 - 也尽量避免过早停止导致回答建立在薄证据上
 
-<a id="adaptive-retrieval-problems"></a>
-
-## 解决了什么问题
+## 5.5 解决了什么问题
 
 当前自适应检索策略主要解决了 5 类问题.
 
@@ -1225,9 +1167,7 @@ retrieval_sufficient = critique_sufficient and self_rag_sufficient
 
 数值题如果没有 numeric backing 就提前停, 后续回答很容易出错. 现在这类题型的 stopping 条件更严.
 
-<a id="adaptive-retrieval-drawbacks"></a>
-
-## 缺点与风险
+## 5.6 缺点与风险
 
 当前方案虽然稳, 但也有明显缺点.
 
@@ -1255,9 +1195,7 @@ Self-RAG 的很多阈值和题型规则本质上还是 hand-crafted, 不是 lear
 
 它主要判断 docs 是否够, 还不是 claim-level 的 end-to-end answerability verifier.
 
-<a id="adaptive-retrieval-improvements"></a>
-
-## 怎么改进
+## 5.7 怎么改进
 
 如果后面继续演进, 我觉得可以往下面 5 个方向升级.
 
@@ -1310,13 +1248,9 @@ Self-RAG 的很多阈值和题型规则本质上还是 hand-crafted, 不是 lear
 
 整体上看, 当前自适应检索策略的价值不在于它已经是最优解, 而在于它把 `早停` `继续` `修 query` 这几个原本隐含在 prompt 里的决策, 变成了可以被观察, 解释, 评测和逐步升级的工程部件.
 
-<a id="quality-gates"></a>
+# 6. 质量门禁
 
-# 质量门禁
-
-<a id="quality-gates-scope"></a>
-
-## 门禁边界
+## 6.1 门禁边界
 
 这里需要先把两个容易混淆的概念分开.
 
@@ -1338,9 +1272,7 @@ Self-RAG 的很多阈值和题型规则本质上还是 hand-crafted, 不是 lear
 
 另外还有一个可选的 `LLM appeal` 申诉机制, 用来减少 gate 的误杀.
 
-<a id="quality-gates-runtime"></a>
-
-## 运行时门禁链
+## 6.2 运行时门禁链
 
 当前统一主链的最后一步是 `validate_and_save`.
 
@@ -1385,9 +1317,7 @@ Self-RAG 的很多阈值和题型规则本质上还是 hand-crafted, 不是 lear
 
 这一步的意义是把"回答内容"和"证据锚点"真正绑起来, 让后面的 gate 可以检查 claim 到 evidence 的对应关系.
 
-<a id="quality-gates-types"></a>
-
-## 具体做了哪些门禁
+## 6.3 具体做了哪些门禁
 
 ### 1. Refusal Gate
 
@@ -1567,9 +1497,7 @@ Self-RAG 的很多阈值和题型规则本质上还是 hand-crafted, 不是 lear
 - 运行时 gate 防单条高风险回答
 - 离线 threshold gate 防版本级回归
 
-<a id="quality-gates-rationale"></a>
-
-## 为什么这样设计
+## 6.4 为什么这样设计
 
 这套门禁设计的核心思路是分层防守.
 
@@ -1603,9 +1531,7 @@ Self-RAG 的很多阈值和题型规则本质上还是 hand-crafted, 不是 lear
 
 这个分层在工程上更现实.
 
-<a id="quality-gates-tradeoffs"></a>
-
-## 优缺点
+## 6.5 优缺点
 
 ### 优点
 
@@ -1626,9 +1552,7 @@ Self-RAG 的很多阈值和题型规则本质上还是 hand-crafted, 不是 lear
 - 这套方案更偏保守和可审计
 - 它不是最聪明的, 但非常适合金融风控这种宁可多拦一点也不能乱放的场景
 
-<a id="quality-gates-improvements"></a>
-
-## 怎么改进
+## 6.6 怎么改进
 
 如果后面继续演进, 我觉得有 6 个方向最值得做.
 
@@ -1693,13 +1617,9 @@ Self-RAG 的很多阈值和题型规则本质上还是 hand-crafted, 不是 lear
 
 整体上看, 当前质量门禁的价值不只是"把回答拦下来". 更重要的是它把证据绑定, 数值校验, 拒答策略和版本级阈值审查拆成了可独立演进的质量控制部件.
 
-<a id="evaluation-framework"></a>
+# 7. 评估体系
 
-# 评估体系
-
-<a id="evaluation-framework-why"></a>
-
-## 为什么单独设计评估体系
+## 7.1 为什么单独设计评估体系
 
 这个项目的评估体系不是为了产出一个总分, 而是为了回答 3 个更关键的问题.
 
@@ -1723,9 +1643,7 @@ Self-RAG 的很多阈值和题型规则本质上还是 hand-crafted, 不是 lear
 
 当前项目里, 这套体系已经真实落在 `50` 题金融评测集上, 并且可以输出 fresh report 做版本对比.
 
-<a id="evaluation-framework-industry"></a>
-
-## 参考了业界哪些成果
+## 7.2 参考了业界哪些成果
 
 这套评估体系不是单一论文口径, 而是把几类成熟思路拼到一起.
 
@@ -1776,9 +1694,7 @@ answer 侧明显参考了 RAGAS 的思路, 当前代码里已经集成了完整�
 
 它不是论文指标, 但在生产系统里非常重要.
 
-<a id="evaluation-framework-layers"></a>
-
-## 三层评估结构
+## 7.3 三层评估结构
 
 当前评估结构可以概括成下面这样.
 
@@ -1814,9 +1730,7 @@ answer 侧明显参考了 RAGAS 的思路, 当前代码里已经集成了完整�
 - answer 差, 就优先改上下文使用和生成
 - gate 差, 就优先改门禁策略而不是乱改主链
 
-<a id="evaluation-framework-metrics"></a>
-
-## 具体指标与计算方式
+## 7.4 具体指标与计算方式
 
 下面只写当前项目里已经真实落地, 并且在代码中有明确实现的指标.
 
@@ -2195,9 +2109,7 @@ gate_miss_rate = false_negative / labeled_total
 
 这组指标的价值在于, 它把 gate 从"看起来合理"变成了"可量化收益和副作用".
 
-<a id="evaluation-framework-gates"></a>
-
-## Threshold Gate 与 Baseline Regression
+## 7.5 Threshold Gate 与 Baseline Regression
 
 这套体系最后还有两道版本级控制.
 
@@ -2239,9 +2151,7 @@ gate_miss_rate = false_negative / labeled_total
 - threshold failure 说明系统还没达到最低可发布标准
 - baseline regression 说明系统可能退化了, 即使它仍然在阈值之上
 
-<a id="evaluation-framework-limitations"></a>
-
-## 这个体系的缺点
+## 7.6 这个体系的缺点
 
 当前体系已经比只看一个总分强很多, 但还有明显短板.
 
@@ -2290,9 +2200,7 @@ gate_miss_rate = false_negative / labeled_total
 
 整体上看, 这套评估体系最大的价值不是"指标很多", 而是它把 retrieval, answer, gate, release decision 这几层拆开了. 这样每次指标波动时, 我们能更快知道应该改哪里, 也更能诚实地说明系统到底强在哪, 弱在哪.
 
-<a id="system-evaluation-flow"></a>
-
-## 系统 Evaluation 流程
+## 7.7 系统 Evaluation 流程
 ```text
 [tests/data/questions.json]
     | 问题 + tags

@@ -6,6 +6,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from riskagent_agenticrag.agents.agentic_rag_runner import run_agentic_rag
 from riskagent_agenticrag.config.langsmith import setup_langsmith
 from riskagent_agenticrag.config.settings import settings
 from riskagent_agenticrag.indexing.indexer import MANIFEST_FILENAME
@@ -61,13 +62,22 @@ class RiskAgentSystem:
         retriever = self._ensure_resources()
         question_with_history = self._merge_history(question=question, history=history)
 
-        out = run_langgraph_agentic_chat(
-            question=question_with_history,
-            retriever=retriever,
-            max_rounds=int(max_rounds),
-            request_id=request_id,
-        )
-        out["runner"] = "langgraph"
+        # 读取 Agentic RAG 模式开关 (RFC-004 阶段一), 默认关闭, 走 LangGraph 主链
+        if settings.features.agentic_mode:
+            out = run_agentic_rag(
+                question=question_with_history,
+                retriever=retriever,
+                max_tool_calls=int(settings.features.agentic_max_tool_calls),
+            )
+            out["runner"] = "agentic"
+        else:
+            out = run_langgraph_agentic_chat(
+                question=question_with_history,
+                retriever=retriever,
+                max_rounds=int(max_rounds),
+                request_id=request_id,
+            )
+            out["runner"] = "langgraph"
 
         # 统一补充 citations
         if "citations" not in out and "docs" in out:

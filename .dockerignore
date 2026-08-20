@@ -1,0 +1,58 @@
+# Git
+.git
+.gitignore
+
+# Python 缓存和虚拟环境
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info
+.eggs
+dist
+build
+
+# 测试和覆盖率
+tests/
+.pytest_cache
+.coverage
+htmlcov
+coverage.xml
+COVERAGE_REPORT.md
+
+# IDE 和编辑器
+.vscode
+.idea
+*.swp
+*.swo
+
+# Docker 和部署
+Dockerfile
+.dockerignore
+deploy/
+
+# 工具和脚本
+scripts/
+Makefile
+
+# 文档
+docs/
+*.md
+!README.md
+
+# 环境和密钥
+.env
+.env.local
+.env.*.local
+
+# 数据卷和持久化
+.milvus/
+.artifacts/
+.artifacts_fresh/
+models/
+
+# 其他
+.DS_Store
+*.log
+.dbg/

@@ -107,6 +107,36 @@ def rewrite_query(question: str) -> str:
     return query or question
 
 
+def revise_query(question: str, previous_query: str) -> str:
+    """基于上一轮查询改写新查询, 用于 CRAG insufficient 档位降级.
+
+    与 rewrite_query 不同, revise_query 额外参考 previous_query,
+    让 LLM 针对上一轮检索不足的部分做针对性改写 (换同义词或调整宽窄).
+    LLM 调用失败时回退为 previous_query, 保证主流程不中断.
+    """
+    prev = str(previous_query or "").strip() or str(question or "").strip()
+    prompt = (
+        "You are a retrieval query revising assistant for finance risk and derivatives. "
+        "The previous search query did not retrieve sufficient evidence. "
+        "Revise it into a better keyword-rich search query optimized for embedding search. "
+        "Do not answer the question. Do not include citations. "
+        "Return JSON only.\n"
+        "Schema: {\"query\": \"...\"}\n\n"
+        "Rules:\n"
+        "- Prefer noun phrases and domain terms (FRTB, delta, desk exposure, limit breach).\n"
+        "- Keep it under 20 tokens if possible.\n"
+        "- Avoid simply repeating the previous query; try synonyms or broader/narrower terms.\n\n"
+        f"Original question: {question}\n"
+        f"Previous query: {prev}\n"
+    )
+    try:
+        data = call_llm_json(prompt, temperature=0.0)
+    except Exception:
+        return prev
+    query = str(data.get("query", "")).strip()
+    return query or prev
+
+
 def critique_retrieval(question: str, docs: list[Document]) -> tuple[bool, str, str]:
     if not docs:
         return False, question, "retrieval returned empty docs"
@@ -143,6 +173,22 @@ def synthesize_answer(*, question: str, docs: list[Document]) -> str:
     ):
         return build_refusal_report(question)
     return generate_answer(question, docs)
+
+
+def synthesize_answer_from_model_knowledge(question: str) -> str:
+    """无检索上下文时, 使用 LLM 自身知识直接回答 (TARG simple 查询直答路径).
+
+    与 synthesize_answer 不同: 后者在 docs 为空时会生成拒答报告,
+    而本函数允许 LLM 用自身知识回答, 适用于 TARG 判定为 simple 的查询.
+    """
+    q = str(question or "").strip()
+    prompt = (
+        "You are a precise assistant explaining financial derivatives and risk concepts. "
+        "Answer the question using your own knowledge. "
+        "Keep the answer concise and factual. Return plain markdown only.\n\n"
+        f"Question: {q}\n"
+    )
+    return call_llm_text(prompt, temperature=0.0)
 
 
 def _paragraph_tokens(text: str) -> set[str]:

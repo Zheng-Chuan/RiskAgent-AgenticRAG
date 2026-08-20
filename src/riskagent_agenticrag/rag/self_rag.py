@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Any
 
 from langchain_core.documents import Document
@@ -136,6 +136,9 @@ class SelfRagRetrievalGrade:
     claim_coverage: float = 0.0
     top_claim_score: float = 0.0
     redundancy_penalty: float = 0.0
+    # CRAG (FR-10) 三档评估结果: "sufficient" / "insufficient" / "irrelevant"
+    # 默认 "sufficient" 以保持与原二档接口向后兼容
+    crag_tier: str = "sufficient"
 
 
 def _question_type(*, question: str) -> str:
@@ -402,6 +405,42 @@ def grade_docs(*, question: str, docs: list[Document]) -> SelfRagRetrievalGrade:
         claim_coverage=claim_coverage,
         top_claim_score=top_claim_score,
         redundancy_penalty=redundancy_penalty,
+    )
+
+
+def grade_docs_crag(*, question: str, docs: list[Document]) -> SelfRagRetrievalGrade:
+    """CRAG 三档纠错检索评估 (FR-10).
+
+    复用现有 grade_docs 的二档评估结果, 基于相关性信号映射到三档:
+    - irrelevant: top_isrel < 0.1 且 claim_coverage < 0.15 (检索完全不相关, 触发扩大 top_k)
+    - sufficient: top_isrel >= 0.2 且 claim_coverage >= 0.3 (检索充分, 保持原 sufficient 逻辑)
+    - insufficient: 其他情况 (检索部分相关但不充分, 触发重写查询再检索)
+
+    crag_tier="sufficient" 时同步设置 sufficient=True, 其余档位 sufficient=False.
+    该函数不修改 grade_docs, 通过 dataclasses.replace 生成带 crag_tier 的副本.
+    """
+    base = grade_docs(question=question, docs=docs)
+    top_isrel = float(base.top_isrel)
+    claim_coverage = float(base.claim_coverage)
+
+    # 三档映射: 先判 irrelevant, 再判 sufficient, 剩余归 insufficient
+    if top_isrel < 0.1 and claim_coverage < 0.15:
+        tier = "irrelevant"
+    elif top_isrel >= 0.2 and claim_coverage >= 0.3:
+        tier = "sufficient"
+    else:
+        tier = "insufficient"
+
+    # sufficient 字段只在 sufficient 档位为 True, 其余档位强制 False
+    new_sufficient = bool(tier == "sufficient")
+    # reason 追加 crag 档位标记, 便于调试与追溯
+    new_reason = f"{base.reason}|crag={tier}"
+
+    return replace(
+        base,
+        sufficient=new_sufficient,
+        reason=new_reason,
+        crag_tier=tier,
     )
 
 

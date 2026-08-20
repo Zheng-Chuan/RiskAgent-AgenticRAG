@@ -9,8 +9,20 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from riskagent_agenticrag.llm.generate import call_llm_json_with_model
 
-# LLM chunking 使用的模型
-LLM_CHUNKING_MODEL = "gpt-4o-mini"
+# LLM chunking 使用的模型 (从 settings 读取, 可用 RISKAGENT_LLM_CHUNKING_MODEL 覆盖)
+def _default_chunking_model() -> str:
+    """返回 LLM 语义切割使用的模型名, 默认跟随 settings.llm.model."""
+    import os
+
+    override = os.getenv("RISKAGENT_LLM_CHUNKING_MODEL", "").strip()
+    if override:
+        return override
+    from riskagent_agenticrag.config.settings import settings
+
+    return str(settings.llm.model or "deepseek-ai/DeepSeek-V3")
+
+
+LLM_CHUNKING_MODEL = _default_chunking_model()
 
 
 # ---------------------------------------------------------------------------
@@ -127,7 +139,15 @@ def _fallback_chunking(text: str, *, max_chunk_size: int = 800, overlap: int = 1
                 "summary": "",
             })
 
-        start = max(start + 1, end - overlap)
+        # 已切到文本末尾, 直接结束, 避免 start 每次只 +1 产生递减碎片
+        if end >= len(text):
+            break
+
+        # 至少前进 1 字符且保留 overlap 回退窗口
+        next_start = end - overlap
+        if next_start <= start:
+            next_start = end
+        start = next_start
 
     return chunks
 

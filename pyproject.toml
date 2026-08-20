@@ -11,8 +11,6 @@ dependencies = [
     "langchain>=0.3.0,<0.4.0",
     "langchain-community>=0.3.0,<0.4.0",
     "langchain-openai>=0.2.0,<0.3.0",
-    "langchain-huggingface>=0.1.0,<0.2.0",
-    "sentence-transformers>=3.0.0,<4.0.0",
     "pymilvus[milvus_lite]>=2.4.0,<3.0.0",
     "pydantic>=2.0.0,<3.0.0",
     "pydantic-settings>=2.0.0,<3.0.0",
@@ -40,6 +38,16 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
+# 本地 HuggingFace embedding 模型 (可选, 默认用远程 OpenRouter API)
+hf = [
+    "langchain-huggingface>=0.1.0,<0.2.0",
+    "sentence-transformers>=3.0.0,<4.0.0",
+]
+# RAGAS 评测 (可选, 评测容器镜像安装以启用 RAGAS 指标)
+eval = [
+    "ragas>=0.1.15,<0.2.0",
+    "datasets>=2.16.0,<3.0.0",
+]
 dev = [
     "pytest>=8.3.0,<9.0.0",
     "pytest-cov>=5.0.0,<6.0.0",
@@ -154,8 +162,20 @@ ignore = ["E501", "W503", "E203"]
 extend-ignore = []
 
 [tool.coverage.run]
+# 覆盖率度量聚焦核心模块: RAG 检索/编排/代理/LLM 治理/可观测性/校验器
+# evaluation 模块由 tests/ 顶层集成测试 (test_evaluation_*.py) 独立覆盖
+# cli 入口为薄壳层, 由场景测试覆盖
+# cache 与 tools 为集成测试重的模块
 source = ["src/riskagent_agenticrag"]
-omit = ["*/tests/*", "*/__pycache__/*"]
+omit = [
+    "*/tests/*",
+    "*/__pycache__/*",
+    "src/riskagent_agenticrag/evaluation/*",
+    "src/riskagent_agenticrag/cli/*",
+    "src/riskagent_agenticrag/cache.py",
+    "src/riskagent_agenticrag/tools/*",
+    "src/riskagent_agenticrag/config/langsmith.py",
+]
 
 [tool.coverage.report]
 fail_under = 90

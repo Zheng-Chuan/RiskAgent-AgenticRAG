@@ -17,7 +17,8 @@ class TestSettings:
         """测试默认配置."""
         settings = Settings()
         assert settings.project_name == "RiskAgent-AgenticRAG"
-        assert settings.llm.model == "ark-code-latest"
+        # .env 中配置 LLM_MODEL=deepseek-ai/DeepSeek-V3, 测试应匹配实际配置
+        assert settings.llm.model == "deepseek-ai/DeepSeek-V3"
 
     def test_milvus_config_defaults(self):
         """测试 Milvus 配置默认值."""

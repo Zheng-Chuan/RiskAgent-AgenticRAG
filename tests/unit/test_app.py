@@ -64,6 +64,8 @@ class TestChatDelegation:
                                          mock_citations):
         """chat() should call run_langgraph_agentic_chat with correct args."""
         mock_settings.project_name = "test"
+        # 显式关闭 agentic_mode, 确保走 langgraph 分支而非 agentic 分支
+        mock_settings.features.agentic_mode = False
         mock_persist_dir = MagicMock(spec=Path)
         mock_persist_dir.exists.return_value = True
         mock_persist_dir.__truediv__ = lambda self, other: MagicMock(exists=lambda: True)
@@ -125,6 +127,8 @@ class TestErrorHandling:
                                               mock_build_retriever, mock_runner):
         """When langgraph runner raises, chat() should propagate the exception."""
         mock_settings.project_name = "test"
+        # 显式关闭 agentic_mode, 确保走 langgraph 分支而非 agentic 分支
+        mock_settings.features.agentic_mode = False
         mock_persist_dir = MagicMock(spec=Path)
         mock_persist_dir.exists.return_value = True
         mock_persist_dir.__truediv__ = lambda self, other: MagicMock(exists=lambda: True)

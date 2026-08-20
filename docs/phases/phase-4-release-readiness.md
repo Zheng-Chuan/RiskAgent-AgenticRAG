@@ -19,13 +19,15 @@
 - 默认 conda 环境口径已经收口到 `agenticrag`
 - 发布门禁已经支持 `有 LLM key 跑 fresh eval 无 LLM key 回退 sample smoke`
 - 已经验证 `RiskMonitor-MultiAgent` 的外部 `LLM` 配置能够打通当前统一主链 并生成 `5` 题 smoke 报告
+- k8s 部署链路已落地 (`deploy/k8s/` + `Dockerfile`), 镜像已迭代到 `v10c-fix`, secret 以 template 形式管理不入库
+- 2026-08-18 `v10b` 报告实现 threshold gate 首次全绿 PASS (此前 `2026-07-18` baseline 的 `retrieval_recall_at_5=0.500 < 0.6` 瓶颈已解决, 现 `0.78`)
+- 2026-08-20 `v10c` FAIL 子集复跑 `3/3` 全 PASS, v10b 遗留的 3 个 FAIL 已闭环 (详见 [评测台账](../evaluations/EVALUATION_LOG.md))
 
 ## 当前仍未完成
 
-- full dataset 的 fresh baseline 已经正式落盘 但 `threshold gate` 结果仍是 `fail`
-- 当前 full baseline 的关键失败项是 `retrieval_recall_at_5=0.500 < 0.6` (`faithfulness=0.775` 已达标)
+- v10c 后的 `50` 题全量复评尚未执行 (预期 `50/50`), 需产出正式全量报告
+- release acceptance 尚未用 `v10b`/`v10c` 最新结果重新执行
 - release acceptance 在无 `LLM key` 环境下仍会回退到仓库内样例报告
-- `release acceptance` 还没有基于这次最新 full baseline 结果重新执行
 
 ## 建议交付
 
@@ -41,4 +43,4 @@
 
 ## 状态
 
-In Progress
+In Progress (2026-08-20 更新: gate 已全绿, 剩余全量复评 + release acceptance 重跑两项收尾)

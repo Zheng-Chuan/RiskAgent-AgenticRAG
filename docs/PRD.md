@@ -95,8 +95,8 @@
 | 证据优先和后置 gate | Decided | [ADR-002](./decisions/ADR-002-evidence-first-validation.md) |
 | 评测优先于演示口径 | Decided | [ADR-003](./decisions/ADR-003-evaluation-first-release-gate.md) |
 | 下一阶段检索强化提案 | Proposed | [RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md) |
-| 全链路可观测性 | Proposed | [RFC-002](./decisions/RFC-002-observability-full-chain-trace.md) |
-| Contextual Retrieval | Proposed | [RFC-003](./decisions/RFC-003-contextual-retrieval.md) |
+| 全链路可观测性 | Accepted (P0/P1 已落地) | [RFC-002](./decisions/RFC-002-observability-full-chain-trace.md) |
+| Contextual Retrieval | Implemented (默认关闭) | [RFC-003](./decisions/RFC-003-contextual-retrieval.md) |
 | Agentic RAG 范式迁移 | Proposed | [RFC-004](./decisions/RFC-004-agentic-rag-paradigm.md) |
 | RAPTOR 递归摘要树索引 | Proposed | [RFC-005](./decisions/RFC-005-raptor-recursive-abstractive-tree.md) |
 

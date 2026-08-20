@@ -2,7 +2,24 @@
 
 ## 状态
 
-Proposed
+Accepted (2026-08-20 回写: P0 与 P1 大部分已落地, 见下方落地情况)
+
+## 落地情况 (2026-08-20 核实)
+
+已实现并经生产评测验证的能力.
+
+- `trace 贯穿与持久化`: 每次请求生成 `request_id`, trace 落盘 `{artifacts}/traces/{request_id}.json`, 包含 nodes / events / retrieval_diag / retriever_version / final (实现于 `observability/persistence.py` + `orchestration/trace.py`)
+- `节点级 trace`: 每个节点记录名称 / 结果摘要 / latency; `retrieve_and_critique` 节点的 docs 带 `rerank_score` (v10b 评测中已实际用于 FVA 等题的根因定位)
+- `检索诊断埋点` `retrieval_diag`: dense / sparse / rerank / mmr 四段各自的 count / latency / top_score, 以及 dense_k / sparse_k / candidate_k / rerank_k 配置快照
+- `延迟分位数统计`: `observability/latency.py` 的 `collect_latency_stats` 支持按节点维度 p50/p95/p99 和按查询类型分组
+- `trace 查询 CLI`: `scripts/trace_inspect.py` 支持 `--trace-id` / `--last N` / `--stats`
+- `保留策略`: `cleanup_traces` 默认 7 天
+
+尚未实现.
+
+- `退化告警` (P1 第 3 项): 尚未实现, 目前质量退化仍依赖人工跑评测
+- trace 的 `retriever_version.reranker_model` 字段记录的是环境变量名而非实际生效模型 (远程 fallback 时有歧义), 已列入观察项
+- P2 外部平台接入维持不做
 
 ## 目标
 

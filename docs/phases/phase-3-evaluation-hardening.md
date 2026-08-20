@@ -24,17 +24,21 @@
 - 已经新增一条外部 `LLM` 注入脚本 可在不改本项目 `.env` 的情况下运行 fresh eval
 - 已生成 `5` 题 smoke fresh report 证明当前统一主链和外部 `LLM` 配置可以真实跑通
 - 已正式生成 `50` 题 full baseline fresh report
-- 当前 full baseline 关键结果为 `passed=38/50` `citation_coverage=0.960` `faithfulness=0.775` `answer_relevancy=0.848` `retrieval_recall_at_5=0.500`
-- 最新报告为 `after_judge_parallel_bugfix_20260718_065654` 已取代之前的 `after_judge_timeout_fix` 报告
+- 2026-07-18 full baseline 关键结果为 `passed=38/50` `citation_coverage=0.960` `faithfulness=0.775` `answer_relevancy=0.848` `retrieval_recall_at_5=0.500`
+- 2026-08-18 `prod_pipeline_v10b_targ_rerank_recallfix` 报告实现 threshold gate 首次全绿 PASS: `passed=47/50` `faithfulness=0.895` `citation_coverage=0.940` `answer_relevancy=0.943` `retrieval_recall_at_5=0.78` (详见 [评测台账](../evaluations/EVALUATION_LOG.md))
+- 2026-08-20 v10c FAIL 子集复跑 `3/3` 全 PASS (q19 FVA / q21 MVA / q22 ColVA, TARG 词表补全后检索链路恢复)
+- recall 口径已修正: 分母只计主 gold (relevance>=2), 与 IR 惯例对齐
+- 评测已默认只读索引 重建需显式 `--reindex`, 评测和索引工作流已分离
+- 评测结果台账模块已建立 (`docs/evaluations/EVALUATION_LOG.md`) 历次评测 FAIL 根因可回溯
 
 ## 当前仍未完成
 
 - 报告元信息里还没有稳定落入 `index version` 或 `schema_fingerprint`
 - gate_labels 样本量仍然偏小 统计显著性有限
-- 当前 `50` 题 full baseline 的 `threshold gate` 结果为 `fail`
-- `faithfulness=0.775` 已超过阈值 `0.75` 但裕度很薄 需要继续监控
-- 当前 `retrieval_recall_at_5=0.500` 低于阈值 `0.6` 是 threshold gate 唯一失败项
-- release acceptance 虽然已支持 fresh eval 但无 `LLM key` 时仍会回退到仓库内样例报告
+- ragas 副指标 `context_precision_no_ref=0.565` `answer_correctness=0.371` 偏低 未进 gate 属 slice 分析范畴
+- ragas judge 偶发 API 噪声 (400 `n should not greater than 1` 与超时), judge 稳定性待加固
+- v10c 后的 `50` 题全量复评尚未执行 (预期 `50/50`)
+- release acceptance 尚未用 v10b/v10c 报告重新执行
 
 ## P0 必须先做
 
@@ -124,4 +128,4 @@
 
 ## 状态
 
-In Progress
+In Progress (2026-08-20 更新: threshold gate 已在 v10b 首次全绿, v10c 后全量复评与 release acceptance 重跑为剩余收尾项)

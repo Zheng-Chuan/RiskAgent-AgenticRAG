@@ -157,9 +157,15 @@ ensure_newline_before_comments = true
 [tool.ruff]
 line-length = 100
 target-version = "py310"
+
+[tool.ruff.lint]
 select = ["E", "F", "W", "I", "N", "UP", "S", "B", "A", "C4", "DTZ", "EXE", "FBT", "ICN", "G", "INP", "ISC", "NPY", "PD", "PGH", "PIE", "PL", "RSE", "RET", "SLF", "TCH", "TID", "TRY", "UP", "YTT"]
-ignore = ["E501", "W503", "E203"]
+ignore = ["E501", "E203"]
 extend-ignore = []
+
+[tool.ruff.lint.per-file-ignores]
+# 测试访问私有成员/字面量断言/assert 语句属常规做法
+"tests/**" = ["SLF001", "PLR2004", "TRY003", "S108", "S101"]
 
 [tool.coverage.run]
 # 覆盖率度量聚焦核心模块: RAG 检索/编排/代理/LLM 治理/可观测性/校验器

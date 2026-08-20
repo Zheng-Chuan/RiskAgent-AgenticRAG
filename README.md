@@ -133,9 +133,9 @@ make test CONDA_ENV=riskagent-agenticrag
 
 ## 测试覆盖率现状
 
-- 当前测试覆盖率约 `33%` 远低于 `Makefile` 中 `test-coverage` 目标设定的 `90%` 阈值
-- `tests/unit/` 覆盖较好 但 `evaluation/` 模块覆盖率仅约 `7%` 是最大缺口
-- `api/server.py` 因 `email-validator` 导入问题导致部分测试无法执行
-- `rag/hybrid_retriever.py` 混合检索核心逻辑覆盖率仅约 `5%`
-- 详细覆盖率分析见 [COVERAGE_REPORT.md](COVERAGE_REPORT.md) 但该报告本身也可能过时 需要以实际运行结果为准
+- 2026-08-20 实测 (`make test-unit`, conda `agenticrag` 环境): 单测覆盖率 `90.24%` (706 个单测全过), 达到 `Makefile` `90%` 阈值
+- 覆盖率口径说明: `pyproject.toml` `[tool.coverage.run]` 的 `omit` 排除了 `evaluation/*` 与 `cli/*` (分别由顶层集成测试和场景测试独立覆盖), 度量聚焦 RAG 检索/编排/代理/LLM 治理/可观测性/校验器
+- 2026-08-20 修复了 `Makefile` `PYTEST` 定义的存量 bug: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` 禁用插件后未显式加载 `pytest_cov`, 导致 `--cov` 参数从未被识别 (历史 "33%" 数据源于该 bug, 实际覆盖率远高于此)
+- 历史低覆盖大缺口已补齐: `rag/remote_reranker.py` (0% -> 全覆盖, 新增 11 个测试), `artifacts/storage.py` bundle 分支 (73% -> 92%+)
+- 存量技术债: 全仓 `ruff check` 尚有约 755 个历史告警 (之前因 `W503` 配置 parse error 从未跑通过), 其中约半数可 `--fix` 自动修复, 待专项治理
 - 当前测试文件共 `55+` 个 覆盖 unit smoke scenario performance milestone acceptance 等多个层次

@@ -8,7 +8,8 @@ CONDA_ENV ?= agenticrag
 CONDA_RUN := conda run -n $(CONDA_ENV)
 PYTHON := $(CONDA_RUN) python
 PIP := $(CONDA_RUN) pip
-PYTEST := PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 $(PYTHON) -m pytest
+# 注意: 禁用插件自动加载后需显式加载 pytest_cov, 否则 --cov 参数不被识别
+PYTEST := PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 $(PYTHON) -m pytest -p pytest_cov
 
 # ==========================================
 # 依赖管理

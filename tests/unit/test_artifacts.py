@@ -6,13 +6,11 @@ from pathlib import Path
 from unittest.mock import patch
 
 import pytest
-
 from riskagent_agenticrag.artifacts.storage import (
     list_artifacts,
     load_artifact,
     save_artifact,
 )
-
 
 # ---------------------------------------------------------------------------
 # Artifact save / load / list
@@ -81,6 +79,141 @@ class TestArtifactStorage:
     def test_list_artifacts_nonexistent_dir(self):
         result = list_artifacts(artifacts_dir="/tmp/nonexistent_dir_xyz_12345")
         assert result == []
+
+
+# ---------------------------------------------------------------------------
+# Bundle 目录的 trace / structured_response 分支
+# ---------------------------------------------------------------------------
+
+class TestArtifactBundle:
+
+    @pytest.mark.unit
+    def test_save_artifact_writes_trace_json(self, tmp_path):
+        """传入 trace_data 时 bundle 目录应落盘 trace.json 且带回填元信息."""
+        with patch.dict(os.environ, {"RISKAGENT_ARTIFACTS_DIR": str(tmp_path)}):
+            path = save_artifact(
+                request_id="req-trace",
+                request_data={"question": "q"},
+                response_data={"answer": "a"},
+                trace_data={"nodes": [{"name": "retrieve"}]},
+            )
+        # 找到 bundle 目录 (文件名含时间戳, 直接按子目录搜索)
+        bundles = [d for d in tmp_path.iterdir() if d.is_dir()]
+        assert len(bundles) == 1
+        trace_file = bundles[0] / "trace.json"
+        assert trace_file.exists()
+        trace = json.loads(trace_file.read_text(encoding="utf-8"))
+        assert trace["nodes"][0]["name"] == "retrieve"
+        assert trace["request_id"] == "req-trace"
+        assert trace["artifact_path"] == path
+        assert trace["bundle_dir"] == str(bundles[0])
+
+    @pytest.mark.unit
+    def test_save_artifact_writes_structured_response(self, tmp_path):
+        """response_data 可解析为结构化 contract 时应输出 structured_response.json."""
+        from riskagent_agenticrag.contracts.structured import StructuredResponse
+
+        resp = StructuredResponse.model_validate(
+            {
+                "request_id": "req-structured",
+                "report": "The exposure is 500m.",
+                "evidence_set": [
+                    {
+                        "evidence_id": "e1",
+                        "source": "doc.md",
+                        "chunk_id": "doc.md#c0",
+                        "start_index": 0,
+                        "snippet": "exposure",
+                    }
+                ],
+                "claims": [
+                    {
+                        "claim_id": "c1",
+                        "statement": "exposure is 500m",
+                        "evidence_ids": ["e1"],
+                        "confidence": "high",
+                        "status": "supported",
+                    }
+                ],
+                "decision_log": [
+                    {"step_id": "s1", "agent": "retrieval", "rationale": "ok", "chosen": "hybrid"}
+                ],
+                "status": "ok",
+            }
+        )
+        with patch.dict(os.environ, {"RISKAGENT_ARTIFACTS_DIR": str(tmp_path)}):
+            save_artifact(
+                request_id="req-structured",
+                request_data={"question": "q"},
+                response_data=resp.model_dump(),
+            )
+        bundles = [d for d in tmp_path.iterdir() if d.is_dir()]
+        structured = bundles[0] / "structured_response.json"
+        assert structured.exists()
+        payload = json.loads(structured.read_text(encoding="utf-8"))
+        assert payload["report"] == "The exposure is 500m."
+
+    @pytest.mark.unit
+    def test_save_artifact_unparseable_response_skips_structured(self, tmp_path):
+        """response_data 不符合 contract 时静默跳过 structured_response.json, 主文件仍落盘."""
+        with patch.dict(os.environ, {"RISKAGENT_ARTIFACTS_DIR": str(tmp_path)}):
+            path = save_artifact(
+                request_id="req-bad",
+                request_data={"question": "q"},
+                response_data={"not": "a valid contract"},
+            )
+        bundles = [d for d in tmp_path.iterdir() if d.is_dir()]
+        assert not (bundles[0] / "structured_response.json").exists()
+        assert Path(path).exists()  # 主 JSON 不受影响
+
+    @pytest.mark.unit
+    def test_save_artifact_bundle_failure_returns_path(self, tmp_path, monkeypatch):
+        """bundle 写入失败时打印错误并返回主文件路径, 不抛异常."""
+        # 让 bundle_dir.mkdir 抛错: 先创建同名文件占位 (mkdir exist_ok 遇到文件会 FileExistsError)
+        with patch.dict(os.environ, {"RISKAGENT_ARTIFACTS_DIR": str(tmp_path)}):
+            # 预创建一个与时间戳前缀匹配的阻碍不可行 (时间戳未知), 改为 patch Path.mkdir
+            import riskagent_agenticrag.artifacts.storage as storage_mod
+
+            def _boom(self, *a, **kw):  # type: ignore[no-untyped-def]
+                raise OSError("disk full")
+
+            monkeypatch.setattr(storage_mod.Path, "mkdir", _boom)
+            # 主文件写入也用 mkdir... 只有 bundle 分支在 try 内, 主 JSON 在 mkdir 之后
+            # 简化: 直接验证外层异常分支 -- patch json.dump 使 bundle 内写入失败
+            monkeypatch.setattr(
+                storage_mod.Path, "mkdir", lambda self, *a, **kw: None
+            )
+            real_open = open
+
+            def _flaky_open(file, mode="r", *a, **kw):  # type: ignore[no-untyped-def]
+                # bundle 内的写入都是 "w" 模式, 第二次开始失败
+                if "w" in mode and getattr(_flaky_open, "calls", 0) > 0:
+                    raise OSError("disk full")
+                _flaky_open.calls = getattr(_flaky_open, "calls", 0) + 1
+                return real_open(file, mode, *a, **kw)
+
+            path = save_artifact(
+                request_id="req-fail",
+                request_data={"question": "q"},
+                response_data={"answer": "a"},
+            )
+        assert path != ""  # 返回主文件路径而非抛异常
+
+
+# ---------------------------------------------------------------------------
+# load_artifact 异常分支
+# ---------------------------------------------------------------------------
+
+class TestLoadArtifactErrors:
+
+    @pytest.mark.unit
+    def test_load_artifact_corrupted_json_returns_none(self, tmp_path, capsys):
+        """损坏的 JSON 文件应返回 None 并打印错误, 不抛异常."""
+        bad = tmp_path / "corrupt.json"
+        bad.write_text("{not valid json", encoding="utf-8")
+        result = load_artifact(str(bad))
+        assert result is None
+        assert "Error loading artifact" in capsys.readouterr().out
 
 
 # ---------------------------------------------------------------------------

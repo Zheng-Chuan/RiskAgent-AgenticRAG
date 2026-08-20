@@ -58,6 +58,19 @@ def _git_commit() -> str:
         return ""
 
 
+def _index_manifest_value(persist_dir: Path, key: str) -> Any:
+    """只读读取索引 manifest 的指定字段, 用于报告元信息 (不触发任何索引操作)."""
+    try:
+        manifest_path = Path(persist_dir) / "index_manifest.json"
+        if not manifest_path.exists():
+            return ""
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+        value = manifest.get(key) if isinstance(manifest, dict) else None
+        return value if value is not None else ""
+    except Exception:
+        return ""
+
+
 def _answer_eval_thresholds() -> dict[str, float]:
     return {
         "citation_coverage": float(os.getenv("EVAL_THRESHOLD_CITATION_COVERAGE", "0.8")),
@@ -492,6 +505,8 @@ def run_evaluation(
             "corpus_dir": str(corpus_dir),
             "dataset_path": str(dataset_path),
             "dataset_version": str(dataset_path.name),
+            "index_schema_version": _index_manifest_value(persist_dir, "version"),
+            "index_schema_fingerprint": _index_manifest_value(persist_dir, "schema_fingerprint"),
             "persist_dir": str(persist_dir),
             "k": eval_final_k,
             "milvus_uri": os.getenv("MILVUS_URI"),

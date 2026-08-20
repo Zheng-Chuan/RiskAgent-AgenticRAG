@@ -128,6 +128,99 @@ class TestManifest:
         assert result["schema_fingerprint"] == ""
 
     @pytest.mark.unit
+    def test_schema_excludes_query_time_features(self, monkeypatch):
+        """查询期 features 不应计入 index schema (改开关不得触发全量重建)."""
+        from riskagent_agenticrag.indexing.indexer import _current_index_schema
+        from riskagent_agenticrag.config import settings as settings_mod
+
+        milvus_config = MilvusStoreConfig(collection_name="t", metric_type="IP", index_type="IVF_FLAT", nlist=64, nprobe=8)
+        base = _current_index_schema(dim=768, milvus_config=milvus_config)
+        assert "features" not in base  # 查询期配置已从 schema 移除
+
+        # 切换查询期开关后 schema 不变
+        monkeypatch.setattr(settings_mod.settings.features, "prompt_version", "v9", raising=False)
+        monkeypatch.setattr(settings_mod.settings.features, "query_intel_enabled", not settings_mod.settings.features.query_intel_enabled, raising=False)
+        monkeypatch.setattr(settings_mod.settings.features, "self_rag_enabled", not settings_mod.settings.features.self_rag_enabled, raising=False)
+        changed = _current_index_schema(dim=768, milvus_config=milvus_config)
+        assert changed == base
+
+    @pytest.mark.unit
+    def test_manifest_mismatch_ignores_legacy_features_block(self, monkeypatch):
+        """老 manifest 的 schema 含 features 块: 只比索引期字段, 平滑迁移不触发重建."""
+        from riskagent_agenticrag.indexing.indexer import (
+            MANIFEST_VERSION,
+            _current_index_schema,
+            _manifest_has_schema_mismatch,
+        )
+
+        milvus_config = MilvusStoreConfig(collection_name="t", metric_type="IP", index_type="IVF_FLAT", nlist=64, nprobe=8)
+        current = _current_index_schema(dim=768, milvus_config=milvus_config)
+
+        # 构造老口径 manifest: schema 含 features, fingerprint 按含 features 的 schema 计算
+        legacy_schema = dict(current)
+        legacy_schema["features"] = {
+            "retrieval_pipeline": "hybrid",
+            "prompt_version": "v1",
+            "query_intel_enabled": True,
+            "self_rag_enabled": False,
+        }
+        import json as _json
+        import hashlib as _hashlib
+        legacy_fp = _hashlib.sha1(
+            _json.dumps(legacy_schema, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        legacy_manifest = {"version": MANIFEST_VERSION, "schema": legacy_schema, "schema_fingerprint": legacy_fp}
+
+        # 老 manifest 与新代码: 索引期字段相同 -> 不 mismatch (不触发重建)
+        assert _manifest_has_schema_mismatch(manifest=legacy_manifest, schema=current) is False
+
+        # 查询期 features 随便变都不影响
+        legacy_manifest["schema"]["features"]["prompt_version"] = "v99"
+        assert _manifest_has_schema_mismatch(manifest=legacy_manifest, schema=current) is False
+
+    @pytest.mark.unit
+    def test_manifest_mismatch_on_index_time_change(self):
+        """索引期字段 (embeddings/chunking) 变化仍必须触发重建."""
+        from riskagent_agenticrag.indexing.indexer import (
+            MANIFEST_VERSION,
+            _current_index_schema,
+            _manifest_has_schema_mismatch,
+        )
+
+        milvus_config = MilvusStoreConfig(collection_name="t", metric_type="IP", index_type="IVF_FLAT", nlist=64, nprobe=8)
+        current = _current_index_schema(dim=768, milvus_config=milvus_config)
+        manifest = {"version": MANIFEST_VERSION, "schema": dict(current), "schema_fingerprint": "irrelevant"}
+
+        # embedding 维度变化 -> mismatch
+        changed = _current_index_schema(dim=1024, milvus_config=milvus_config)
+        assert _manifest_has_schema_mismatch(manifest=manifest, schema=changed) is True
+
+        # 版本号变化 -> mismatch
+        manifest_old_ver = {"version": MANIFEST_VERSION - 1, "schema": dict(current), "schema_fingerprint": ""}
+        assert _manifest_has_schema_mismatch(manifest=manifest_old_ver, schema=current) is True
+
+    @pytest.mark.unit
+    def test_manifest_mismatch_fallback_to_fingerprint(self):
+        """老格式 manifest 无完整 schema 时回退 fingerprint 比较."""
+        from riskagent_agenticrag.indexing.indexer import (
+            MANIFEST_VERSION,
+            _current_index_schema,
+            _manifest_has_schema_mismatch,
+            _schema_fingerprint,
+        )
+
+        milvus_config = MilvusStoreConfig(collection_name="t", metric_type="IP", index_type="IVF_FLAT", nlist=64, nprobe=8)
+        current = _current_index_schema(dim=768, milvus_config=milvus_config)
+
+        # 无 schema 只有 fingerprint: 匹配 -> False
+        manifest = {"version": MANIFEST_VERSION, "schema": {}, "schema_fingerprint": _schema_fingerprint(current)}
+        assert _manifest_has_schema_mismatch(manifest=manifest, schema=current) is False
+
+        # fingerprint 为空 -> True (视为需要重建)
+        manifest_empty = {"version": MANIFEST_VERSION, "schema": {}, "schema_fingerprint": ""}
+        assert _manifest_has_schema_mismatch(manifest=manifest_empty, schema=current) is True
+
+    @pytest.mark.unit
     def test_write_and_load_manifest(self, tmp_path):
         from riskagent_agenticrag.indexing.indexer import _load_manifest, _write_manifest
         data = {

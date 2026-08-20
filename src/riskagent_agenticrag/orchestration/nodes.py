@@ -181,6 +181,13 @@ def node_retrieve_and_critique(state: AgenticState) -> AgenticState:
             debug_stats = retriever.debug_stats()
             if isinstance(debug_stats, dict):
                 _trace_retrieval_diag(state, debug_stats)
+                # 实际生效的 reranker 模型透传到 state, 供最终节点写 retriever_version
+                # (环境变量名在远程 fallback 场景下与实际模型不符, 不能作为唯一来源)
+                active_model = str(debug_stats.get("active_reranker_model") or "").strip()
+                if active_model:
+                    state["active_reranker_model"] = active_model
+                if debug_stats.get("reranker_status"):
+                    state["reranker_status"] = str(debug_stats.get("reranker_status"))
     except Exception:
         pass  # 检索诊断采集失败不影响主流程
 
@@ -679,9 +686,14 @@ def node_validate_and_save(state: AgenticState) -> AgenticState:
     }
 
     try:
+        # reranker_model 优先记实际生效模型 (远程 fallback 时环境变量名会误导),
+        # 检索节点已将 active_reranker_model 透传到 state, 未检索 (simple 直答) 时回退环境变量
         retriever_version = {
             "pipeline": "hybrid_query_intel_advanced_index",
-            "reranker_model": os.getenv("RISKAGENT_RERANKER_MODEL", ""),
+            "reranker_model": str(
+                state.get("active_reranker_model") or os.getenv("RISKAGENT_RERANKER_MODEL", "")
+            ),
+            "reranker_status": str(state.get("reranker_status") or ""),
             "dense_k": os.getenv("RISKAGENT_DENSE_K", ""),
             "sparse_k": os.getenv("RISKAGENT_SPARSE_K", ""),
             "rerank_k": os.getenv("RISKAGENT_RERANK_K", ""),

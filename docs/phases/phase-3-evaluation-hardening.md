@@ -30,10 +30,10 @@
 - recall 口径已修正: 分母只计主 gold (relevance>=2), 与 IR 惯例对齐
 - 评测已默认只读索引 重建需显式 `--reindex`, 评测和索引工作流已分离
 - 评测结果台账模块已建立 (`docs/evaluations/EVALUATION_LOG.md`) 历次评测 FAIL 根因可回溯
+- 2026-08-20 报告元信息已补 `index_schema_version` `index_schema_fingerprint` (只读 manifest, 不触发索引操作); 同日完成 schema fingerprint 拆分: 查询期 features (retrieval_pipeline/prompt_version/query_intel/self_rag) 移出 mismatch 比较范围, 改开关不再触发全量重建, 老 manifest 平滑迁移无需重建 (生产 manifest 已验证)
 
 ## 当前仍未完成
 
-- 报告元信息里还没有稳定落入 `index version` 或 `schema_fingerprint`
 - gate_labels 样本量仍然偏小 统计显著性有限
 - ragas 副指标 `context_precision_no_ref=0.565` `answer_correctness=0.371` 偏低 未进 gate 属 slice 分析范畴
 - ragas judge 偶发 API 噪声 (400 `n should not greater than 1` 与超时), judge 稳定性待加固

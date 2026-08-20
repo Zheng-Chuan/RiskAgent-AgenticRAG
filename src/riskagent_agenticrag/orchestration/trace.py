@@ -128,6 +128,10 @@ def _trace_retrieval_diag(state: AgenticState, debug_stats: dict[str, Any]) -> N
         }
 
         # ---- 其他配置信息 ----
+        # reranker_model 语义: 实际生效的模型 (active 优先, 回退请求名);
+        # 单纯的环境变量请求名在远程 fallback 场景下会误导排障.
+        active_model = str(debug_stats.get("active_reranker_model") or "").strip()
+        requested_model = str(debug_stats.get("reranker_model") or "").strip()
         diag["config"] = {
             "dense_k": debug_stats.get("dense_k"),
             "sparse_k": debug_stats.get("sparse_k"),
@@ -135,7 +139,8 @@ def _trace_retrieval_diag(state: AgenticState, debug_stats: dict[str, Any]) -> N
             "rerank_k": debug_stats.get("rerank_k"),
             "final_k": debug_stats.get("final_k"),
             "rrf_k": debug_stats.get("rrf_k"),
-            "reranker_model": debug_stats.get("reranker_model"),
+            "reranker_model": active_model or requested_model,
+            "reranker_status": debug_stats.get("reranker_status"),
             "has_bm25": debug_stats.get("has_bm25"),
         }
     except Exception:

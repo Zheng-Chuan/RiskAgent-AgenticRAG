@@ -84,4 +84,4 @@ Threshold Gate 判定: PASS, 阈值失败 0 项, 基线回归 0 项.
 ### 遗留观察项
 
 - ragas context_precision_no_ref=0.565 和 answer_correctness=0.371 偏低, 未进 gate, 属 phase-3 后续 slice 分析范畴
-- trace 的 `retriever_version.reranker_model` 记录的是环境变量名而非实际生效模型 (实际为远程 bge-reranker-v2-m3), 观测字段有歧义, 待修
+- ~~trace 的 `retriever_version.reranker_model` 记录的是环境变量名而非实际生效模型~~ 已修复 (2026-08-20): 检索节点将 `active_reranker_model` 透传 state, trace/retriever_version 与 retrieval_diag 均记录实际生效模型, simple 直答回退环境变量; 需随下次镜像部署后在容器内生效

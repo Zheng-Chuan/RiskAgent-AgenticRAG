@@ -35,6 +35,8 @@ MANIFEST_FILENAME = "index_manifest.json"
 # 注意: _NAV_RE 维基导航 pattern 扩展未 bump 版本 -- 仅影响 28 个垃圾 chunk (占 1.2%),
 # 且垃圾 qrels 已通过 relevance 口径修正豁免, 不构成全量重建的理由;
 # 新规则将在后续增量索引 (新文档接入) 时自然生效.
+# 2026-08-20: schema fingerprint 拆分 (查询期 features 移出比较范围) 同样未 bump 版本 --
+# 匹配逻辑改为逐块比较索引期字段, 老 manifest (含 features 的 schema) 可平滑迁移, 不触发重建.
 MANIFEST_VERSION = 4
 
 
@@ -146,12 +148,6 @@ def _current_index_schema(*, dim: int, milvus_config: MilvusStoreConfig) -> dict
         },
         "chunking": _chunking_config(),
         "advanced_index": dict(DEFAULT_ADVANCED_INDEX_CONFIG),
-        "features": {
-            "retrieval_pipeline": str(settings.features.retrieval_pipeline),
-            "prompt_version": str(settings.features.prompt_version),
-            "query_intel_enabled": bool(settings.features.query_intel_enabled),
-            "self_rag_enabled": bool(settings.features.self_rag_enabled),
-        },
         "source_loader": {
             "loader_version": "load_sources_v1",
             "parent_builder_version": "build_parent_documents_v1",
@@ -159,15 +155,28 @@ def _current_index_schema(*, dim: int, milvus_config: MilvusStoreConfig) -> dict
     }
 
 
+# 索引期字段: 变化才意味着 chunk 数据/schema 整体改变, 需要全量重建.
+# 注意: 查询期配置 (features: retrieval_pipeline / prompt_version / query_intel /
+# self_rag) 已从 schema 移除 -- 它们只影响查询路径, 不影响索引数据, 计入
+# fingerprint 会导致改开关就被迫全量重建.
+_INDEX_SCHEMA_KEYS = ("schema_version", "embeddings", "milvus", "chunking", "advanced_index", "source_loader")
+
+
 def _manifest_has_schema_mismatch(*, manifest: dict[str, Any], schema: dict[str, Any]) -> bool:
-    current_fingerprint = _schema_fingerprint(schema)
-    previous_fingerprint = str(manifest.get("schema_fingerprint", "") or "").strip()
     previous_version = int(manifest.get("version", 0) or 0)
     if previous_version != MANIFEST_VERSION:
         return True
+    previous_schema = manifest.get("schema")
+    if isinstance(previous_schema, dict) and previous_schema:
+        # 逐块比较索引期字段: 查询期 features 变化不触发重建.
+        # 兼容性: 老 manifest 的 schema 含 features 块, 但不在比较范围内,
+        # 因此从旧口径平滑迁移到新口径无需全量重建.
+        return any(previous_schema.get(key) != schema.get(key) for key in _INDEX_SCHEMA_KEYS)
+    # 老格式 manifest 未存完整 schema, 回退到整体 fingerprint 比较.
+    previous_fingerprint = str(manifest.get("schema_fingerprint", "") or "").strip()
     if not previous_fingerprint:
         return True
-    return previous_fingerprint != current_fingerprint
+    return previous_fingerprint != _schema_fingerprint(schema)
 
 
 def _reset_persisted_index_artifacts(*, persist_dir: Path, client: Any, milvus_config: MilvusStoreConfig) -> None:

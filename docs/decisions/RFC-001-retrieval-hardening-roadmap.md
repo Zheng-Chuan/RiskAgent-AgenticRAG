@@ -2,7 +2,28 @@
 
 ## 状态
 
-Proposed (2026-08 更新: 对齐业界 2025-2026 前沿范式)
+Accepted (2026-08-21 回写: P0/P1 大部分落地, P2/P3 未启动, 见下方落地情况)
+
+## 落地情况 (2026-08-21 核实)
+
+| 提案项 | 状态 | 说明 |
+|---|---|---|
+| Contextual Retrieval (P0) | 实现但默认关闭 | Qwen3-Embedding-4B 下 briefs 稀释术语信号, 定论见 [RFC-003](./RFC-003-contextual-retrieval.md) |
+| qrels 升级 (P0) | 已落地 | recall 口径修正为主 gold (relevance>=2), qrels 带 chunk_id 单位 |
+| 索引一致性 (P0) | 已落地 | schema fingerprint 拆分 (索引期/查询期分离), 查询开关不再触发全量重建; 评测默认只读, 重建需显式 `--reindex` |
+| TARG 自适应门控 (P1) | 已落地 | query_router 实现, 金融术语词表 (词边界正则) 修复 12 题误判 (XVA/DVA/FVA/MVA/ColVA 家族) |
+| CRAG 纠错检索 (P1) | 已实现 | CRAG 三档策略代码已合入 (agents/strategies), 效果未单独验收 |
+| retrieval observability (P1) | 已落地 | trace/retrieval_diag/latency 分位数, 见 [RFC-002](./RFC-002-observability-full-chain-trace.md) |
+| reranker (P1) | 已落地 | 远程 bge-reranker-v2-m3 启用 (auto fallback), trace 记实际生效模型 |
+| SEAL-RAG 替换式检索 (P2) | 未启动 | revise loop 仍为追加式 |
+| RAPTOR (P2) | 未启动 | 见 [RFC-005](./RFC-005-raptor-recursive-abstractive-tree.md) |
+| Agentic RAG 迁移 (P3) | 未启动 | 见 [RFC-004](./RFC-004-agentic-rag-paradigm.md) |
+
+### 核心成果对照预期
+
+- recall_at_5: 0.500 -> 0.82 (v10d 全量评测, v10b 为 0.78), **超过预期收益区间 0.65-0.75 的上限**; 修复路径与 RFC 预设不同 (TARG 路由修复 + reranker + 口径修正, 而非 Contextual Retrieval)
+- threshold gate 全绿且全量 50/50 首次达成 (v10d: faithfulness 0.903 / citation 1.000 / recall@5 0.82, 见 [EVALUATION_LOG](../evaluations/EVALUATION_LOG.md))
+- 成功标志中 "简单查询调用减少 50%" 与 "多跳 context 不膨胀" 未做专门统计验证, 属遗留观察项
 
 ## 目标
 

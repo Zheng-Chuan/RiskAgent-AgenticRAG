@@ -18,6 +18,40 @@
 | 2026-08-18 | prod_pipeline v10 (规则分块重建索引 2393 chunks 后) | - | FAIL | faithfulness=0.681 未达 0.75; recall@5=0.373 检索侧瓶颈; citation 0.82 / relevancy 0.882 达标 | 容器内 `/app/.artifacts/reports/` |
 | 2026-08-18 | prod_pipeline_v10b_targ_rerank_recallfix | 47/50 | PASS | gate 首次全绿; recall@5 0.373 -> 0.78; 3 FAIL 均为 TARG 词表缺失 | `.artifacts/reports/rag_eval_prod_pipeline_v10b_targ_rerank_recallfix_20260818_073514.md` |
 | 2026-08-20 | prod_pipeline_v10c_fva_mva_colva_fix | 3/3 | PASS | v10b 的 3 个 FAIL 复跑全部转 PASS; 只跑 FAIL 子集未重建索引 | 容器内 `/app/.artifacts/reports/rag_eval_prod_pipeline_v10c_fva_mva_colva_fix_20260820_103543.md` |
+| 2026-08-21 | prod_pipeline_v10d_full_reeval | 50/50 | PASS | 全量 50/50 首次达成; recall@5 0.78 -> 0.82; citation 0.940 -> 1.000; 评测只读未重建索引 | `.artifacts/reports/rag_eval_prod_pipeline_v10d_full_reeval_20260821_141306.md` |
+
+## 2026-08-21 prod_pipeline_v10d_full_reeval (50 题全量复评, 发布闭环)
+
+背景: v10c 只复跑了 v10b 的 3 个 FAIL 题, 全量 50/50 一直是预期未验证. v10d-fix 镜像在 v10c 词表修复之上合入三项工程改动: (1) schema fingerprint 拆分为索引期/查询期两段, 查询开关 (reranker/self_rag 等) 不再触发全量索引重建; (2) 报告 `inputs` 新增 `resolved_reranker_model`/`resolved_reranker_status` 字段, 记录实际生效的 reranker 而非环境变量名; (3) ruff 存量 348 项风格修复 (纯代码卫生, 不改行为). 本次全量复评一并验证 50/50, 只读索引行为和新报告字段.
+
+环境: k8s 容器 `riskagent-api-868bb4d479-lmwnm` (镜像 v10d-fix), 索引 2393 chunks (manifest v4, 规则分块), 评测全程只读未重建索引 (未带 `--reindex`).
+
+### 指标
+
+| 指标 | v10d | v10b (上次全量) | 阈值 | 判定 |
+|---|---|---|---|---|
+| citation_coverage | 1.000 | 0.940 | 0.80 | PASS |
+| faithfulness | 0.903 | 0.895 | 0.75 | PASS |
+| answer_relevancy | 0.928 | 0.943 | 0.70 | PASS |
+| sentence_support_rate | 0.829 | 0.808 | - | - |
+| retrieval_recall_at_1 | 0.60 | 0.52 | - | - |
+| retrieval_recall_at_3 | 0.74 | 0.68 | - | - |
+| retrieval_recall_at_5 | 0.82 | 0.78 | 0.60 | PASS |
+| retrieval_mrr | 0.69 | 0.628 | - | - |
+| ragas context_recall | 0.907 | 0.833 | - | - |
+| ragas context_precision_no_ref | 0.543 | 0.565 | - | 待改进 |
+| ragas answer_correctness | 0.328 | 0.371 | - | 待改进 |
+
+Threshold Gate 判定: PASS, 阈值失败 0 项, 基线回归 0 项. 题目级 50/50 全部 PASS, 无 FAIL 根因待分析.
+
+### 新报告字段验证
+
+- `inputs.index_schema_fingerprint` = `7b2759665276aaaeff3989473f010381c47d0886`: 首次随报告落盘, 作为后续评测对比基线; 本次评测前后索引指纹一致, 证实只读行为
+- `inputs.resolved_reranker_model` = `BAAI/bge-reranker-v2-m3`, `resolved_reranker_status` = `remote_enabled`: 实际生效模型与配置值 (`cross-encoder/ms-marco-MiniLM-L-6-v2`, 本地不可用后 auto fallback) 区分记录, v10b 遗留的 "trace 记环境变量名" 问题闭环
+
+### 结论
+
+v10b 的 3 个 FAIL (TARG 词表缺失) 在全量口径下确认修复, 全量 50/50 首次达成. release acceptance 以本报告重跑通过 (answer_eval ok / gold_metrics 存在 / gate verdict pass), 发布闭环完成. ragas context_precision_no_ref 与 answer_correctness 仍偏低, 未进 gate, 维持 phase-3 后续 slice 分析范畴.
 
 ## 2026-08-20 prod_pipeline_v10c_fva_mva_colva_fix (FAIL 子集复跑)
 

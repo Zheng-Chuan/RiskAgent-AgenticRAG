@@ -46,7 +46,7 @@ spec:
               echo "Redis 已就绪"
       containers:
         - name: api
-          image: riskagent-agenticrag:v10c-fix
+          image: riskagent-agenticrag:v10d-fix
           imagePullPolicy: IfNotPresent
           ports:
             - containerPort: 8000

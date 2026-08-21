@@ -10,12 +10,13 @@ import subprocess
 import tempfile
 import threading
 import time
-from typing import Any, Iterable
+from collections.abc import Iterable
+from typing import Any
 
 from langchain_core.documents import Document
 
 from riskagent_agenticrag.config.settings import get_settings, settings
-from riskagent_agenticrag.llm.governance import get_llm_cost_governor, LLMGovernanceError
+from riskagent_agenticrag.llm.governance import LLMGovernanceError, get_llm_cost_governor
 from riskagent_agenticrag.llm.llm_cache import CachedResponse, LLMCache, get_llm_cache
 from riskagent_agenticrag.llm.token_tracker import get_token_tracker
 
@@ -74,7 +75,7 @@ def _call_via_curl(
             "-d", f"@{payload_file}",
             "--max-time", str(timeout),
         ]
-        result = subprocess.run(cmd, capture_output=True, timeout=float(timeout + 5))
+        result = subprocess.run(cmd, capture_output=True, timeout=float(timeout + 5), check=False)
         if result.returncode != 0:
             stdout = result.stdout.decode("utf-8", errors="replace") if result.stdout else ""
             stderr = result.stderr.decode("utf-8", errors="replace") if result.stderr else ""

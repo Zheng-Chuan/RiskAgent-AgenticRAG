@@ -1,12 +1,10 @@
 from __future__ import annotations
 
+import importlib
 import json
 import tempfile
 import unittest
-import importlib
 from pathlib import Path
-
-
 
 load_dataset = importlib.import_module("riskagent_agenticrag.evaluation.dataset").load_dataset
 

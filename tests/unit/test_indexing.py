@@ -1,12 +1,10 @@
 """Unit tests for indexing/indexer.py and indexing/milvus_store.py."""
 
 import json
-from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
 from langchain_core.documents import Document
-
 from riskagent_agenticrag.indexing.milvus_store import (
     MilvusStoreConfig,
     delete_by_source,
@@ -14,7 +12,6 @@ from riskagent_agenticrag.indexing.milvus_store import (
     ensure_collection,
     insert_chunks,
 )
-
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -130,8 +127,8 @@ class TestManifest:
     @pytest.mark.unit
     def test_schema_excludes_query_time_features(self, monkeypatch):
         """查询期 features 不应计入 index schema (改开关不得触发全量重建)."""
-        from riskagent_agenticrag.indexing.indexer import _current_index_schema
         from riskagent_agenticrag.config import settings as settings_mod
+        from riskagent_agenticrag.indexing.indexer import _current_index_schema
 
         milvus_config = MilvusStoreConfig(collection_name="t", metric_type="IP", index_type="IVF_FLAT", nlist=64, nprobe=8)
         base = _current_index_schema(dim=768, milvus_config=milvus_config)
@@ -164,8 +161,8 @@ class TestManifest:
             "query_intel_enabled": True,
             "self_rag_enabled": False,
         }
-        import json as _json
         import hashlib as _hashlib
+        import json as _json
         legacy_fp = _hashlib.sha1(
             _json.dumps(legacy_schema, ensure_ascii=False, sort_keys=True, separators=(",", ":")).encode("utf-8")
         ).hexdigest()

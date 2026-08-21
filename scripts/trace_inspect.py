@@ -17,7 +17,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-
 # ---- 工具函数 ----
 
 def _traces_dir() -> Path:
@@ -35,7 +34,7 @@ def _load_all_traces() -> list[tuple[Path, dict[str, Any]]]:
     results: list[tuple[Path, dict[str, Any]]] = []
     for f in sorted(traces_dir.glob("*.json"), key=lambda x: x.stat().st_mtime, reverse=True):
         try:
-            with open(f, "r", encoding="utf-8") as fp:
+            with open(f, encoding="utf-8") as fp:
                 data = json.load(fp)
             results.append((f, data))
         except (json.JSONDecodeError, OSError):
@@ -50,7 +49,7 @@ def _load_trace(trace_id: str) -> dict[str, Any] | None:
     if not trace_file.is_file():
         return None
     try:
-        with open(trace_file, "r", encoding="utf-8") as f:
+        with open(trace_file, encoding="utf-8") as f:
             return json.load(f)
     except (json.JSONDecodeError, OSError):
         return None
@@ -143,7 +142,7 @@ def cmd_inspect_trace(trace_id: str) -> None:
     diag = trace.get("retrieval_diag")
     if diag:
         print(f"\n{'─' * 80}")
-        print(f"  检索诊断")
+        print("  检索诊断")
         print(f"{'─' * 80}")
 
         dense = diag.get("dense", {})

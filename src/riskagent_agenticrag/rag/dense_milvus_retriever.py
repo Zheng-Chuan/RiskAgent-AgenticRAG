@@ -7,7 +7,12 @@ from typing import Any
 from langchain_core.documents import Document  # type: ignore[import-not-found]
 
 from riskagent_agenticrag.config.settings import settings
-from riskagent_agenticrag.indexing.milvus_store import MilvusStoreConfig, build_milvus_client, ensure_collection, search
+from riskagent_agenticrag.indexing.milvus_store import (
+    MilvusStoreConfig,
+    build_milvus_client,
+    ensure_collection,
+    search,
+)
 from riskagent_agenticrag.rag.embeddings import build_embeddings
 
 

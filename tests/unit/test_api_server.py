@@ -6,12 +6,9 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
-from fastapi import HTTPException
 from fastapi.testclient import TestClient
-
 from riskagent_agenticrag.api.schemas import ApiError
 from riskagent_agenticrag.api.server import (
-    _EMPTY_ASK,
     _error_from_exc,
     _error_from_http,
     _make_error_response,
@@ -19,7 +16,6 @@ from riskagent_agenticrag.api.server import (
     _record_metrics,
     app,
 )
-
 
 # ---------------------------------------------------------------------------
 # Tests: Health Check
@@ -381,8 +377,6 @@ class TestAuthRequired:
             "EMBEDDINGS_PROVIDER": "hash",
         }
         with patch.dict(os.environ, overrides):
-            from fastapi.testclient import TestClient
-            from riskagent_agenticrag.api.server import app
             client = TestClient(app)
 
             # No API key -> 401
@@ -404,8 +398,6 @@ class TestAuthRequired:
             "EMBEDDINGS_PROVIDER": "hash",
         }
         with patch.dict(os.environ, overrides):
-            from fastapi.testclient import TestClient
-            from riskagent_agenticrag.api.server import app
             client = TestClient(app)
 
             resp = client.post(

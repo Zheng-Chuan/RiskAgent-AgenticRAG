@@ -13,7 +13,7 @@ import threading
 import time
 from collections import deque
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from prometheus_client import Counter, Gauge, Histogram
 
@@ -336,7 +336,7 @@ def _safe_float(value: Any, default: float = 0.0) -> float:
 # ---------------------------------------------------------------------- #
 # Module-level singleton
 # ---------------------------------------------------------------------- #
-_tracker: Optional[TokenTracker] = None
+_tracker: TokenTracker | None = None
 _tracker_lock = threading.Lock()
 
 

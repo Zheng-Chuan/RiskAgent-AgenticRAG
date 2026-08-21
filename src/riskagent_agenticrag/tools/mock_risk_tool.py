@@ -7,18 +7,18 @@
 from __future__ import annotations
 
 import hashlib
-from typing import Any, Optional
+from typing import Any
 
 
 def monitor_desk_exposure(
     *,
     desk: str,
-    as_of: Optional[str] = None,
+    as_of: str | None = None,
     abs_delta_limit: float = 1_000_000,
-    market_snapshot_url: Optional[str] = None,
+    market_snapshot_url: str | None = None,
 ) -> dict[str, Any]:
     # 中文注释: 返回结构尽量贴近真实系统, 但保持 deterministic.
-    seed = f"{desk}|{as_of or ''}|{abs_delta_limit}".encode("utf-8")
+    seed = f"{desk}|{as_of or ''}|{abs_delta_limit}".encode()
     digest = hashlib.sha1(seed).hexdigest()[:8]
 
     # 中文注释: 生成一个可重复的 delta 数值.

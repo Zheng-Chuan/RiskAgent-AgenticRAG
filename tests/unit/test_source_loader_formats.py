@@ -10,8 +10,6 @@ import pathlib
 from unittest.mock import MagicMock, patch
 
 import pytest
-from langchain_core.documents import Document
-
 from riskagent_agenticrag.rag.source_loader import (
     _load_docx,
     _load_excel,
@@ -21,7 +19,6 @@ from riskagent_agenticrag.rag.source_loader import (
     get_supported_formats,
     load_sources,
 )
-
 
 # ---------------------------------------------------------------------------
 # get_supported_formats

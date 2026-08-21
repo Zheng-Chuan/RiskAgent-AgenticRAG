@@ -9,7 +9,6 @@ from langchain_core.documents import Document
 
 from riskagent_agenticrag.rag.utils import token_set
 
-
 _QUESTION_STOPWORDS = {
     "a",
     "an",

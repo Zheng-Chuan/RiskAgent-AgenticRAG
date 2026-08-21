@@ -7,7 +7,11 @@ import uuid
 from pathlib import Path
 from typing import Any, Literal
 
-from riskagent_agenticrag.agents.data_agent import extract_structured_request, run_data_agent, tool_output_to_document
+from riskagent_agenticrag.agents.data_agent import (
+    extract_structured_request,
+    run_data_agent,
+    tool_output_to_document,
+)
 from riskagent_agenticrag.artifacts.storage import save_artifact
 from riskagent_agenticrag.config.settings import settings
 from riskagent_agenticrag.llm.generate import get_last_token_usage
@@ -24,7 +28,11 @@ from riskagent_agenticrag.rag import agentic_primitives
 from riskagent_agenticrag.rag.evidence_budget import EvidenceBudget
 from riskagent_agenticrag.rag.pipeline import extract_citations
 from riskagent_agenticrag.rag.query_router import assess_query_complexity
-from riskagent_agenticrag.rag.self_rag import grade_docs_crag, grade_generation, should_require_numeric_backing
+from riskagent_agenticrag.rag.self_rag import (
+    grade_docs_crag,
+    grade_generation,
+    should_require_numeric_backing,
+)
 from riskagent_agenticrag.validators.gates import validate_response
 
 

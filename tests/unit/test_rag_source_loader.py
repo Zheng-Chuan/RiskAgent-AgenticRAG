@@ -5,10 +5,7 @@ from __future__ import annotations
 import pathlib
 
 import pytest
-from langchain_core.documents import Document
-
 from riskagent_agenticrag.rag.source_loader import load_sources
-
 
 # ---------------------------------------------------------------------------
 # Loading Markdown files

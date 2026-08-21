@@ -7,7 +7,6 @@ from __future__ import annotations
 
 import pytest
 from langchain_core.documents import Document
-
 from riskagent_agenticrag.rag.pipeline import extract_citations
 
 

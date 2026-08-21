@@ -9,7 +9,6 @@ import pathlib
 
 import pytest
 from langchain_core.documents import Document
-
 from riskagent_agenticrag.rag.sparse_index import (
     SPARSE_CORPUS_FILENAME,
     load_sparse_corpus,

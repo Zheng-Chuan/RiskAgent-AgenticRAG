@@ -8,10 +8,9 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 import pytest
-
+import riskagent_agenticrag.llm.governance as _gov_mod
 from riskagent_agenticrag.llm.generate import call_llm_text
 from riskagent_agenticrag.llm.governance import LLMGovernanceError
-import riskagent_agenticrag.llm.governance as _gov_mod
 
 # ---------------------------------------------------------------------------
 # Infrastructure check

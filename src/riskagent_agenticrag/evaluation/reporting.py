@@ -11,7 +11,7 @@ import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Optional
+from typing import Any
 
 
 def _utc_timestamp() -> str:
@@ -55,7 +55,7 @@ def load_report(path: str) -> dict[str, Any]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
 
 
-def find_latest_report(*, artifacts_dir: str = ".artifacts") -> Optional[str]:
+def find_latest_report(*, artifacts_dir: str = ".artifacts") -> str | None:
     paths = list_reports(artifacts_dir=artifacts_dir)
     if not paths:
         return None

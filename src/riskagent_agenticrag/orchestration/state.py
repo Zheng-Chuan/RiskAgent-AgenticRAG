@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import Any, Optional, TypedDict
+from typing import Any, TypedDict
 
 
 class AgenticState(TypedDict, total=False):
@@ -35,5 +35,5 @@ class AgenticState(TypedDict, total=False):
     decision_log: list[dict[str, Any]]
 
     status: str
-    failure_reason: Optional[dict[str, Any]]
+    failure_reason: dict[str, Any] | None
     debug: dict[str, Any]

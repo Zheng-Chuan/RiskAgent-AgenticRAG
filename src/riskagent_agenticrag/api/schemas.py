@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -19,13 +19,13 @@ class ChatMessage(BaseModel):
 
 class AskRequest(BaseModel):
     question: str = Field(min_length=1)
-    request_id: Optional[str] = None
+    request_id: str | None = None
     max_rounds: int = Field(default=2, ge=1, le=5)
 
 
 class ChatRequest(BaseModel):
     messages: list[ChatMessage] = Field(min_length=1)
-    request_id: Optional[str] = None
+    request_id: str | None = None
     max_rounds: int = Field(default=2, ge=1, le=5)
 
 
@@ -37,9 +37,9 @@ class AskResponse(BaseModel):
     claims: list[dict[str, Any]] = Field(default_factory=list)
     evidence_set: list[dict[str, Any]] = Field(default_factory=list)
     decision_log: list[dict[str, Any]] = Field(default_factory=list)
-    failure_reason: Optional[dict[str, Any]] = None
+    failure_reason: dict[str, Any] | None = None
     debug: dict[str, Any] = Field(default_factory=dict)
-    error: Optional[ApiError] = None
+    error: ApiError | None = None
 
 
 class HealthResponse(BaseModel):

@@ -10,18 +10,17 @@ from __future__ import annotations
 import json
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass(frozen=True)
 class EvalQrel:
     qrel_id: str
-    text: Optional[str]
+    text: str | None
     relevance: int
-    chunk_id: Optional[str] = None
-    source: Optional[str] = None
-    section_path: Optional[str] = None
-    parent_id: Optional[str] = None
+    chunk_id: str | None = None
+    source: str | None = None
+    section_path: str | None = None
+    parent_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -35,12 +34,12 @@ class EvalGateLabel:
 class EvalItem:
     item_id: str
     question: str
-    reference_answer: Optional[str]
-    ground_truth_contexts: Optional[list[str]]
-    reference_contexts: Optional[list[str]]  # For context_precision metric
+    reference_answer: str | None
+    ground_truth_contexts: list[str] | None
+    reference_contexts: list[str] | None  # For context_precision metric
     tags: list[str]
     qrels: list[EvalQrel]
-    gate_label: Optional[EvalGateLabel]
+    gate_label: EvalGateLabel | None
 
 
 def _load_qrel_gap_allowlist(path: Path) -> dict[str, str]:
@@ -149,7 +148,7 @@ def load_dataset(path: Path) -> list[EvalItem]:
         reference_answer = str(reference_answer_raw).strip() if reference_answer_raw is not None else None
 
         gt_raw = obj.get("ground_truth_contexts")
-        ground_truth_contexts: Optional[list[str]] = None
+        ground_truth_contexts: list[str] | None = None
         if isinstance(gt_raw, list):
             gt_list: list[str] = []
             for c in gt_raw:
@@ -162,7 +161,7 @@ def load_dataset(path: Path) -> list[EvalItem]:
 
         # Load reference_contexts for context_precision metric
         ref_ctx_raw = obj.get("reference_contexts")
-        reference_contexts: Optional[list[str]] = None
+        reference_contexts: list[str] | None = None
         if isinstance(ref_ctx_raw, list):
             ref_ctx_list: list[str] = []
             for c in ref_ctx_raw:

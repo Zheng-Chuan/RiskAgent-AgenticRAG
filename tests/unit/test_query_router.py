@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import pytest
 
-
 # ---------------------------------------------------------------------------
 # Import 验证
 # ---------------------------------------------------------------------------
@@ -12,7 +11,7 @@ import pytest
 @pytest.mark.unit
 def test_import_assess_query_complexity():
     """验证 assess_query_complexity 和 QueryComplexity 可正常导入."""
-    from riskagent_agenticrag.rag.query_router import assess_query_complexity, QueryComplexity
+    from riskagent_agenticrag.rag.query_router import QueryComplexity, assess_query_complexity
 
     assert callable(assess_query_complexity)
     assert QueryComplexity is not None

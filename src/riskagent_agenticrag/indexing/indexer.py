@@ -2,9 +2,10 @@ from __future__ import annotations
 
 import hashlib
 import json
+from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from langchain_core.documents import Document  # type: ignore[import-not-found]
 
@@ -28,7 +29,6 @@ from riskagent_agenticrag.rag.embeddings import build_embeddings
 from riskagent_agenticrag.rag.ingestion import build_parent_documents, split_documents
 from riskagent_agenticrag.rag.source_loader import load_sources
 from riskagent_agenticrag.rag.sparse_index import SPARSE_CORPUS_FILENAME
-
 
 MANIFEST_FILENAME = "index_manifest.json"
 # v3: +context_brief 字段; v4: chunking 循环 bug 修复 + 碎片/噪声过滤 (chunk 集合整体变化, 需全量重建)
@@ -339,7 +339,7 @@ def incremental_index(
         except Exception:
             briefs = [""] * len(chunks)
 
-        for c, brief in zip(chunks, briefs):
+        for c, brief in zip(chunks, briefs, strict=False):
             c.metadata["context_brief"] = brief
 
         delete_by_source(client=client, config=cfg, source=src)
@@ -355,7 +355,7 @@ def incremental_index(
                 texts.append(chunk_text)
         vecs = embeddings.embed_documents(texts) if texts else []
         rows: list[dict[str, Any]] = []
-        for c, v in zip(chunks, vecs):
+        for c, v in zip(chunks, vecs, strict=False):
             meta = c.metadata or {}
             rows.append(
                 {

@@ -17,7 +17,6 @@ from __future__ import annotations
 
 import pathlib
 import re
-from typing import Any
 
 from langchain_core.documents import Document
 

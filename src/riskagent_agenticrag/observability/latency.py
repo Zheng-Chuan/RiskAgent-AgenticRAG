@@ -7,7 +7,6 @@ import os
 from pathlib import Path
 from typing import Any
 
-
 # ---- 工具函数 ----
 
 def _percentile(values: list[float], p: float) -> float:
@@ -36,7 +35,7 @@ def _load_traces(artifacts_dir: str | None = None) -> list[dict[str, Any]]:
     traces: list[dict[str, Any]] = []
     for f in traces_dir.glob("*.json"):
         try:
-            with open(f, "r", encoding="utf-8") as fp:
+            with open(f, encoding="utf-8") as fp:
                 data = json.load(fp)
             traces.append(data)
         except (json.JSONDecodeError, OSError):

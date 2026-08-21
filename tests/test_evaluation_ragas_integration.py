@@ -3,8 +3,6 @@ from __future__ import annotations
 import importlib
 import unittest
 
-
-
 try:
     try_compute_ragas_metrics = importlib.import_module(
         "riskagent_agenticrag.evaluation.ragas_metrics"

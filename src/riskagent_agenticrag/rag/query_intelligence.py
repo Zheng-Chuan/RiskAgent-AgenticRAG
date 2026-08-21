@@ -230,7 +230,7 @@ class QueryIntelligentRetriever:
         merged: dict[str, Document] = {}
         variant_hits: dict[str, list[str]] = {}
 
-        for v, docs in zip(variants, per_variant_docs):
+        for v, docs in zip(variants, per_variant_docs, strict=False):
             for d in docs:
                 key = doc_key(d)
                 if key not in merged:

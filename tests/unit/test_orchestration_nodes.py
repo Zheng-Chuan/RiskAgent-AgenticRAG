@@ -2,9 +2,9 @@
 
 from __future__ import annotations
 
-import pytest
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
+import pytest
 
 # ---------------------------------------------------------------------------
 # Helpers
@@ -234,7 +234,7 @@ def test_node_validate_and_save_ok(mock_gen, mock_ev, mock_claims, mock_num, moc
 
 
 @pytest.mark.unit
-@patch("riskagent_agenticrag.orchestration.nodes.save_artifact", side_effect=IOError("disk full"))
+@patch("riskagent_agenticrag.orchestration.nodes.save_artifact", side_effect=OSError("disk full"))
 @patch("riskagent_agenticrag.orchestration.nodes.validate_response", return_value={"category": "hallucination", "message": "bad"})
 @patch("riskagent_agenticrag.orchestration.nodes.should_require_numeric_backing", return_value=False)
 @patch("riskagent_agenticrag.orchestration.nodes.agentic_primitives.build_claims_from_answer", return_value=[])
@@ -280,8 +280,8 @@ def test_should_continue_retrieval_false():
 @pytest.mark.unit
 def test_extract_doc_score_rerank_priority():
     """rerank_score 应优先于 rrf_score / coarse_score."""
-    from riskagent_agenticrag.orchestration.nodes import _extract_doc_score
     from langchain_core.documents import Document
+    from riskagent_agenticrag.orchestration.nodes import _extract_doc_score
 
     d = Document(page_content="x", metadata={"rerank_score": 0.9, "rrf_score": 0.5, "coarse_score": 0.3})
     score, src = _extract_doc_score(d)
@@ -292,8 +292,8 @@ def test_extract_doc_score_rerank_priority():
 @pytest.mark.unit
 def test_extract_doc_score_rrf_when_no_rerank():
     """无 rerank_score 时应回退到 rrf_score."""
-    from riskagent_agenticrag.orchestration.nodes import _extract_doc_score
     from langchain_core.documents import Document
+    from riskagent_agenticrag.orchestration.nodes import _extract_doc_score
 
     d = Document(page_content="x", metadata={"rrf_score": 0.5, "coarse_score": 0.3})
     score, src = _extract_doc_score(d)
@@ -304,8 +304,8 @@ def test_extract_doc_score_rrf_when_no_rerank():
 @pytest.mark.unit
 def test_extract_doc_score_coarse_when_no_rrf():
     """无 rrf_score 时应回退到 coarse_score."""
-    from riskagent_agenticrag.orchestration.nodes import _extract_doc_score
     from langchain_core.documents import Document
+    from riskagent_agenticrag.orchestration.nodes import _extract_doc_score
 
     d = Document(page_content="x", metadata={"coarse_score": 0.3})
     score, src = _extract_doc_score(d)
@@ -316,8 +316,8 @@ def test_extract_doc_score_coarse_when_no_rrf():
 @pytest.mark.unit
 def test_extract_doc_score_unknown_when_no_scores():
     """无任何分数时应返回 0.0 / unknown."""
-    from riskagent_agenticrag.orchestration.nodes import _extract_doc_score
     from langchain_core.documents import Document
+    from riskagent_agenticrag.orchestration.nodes import _extract_doc_score
 
     d = Document(page_content="x", metadata={})
     score, src = _extract_doc_score(d)
@@ -533,6 +533,7 @@ def test_node_revise_query_rewrite_fallback(mock_rw):
 def test_appeal_enabled_reads_env():
     """_appeal_enabled 应读取 RISKAGENT_ENABLE_LLM_APPEAL 环境变量."""
     import os
+
     from riskagent_agenticrag.orchestration.nodes import _appeal_enabled
 
     with patch.dict(os.environ, {"RISKAGENT_ENABLE_LLM_APPEAL": "true"}):
@@ -669,6 +670,7 @@ def test_node_retrieve_crag_irrelevant_stops_at_max_rounds(mock_critique, mock_g
 def test_node_retrieve_self_rag_disabled_uses_critique(mock_critique, mock_grade, mock_extract):
     """关闭 Self-RAG 时应使用 LLM critique 二档逻辑."""
     import os
+
     from riskagent_agenticrag.orchestration.nodes import node_retrieve_and_critique
 
     retriever = MagicMock(invoke=MagicMock(return_value=[]))

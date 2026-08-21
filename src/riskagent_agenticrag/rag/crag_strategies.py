@@ -14,7 +14,6 @@ from typing import Any
 
 from langchain_core.documents import Document  # noqa: F401  # 保留类型引用便于扩展
 
-
 # retriever 链路中常见的 k 相关字段名, 用于扩大 top_k 时统一替换
 _K_FIELDS = (
     "k",

@@ -6,14 +6,14 @@ import json
 import os
 import time
 import uuid
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import Body, Depends, FastAPI, Header, HTTPException, Request, Response, status
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from pydantic import ValidationError
 from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
+from pydantic import ValidationError
 from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.errors import RateLimitExceeded
 from slowapi.util import get_remote_address
@@ -73,8 +73,8 @@ def _expected_api_key() -> str:
 
 
 def _require_api_key(
-    x_api_key: Optional[str] = None,
-    authorization: Optional[HTTPAuthorizationCredentials] = None,
+    x_api_key: str | None = None,
+    authorization: HTTPAuthorizationCredentials | None = None,
 ) -> None:
     """验证 API Key."""
     if not settings.api_auth.enabled:
@@ -95,8 +95,8 @@ def _require_api_key(
 
 
 async def auth_dep(
-    x_api_key: Optional[str] = Header(default=None, alias="X-API-Key"),
-    authorization: Optional[HTTPAuthorizationCredentials] = Depends(security),
+    x_api_key: str | None = Header(default=None, alias="X-API-Key"),
+    authorization: HTTPAuthorizationCredentials | None = Depends(security),
 ) -> None:
     """认证依赖注入."""
     try:
@@ -355,7 +355,7 @@ def v1_chat(request: Request, response: Response, req_body: dict[str, Any] = Bod
             )
         last_user = user_msgs[-1].content
         history_pairs: list[tuple[str, str]] = []
-        pending_user: Optional[str] = None
+        pending_user: str | None = None
         for m in messages:
             if m.role == "user":
                 pending_user = m.content

@@ -8,7 +8,11 @@ from typing import Any
 from langchain_core.documents import Document
 from rank_bm25 import BM25Okapi
 
-from riskagent_agenticrag.rag.advanced_index import load_hyde_corpus, load_summary_corpus, parent_corpus_by_id
+from riskagent_agenticrag.rag.advanced_index import (
+    load_hyde_corpus,
+    load_summary_corpus,
+    parent_corpus_by_id,
+)
 from riskagent_agenticrag.rag.query_intelligence import _route_name
 from riskagent_agenticrag.rag.self_rag import should_require_numeric_backing
 from riskagent_agenticrag.rag.utils import tokenize

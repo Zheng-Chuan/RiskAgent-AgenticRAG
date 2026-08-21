@@ -91,7 +91,7 @@ class TestRealInfrastructureConnectivity(unittest.TestCase):
         val = r.get(test_key)
         self.assertEqual(val, b"hello_integration")
         r.delete(test_key)
-        print(f"  [OK] Redis connected and set/get verified")
+        print("  [OK] Redis connected and set/get verified")
 
     def test_milvus_connection(self) -> None:
         """Socket connect to port 19530, and HTTP healthz on 9091."""
@@ -100,13 +100,13 @@ class TestRealInfrastructureConnectivity(unittest.TestCase):
             sock.settimeout(5)
             result = sock.connect_ex(("127.0.0.1", 19530))
             self.assertEqual(result, 0, "Milvus TCP port 19530 not reachable")
-        print(f"  [OK] Milvus TCP:19530 reachable")
+        print("  [OK] Milvus TCP:19530 reachable")
 
         # HTTP healthz
         try:
             resp = requests.get("http://localhost:9091/healthz", timeout=5)
             self.assertEqual(resp.status_code, 200)
-            print(f"  [OK] Milvus healthz HTTP 200")
+            print("  [OK] Milvus healthz HTTP 200")
         except requests.ConnectionError:
             self.skipTest("Milvus healthz endpoint not reachable at :9091")
 
@@ -147,7 +147,7 @@ class TestTokenBucketReal(unittest.TestCase):
         bucket = TokenBucket(capacity=100.0, refill_per_second=1.0)
         self.assertTrue(bucket.consume(100))
         self.assertFalse(bucket.consume(50))
-        print(f"  [OK] Bucket correctly rejected over-capacity request")
+        print("  [OK] Bucket correctly rejected over-capacity request")
 
     def test_bucket_refills_over_time(self) -> None:
         """Consume all, sleep briefly, verify partial refill allows smaller request."""
@@ -241,11 +241,10 @@ class TestTokenTrackerReal(unittest.TestCase):
 
     def test_usage_aggregation(self) -> None:
         """Make 3 real LLM calls, verify get_usage() shows calls==3 and tokens increasing."""
-        from riskagent_agenticrag.llm.generate import call_llm_text
-        from riskagent_agenticrag.llm.token_tracker import get_token_tracker
-
         # Reset cache to ensure all 3 calls hit the LLM
         from riskagent_agenticrag.llm import llm_cache
+        from riskagent_agenticrag.llm.generate import call_llm_text
+        from riskagent_agenticrag.llm.token_tracker import get_token_tracker
 
         llm_cache._cache = None
 
@@ -324,7 +323,6 @@ class TestLLMCacheReal(unittest.TestCase):
         """Make a real LLM call with temperature=0.0, verify it's a cache miss."""
         from riskagent_agenticrag.llm.generate import call_llm_text
         from riskagent_agenticrag.llm.llm_cache import get_llm_cache
-        from riskagent_agenticrag.llm.token_tracker import get_token_tracker
 
         prompt = "Define the word 'cache' in one sentence."
         t0 = time.time()
@@ -407,7 +405,7 @@ class TestLLMCacheReal(unittest.TestCase):
         self.assertIsNone(cache.get("key1"))  # evicted
         self.assertIsNotNone(cache.get("key2"))
         self.assertIsNotNone(cache.get("key3"))
-        print(f"  [OK] Cache eviction working: key1 evicted, key2 & key3 retained")
+        print("  [OK] Cache eviction working: key1 evicted, key2 & key3 retained")
 
 
 # ===========================================================================

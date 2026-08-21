@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import json
 import re
-from typing import Any, Optional
+from typing import Any
 
 from langchain_core.documents import Document
 
@@ -66,7 +66,7 @@ def build_refusal_report(question: str) -> str:
     return llm_generate.call_llm_text(prompt, temperature=0.0)
 
 
-def try_parse_json(text: str) -> Optional[dict[str, Any]]:
+def try_parse_json(text: str) -> dict[str, Any] | None:
     # 中文注释: LLM 输出不一定严格 JSON, 这里做最小容错.
     raw = (text or "").strip()
     if not raw:

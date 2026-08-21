@@ -26,7 +26,7 @@ _STOPWORDS = {
     "the", "and", "for", "with", "that", "this", "from", "are", "was", "were",
     "will", "have", "has", "had", "not", "but", "its", "their", "than", "when",
     "what", "which", "who", "whom", "how", "why", "where", "into", "over",
-    "under", "such", "also", "than", "then", "them", "they", "there", "these",
+    "under", "such", "also", "then", "them", "they", "there", "these",
     "those", "been", "being", "each", "other", "some", "any", "all", "more",
     "most", "less", "least", "very", "much", "many", "given", "including",
 }

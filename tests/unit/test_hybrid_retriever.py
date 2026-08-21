@@ -183,6 +183,7 @@ class TestResolveHfModelPath:
 
     def test_returns_latest_snapshot_dir(self, tmp_path):
         import time
+
         from riskagent_agenticrag.rag.hybrid_retriever import _resolve_hf_model_path
 
         snapshots_dir = tmp_path / ".cache" / "huggingface" / "hub" / "models--test--model" / "snapshots"
@@ -191,7 +192,6 @@ class TestResolveHfModelPath:
         old_dir.mkdir(parents=True)
         new_dir.mkdir(parents=True)
         # 设置不同的修改时间
-        import os
         old_time = time.time() - 100
         new_time = time.time()
         os.utime(old_dir, (old_time, old_time))

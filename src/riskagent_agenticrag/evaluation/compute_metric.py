@@ -2,15 +2,11 @@ from __future__ import annotations
 
 import argparse
 import json
+from collections.abc import Callable
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Callable, Optional
+from typing import Any
 
-from riskagent_agenticrag.evaluation.advanced_metrics import (
-    compute_retrieval_metrics,
-    compute_gate_metrics,
-    compute_reliability_cost_metrics,
-)
 from riskagent_agenticrag.evaluation.citation_precision import try_compute_citation_precision
 from riskagent_agenticrag.evaluation.domain_consistency import try_compute_domain_consistency
 from riskagent_agenticrag.evaluation.ragas_metrics import compute_all_ragas_metrics
@@ -66,7 +62,7 @@ METRIC_MODULES: dict[str, MetricModule] = {
 
 
 def _load_samples_from_report(report_path: Path) -> list[dict[str, Any]]:
-    with open(report_path, "r", encoding="utf-8") as f:
+    with open(report_path, encoding="utf-8") as f:
         data = json.load(f)
     samples = data.get("samples", [])
     return samples
@@ -75,7 +71,7 @@ def _load_samples_from_report(report_path: Path) -> list[dict[str, Any]]:
 def compute_metrics(
     report_path: Path,
     module_name: str,
-    metric_names: Optional[list[str]] = None,
+    metric_names: list[str] | None = None,
     **kwargs: Any,
 ) -> dict[str, Any]:
     samples = _load_samples_from_report(report_path)
@@ -184,7 +180,7 @@ def main():
             return
         print(f"Module: {mod.name}")
         print(f"Description: {mod.description}")
-        print(f"Available metrics:")
+        print("Available metrics:")
         for m in mod.available_metrics:
             print(f"  - {m}")
         return
@@ -225,7 +221,7 @@ def main():
         print(f"❌ Error: {result.get('error')}")
         return
 
-    print(f"✅ OK")
+    print("✅ OK")
     print()
 
     metrics = result.get("metrics", {})

@@ -92,6 +92,7 @@ def test_set_and_get_retriever_context():
 def test_get_retriever_raises_without_context():
     """未设置 context 时 _get_retriever 应抛 RuntimeError."""
     from unittest.mock import patch
+
     from riskagent_agenticrag.agents.retrieval_tools import _get_retriever
 
     # mock contextvar get 抛 LookupError, 模拟 contextvar 从未设置的情况

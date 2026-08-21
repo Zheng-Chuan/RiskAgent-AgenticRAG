@@ -4,9 +4,7 @@ from __future__ import annotations
 
 import time
 
-import pytest
-
-from riskagent_agenticrag.cache import CacheManager, InMemoryCache, RedisCache, cached, get_cache
+from riskagent_agenticrag.cache import CacheManager, InMemoryCache, cached, get_cache
 
 
 class TestInMemoryCache:

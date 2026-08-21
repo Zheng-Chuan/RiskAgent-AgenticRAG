@@ -3,11 +3,9 @@
 from __future__ import annotations
 
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
-from langchain_core.documents import Document
-
 from riskagent_agenticrag.rag.dense_milvus_retriever import (
     DenseMilvusRetriever,
     DenseMilvusRetrieverConfig,

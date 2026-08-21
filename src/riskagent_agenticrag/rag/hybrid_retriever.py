@@ -296,7 +296,7 @@ class HybridRetriever:
 
         pairs = [(q, d.page_content or "") for d in rerank_pool]
         ce_scores = self._reranker.predict(pairs)
-        for s, d in zip(ce_scores, rerank_pool):
+        for s, d in zip(ce_scores, rerank_pool, strict=False):
             d.metadata["rerank_score"] = float(s)
             d.metadata["reranker_model"] = self._active_reranker_model
         rerank_pool.sort(key=lambda d: float(d.metadata.get("rerank_score", 0.0)), reverse=True)

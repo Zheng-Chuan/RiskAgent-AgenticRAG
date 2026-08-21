@@ -4,12 +4,10 @@ from __future__ import annotations
 
 import os
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
-
 from riskagent_agenticrag.rag.retriever_factory import _csv_env_list, build_retriever
-
 
 # ---------------------------------------------------------------------------
 # _csv_env_list

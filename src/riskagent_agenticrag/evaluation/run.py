@@ -37,9 +37,18 @@ from riskagent_agenticrag.evaluation.citation_precision import try_compute_citat
 from riskagent_agenticrag.evaluation.citations import compute_citations_coverage, is_valid_citation
 from riskagent_agenticrag.evaluation.dataset import load_dataset
 from riskagent_agenticrag.evaluation.domain_consistency import try_compute_domain_consistency
-from riskagent_agenticrag.evaluation.ragas_metrics import compute_all_ragas_metrics, get_all_metrics_description
-from riskagent_agenticrag.evaluation.report_generator import generate_markdown_report, generate_comparison_report
-from riskagent_agenticrag.evaluation.reporting import compare_reports, find_latest_report, load_report, write_report
+from riskagent_agenticrag.evaluation.ragas_metrics import (
+    compute_all_ragas_metrics,
+)
+from riskagent_agenticrag.evaluation.report_generator import (
+    generate_markdown_report,
+)
+from riskagent_agenticrag.evaluation.reporting import (
+    compare_reports,
+    find_latest_report,
+    load_report,
+    write_report,
+)
 from riskagent_agenticrag.evaluation.thresholds import evaluate_threshold_gate, load_thresholds
 from riskagent_agenticrag.indexing.indexer import incremental_index
 from riskagent_agenticrag.orchestration.langgraph_runner import run_langgraph_agentic_chat
@@ -736,7 +745,7 @@ def main() -> None:
         label = str(args.stage).strip()
     out_path = write_report(report, artifacts_dir=args.artifacts_dir, label=label)
     print(f"JSON Report: {out_path}")
-    
+
     # Generate Markdown report
     md_path = Path(out_path).with_suffix('.md')
     try:
@@ -749,7 +758,7 @@ def main() -> None:
         print(f"Markdown Report: {md_path}")
     except Exception as e:
         print(f"Warning: Failed to generate Markdown report: {e}", file=os.sys.stderr)
-    
+
     if bool(args.enforce_thresholds):
         verdict = ((report.get("threshold_gate") or {}).get("verdict") or "pass").strip().lower()
         if verdict == "fail":

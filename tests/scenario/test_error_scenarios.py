@@ -186,10 +186,11 @@ class TestScenarioErrors:
 
             incremental_index(corpus_dir=corpus_dir, persist_dir=persist_dir, include_paths=None)
 
-            from riskagent_agenticrag.llm.governance import LLMGovernanceError, get_llm_cost_governor
-
             # Reset governor singleton to pick up new config
             import riskagent_agenticrag.llm.governance as gov_mod
+            from riskagent_agenticrag.llm.governance import (
+                get_llm_cost_governor,
+            )
 
             if hasattr(gov_mod, "_governor_instance"):
                 gov_mod._governor_instance = None

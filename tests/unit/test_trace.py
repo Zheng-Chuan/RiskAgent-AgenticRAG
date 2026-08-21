@@ -10,7 +10,6 @@ from unittest.mock import MagicMock
 
 import pytest
 from langchain_core.documents import Document
-
 from riskagent_agenticrag.orchestration.trace import (
     _doc_trace_row,
     _ensure_trace,
@@ -19,7 +18,6 @@ from riskagent_agenticrag.orchestration.trace import (
     _trace_node_start,
     _trace_retrieval_diag,
 )
-
 
 # ---------------------------------------------------------------------------
 # _ensure_trace

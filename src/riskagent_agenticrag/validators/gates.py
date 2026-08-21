@@ -1,7 +1,7 @@
 """验证门禁 -- evidence / numeric / refusal 确定性规则校验, fail fast."""
 
 import re
-from typing import Any, Optional
+from typing import Any
 
 
 def _extract_numbers(text: str) -> list[float]:
@@ -110,7 +110,7 @@ def _numbers_supported(statement: str, evidence_text: str) -> bool:
 def evidence_gate(
     claims: list[dict[str, Any]],
     evidence_set: list[dict[str, Any]],
-) -> Optional[dict[str, Any]]:
+) -> dict[str, Any] | None:
     """
     Evidence gate: 检查每条 claim 的 evidence_ids 是否有效.
 
@@ -207,32 +207,32 @@ def _classify_number_context(text: str, num: float) -> str:
         "计算", "等于", "结果是", "得出", "总计", "sum", "total", "calculate",
         "equals", "results in", "derived", "computed", "approximately", "约"
     ]
-    
+
     # 在数字前后50个字符内查找关键词
     text_lower = text.lower()
     num_str = str(int(num)) if num == int(num) else str(num)
-    
+
     # 找到数字位置
     idx = text_lower.find(num_str)
     if idx == -1:
         return "unknown"
-    
+
     # 提取上下文
     context_start = max(0, idx - 50)
     context_end = min(len(text_lower), idx + 50)
     context = text_lower[context_start:context_end]
-    
+
     # 检查是否有计算型关键词
     for keyword in calc_keywords:
         if keyword in context:
             return "calculated"
-    
+
     # 检查是否有引用标记（表示来自原文）
     citation_patterns = ["[source=", "[ctx", "citation", "引用"]
     for pattern in citation_patterns:
         if pattern in context:
             return "stated"
-    
+
     # 默认分类为陈述型（保守策略）
     return "stated"
 
@@ -242,7 +242,7 @@ def numeric_consistency_gate(
     claims: list[dict[str, Any]],
     tool_traces: list[dict[str, Any]],
     evidence_set: list[dict[str, Any]],
-) -> Optional[dict[str, Any]]:
+) -> dict[str, Any] | None:
     """
     Numeric consistency gate: 数字一致性检查.
 
@@ -327,7 +327,7 @@ def refusal_gate(
     docs: list[Any],
     evidence_set: list[dict[str, Any]],
     report: str,
-) -> Optional[dict[str, Any]]:
+) -> dict[str, Any] | None:
     """
     Refusal gate: 检查是否应该拒答.
 
@@ -391,7 +391,7 @@ def validate_response(
     docs: list[Any],
     *,
     require_numeric_backing: bool = True,
-) -> Optional[dict[str, Any]]:
+) -> dict[str, Any] | None:
     """
     统一入口: 依次执行所有 gate, 返回第一个失败的 FailureReason.
 

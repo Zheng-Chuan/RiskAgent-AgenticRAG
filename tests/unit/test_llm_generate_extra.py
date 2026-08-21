@@ -10,18 +10,12 @@ import subprocess
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from riskagent_agenticrag.llm.generate import (
     _call_via_curl,
     _call_via_langchain,
     _is_transient_error,
-    call_llm_json,
-    call_llm_json_with_model,
-    call_llm_text,
-    call_llm_text_with_model,
     _parse_json_response,
 )
-
 
 # ---------------------------------------------------------------------------
 # _is_transient_error

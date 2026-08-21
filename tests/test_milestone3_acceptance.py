@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import os
 import unittest
-from unittest.mock import patch
 from pathlib import Path
+from unittest.mock import patch
 
 from riskagent_agenticrag.orchestration.nodes import node_validate_and_save
 

@@ -8,14 +8,12 @@ from __future__ import annotations
 
 import pytest
 from langchain_core.documents import Document
-
 from riskagent_agenticrag.rag.ingestion import (
     _enrich_chunk_metadata,
     _stable_parent_id,
     build_parent_documents,
     split_documents,
 )
-
 
 # ---------------------------------------------------------------------------
 # _stable_parent_id

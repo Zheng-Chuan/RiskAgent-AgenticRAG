@@ -3,9 +3,6 @@ from __future__ import annotations
 import importlib
 import tempfile
 import unittest
-from pathlib import Path
-
-
 
 citations_mod = importlib.import_module("riskagent_agenticrag.evaluation.citations")
 compute_citations_coverage = citations_mod.compute_citations_coverage

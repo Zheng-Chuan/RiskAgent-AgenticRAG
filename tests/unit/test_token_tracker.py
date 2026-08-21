@@ -3,10 +3,9 @@
 from __future__ import annotations
 
 import time
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
-
 from riskagent_agenticrag.llm.token_tracker import (
     TokenTracker,
     TokenUsageRecord,
@@ -16,7 +15,6 @@ from riskagent_agenticrag.llm.token_tracker import (
     record_token_usage,
     reset_token_tracker,
 )
-
 
 # ---------------------------------------------------------------------------
 # 辅助函数 _safe_int / _safe_float

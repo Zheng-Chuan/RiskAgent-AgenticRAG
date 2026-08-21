@@ -20,29 +20,29 @@ def setup_langsmith(
     """
     if enabled is None:
         enabled = os.getenv("LANGCHAIN_TRACING_V2", "").lower() in ("true", "1", "yes")
-    
+
     if not enabled:
         return False
-    
+
     api_key = os.getenv("LANGCHAIN_API_KEY")
     if not api_key:
         print("⚠️  LANGCHAIN_TRACING_V2=true 但未设置 LANGCHAIN_API_KEY")
         print("   请在 https://smith.langchain.com/ 获取 API key")
         return False
-    
+
     os.environ["LANGCHAIN_TRACING_V2"] = "true"
     os.environ["LANGCHAIN_API_KEY"] = api_key
-    
+
     if project_name:
         os.environ["LANGCHAIN_PROJECT"] = project_name
-    
+
     endpoint = os.getenv("LANGCHAIN_ENDPOINT", "https://api.smith.langchain.com")
     os.environ["LANGCHAIN_ENDPOINT"] = endpoint
-    
+
     print("✅ LangSmith 追踪已启用")
     print(f"   项目: {project_name}")
     print("   查看追踪: https://smith.langchain.com/")
-    
+
     return True
 
 
@@ -52,7 +52,7 @@ def get_langsmith_status() -> dict[str, str]:
     api_key = os.getenv("LANGCHAIN_API_KEY", "")
     project = os.getenv("LANGCHAIN_PROJECT", "")
     endpoint = os.getenv("LANGCHAIN_ENDPOINT", "https://api.smith.langchain.com")
-    
+
     return {
         "enabled": "true" if enabled else "false",
         "api_key_set": "true" if api_key else "false",

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import os
 import pathlib
-from typing import Annotated, Literal
+from typing import Literal
 
 from dotenv import load_dotenv
 from pydantic import Field, SecretStr

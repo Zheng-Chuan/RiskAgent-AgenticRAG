@@ -1,7 +1,6 @@
 """Unit tests for validators/gates.py - evidence / numeric / refusal gates."""
 
 import pytest
-
 from riskagent_agenticrag.validators.gates import (
     _coverage_ratio,
     _extract_numbers,
@@ -11,7 +10,6 @@ from riskagent_agenticrag.validators.gates import (
     refusal_gate,
     validate_response,
 )
-
 
 # ---------------------------------------------------------------------------
 # Helpers

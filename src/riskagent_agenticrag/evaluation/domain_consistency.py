@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass(frozen=True)
@@ -11,7 +11,7 @@ class DomainConsistencyResult:
     ok: bool
     metrics: dict[str, float]
     details: dict[str, Any]
-    error: Optional[str] = None
+    error: str | None = None
 
 
 _MVP_GLOSSARY_FORBIDDEN: dict[str, list[str]] = {
@@ -29,11 +29,11 @@ def _extract_numbers(text: str) -> list[float]:
     t = re.sub(r"\[source=[^\]]*?chunk_id=[^\]]*?\]", " ", t, flags=re.IGNORECASE)
     t = re.sub(r"\(page\s*#?\s*\d+(?:\.\d+)?\)", " ", t, flags=re.IGNORECASE)
     t = re.sub(r"\(doc\s*#?\s*\d+(?:\.\d+)?\)", " ", t, flags=re.IGNORECASE)
-    
+
     # 移除章节编号模式 (如 "1)", "2.", "3)", "1.1", "2.2." 等)
     # 匹配: 行首或空白字符后的 数字 + ) 或 .
     t = re.sub(r"(^|\n)\s*\d+(?:\.\d+)*[.)](?=\s)", " ", t)
-    
+
     matches = re.findall(r"-?\d+(?:,\d{3})*(?:\.\d+)?%?", t)
     out: list[float] = []
     for m in matches:

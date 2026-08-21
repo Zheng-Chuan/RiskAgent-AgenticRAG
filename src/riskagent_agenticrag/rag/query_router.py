@@ -9,7 +9,6 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
-
 # 金融术语词表 (词边界匹配, 避免短缩写误匹配长单词, 如 "es" 误中 "because")
 # XVA 家族补全: fva/mva/colva 曾缺失导致三题被误判 simple 跳过检索 (eval v10b)
 _FINANCIAL_TERM_RE = re.compile(

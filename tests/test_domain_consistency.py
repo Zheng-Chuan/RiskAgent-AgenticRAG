@@ -6,7 +6,9 @@ import unittest
 class Week7DomainConsistencyQualityTest(unittest.TestCase):
 
     def test_numeric_consistency_supported(self) -> None:
-        from riskagent_agenticrag.evaluation.domain_consistency import try_compute_domain_consistency
+        from riskagent_agenticrag.evaluation.domain_consistency import (
+            try_compute_domain_consistency,
+        )
 
         samples = [
             {
@@ -20,7 +22,9 @@ class Week7DomainConsistencyQualityTest(unittest.TestCase):
         self.assertGreaterEqual(float(out.metrics.get("numeric_consistency_score", 0.0)), 0.99)
 
     def test_numeric_consistency_unsupported(self) -> None:
-        from riskagent_agenticrag.evaluation.domain_consistency import try_compute_domain_consistency
+        from riskagent_agenticrag.evaluation.domain_consistency import (
+            try_compute_domain_consistency,
+        )
 
         samples = [
             {
@@ -36,7 +40,9 @@ class Week7DomainConsistencyQualityTest(unittest.TestCase):
         self.assertEqual(out.details["numeric_failures"][0]["id"], "s1")
 
     def test_glossary_violation(self) -> None:
-        from riskagent_agenticrag.evaluation.domain_consistency import try_compute_domain_consistency
+        from riskagent_agenticrag.evaluation.domain_consistency import (
+            try_compute_domain_consistency,
+        )
 
         samples = [
             {

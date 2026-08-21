@@ -7,7 +7,7 @@
 from __future__ import annotations
 
 import datetime
-from typing import Any, Literal, Optional
+from typing import Any, Literal
 
 try:
     # 中文注释: pydantic v2.
@@ -65,10 +65,10 @@ class Evidence(_StrictBaseModel):
     chunk_id: str
     start_index: int
     snippet: str
-    section_path: Optional[str] = None
-    start_line: Optional[int] = None
-    end_line: Optional[int] = None
-    page: Optional[int] = None
+    section_path: str | None = None
+    start_line: int | None = None
+    end_line: int | None = None
+    page: int | None = None
 
 
 class Claim(_StrictBaseModel):
@@ -77,7 +77,7 @@ class Claim(_StrictBaseModel):
     evidence_ids: list[str]
     confidence: ClaimConfidence
     status: ClaimStatus
-    failure_reason: Optional[FailureReason] = None
+    failure_reason: FailureReason | None = None
 
 
 class ToolTrace(_StrictBaseModel):
@@ -86,7 +86,7 @@ class ToolTrace(_StrictBaseModel):
     tool_output: dict[str, Any]
     started_at: str
     finished_at: str
-    error: Optional[str] = None
+    error: str | None = None
 
 
 class Decision(_StrictBaseModel):
@@ -117,7 +117,7 @@ class StructuredResponse(_StrictBaseModel):
     tool_traces: list[ToolTrace] = Field(default_factory=list)
     decision_log: list[Decision]
     status: RunStatus
-    failure_reason: Optional[FailureReason] = None
+    failure_reason: FailureReason | None = None
 
 
 def parse_structured_response(data: dict[str, Any]) -> StructuredResponse:
@@ -127,7 +127,7 @@ def parse_structured_response(data: dict[str, Any]) -> StructuredResponse:
     return StructuredResponse.parse_obj(data)
 
 
-def try_parse_structured_response(data: dict[str, Any]) -> tuple[Optional[StructuredResponse], Optional[FailureReason]]:
+def try_parse_structured_response(data: dict[str, Any]) -> tuple[StructuredResponse | None, FailureReason | None]:
     try:
         return parse_structured_response(data), None
     except Exception as e:  # pylint: disable=broad-exception-caught
@@ -146,9 +146,9 @@ def build_tool_trace(
     tool_name: str,
     tool_input: dict[str, Any],
     tool_output: dict[str, Any],
-    started_at: Optional[str] = None,
-    finished_at: Optional[str] = None,
-    error: Optional[str] = None,
+    started_at: str | None = None,
+    finished_at: str | None = None,
+    error: str | None = None,
 ) -> ToolTrace:
     # 中文注释: 统一构建 trace, 降低各 agent 重复代码.
     start = started_at or _utc_now_iso()

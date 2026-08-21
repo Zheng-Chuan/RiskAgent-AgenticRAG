@@ -11,21 +11,16 @@ from unittest.mock import patch
 
 import pytest
 from langchain_core.documents import Document
-
 from riskagent_agenticrag.rag.agentic_primitives import (
     _extract_chunk_ids_from_text,
-    _paragraph_tokens,
     _split_claim_statements,
     attach_citations_to_each_paragraph,
     build_evidence_set_from_docs,
-    critique_retrieval,
-    rewrite_query,
     revise_query,
     synthesize_answer,
     synthesize_answer_from_model_knowledge,
     try_parse_json,
 )
-
 
 # ---------------------------------------------------------------------------
 # try_parse_json

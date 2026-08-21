@@ -107,7 +107,7 @@ def _build_hf_embeddings() -> Embeddings:
         warnings.filterwarnings("ignore", message=".*LangChainDeprecationWarning.*")
         try:
             mod = importlib.import_module("langchain_huggingface")
-            HFEmbeddings = getattr(mod, "HuggingFaceEmbeddings")
+            HFEmbeddings = mod.HuggingFaceEmbeddings
         except Exception:
             from langchain_community.embeddings import HuggingFaceEmbeddings as HFEmbeddings
 

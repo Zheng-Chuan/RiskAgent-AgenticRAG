@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 import json
 import os
 import re
@@ -8,8 +7,9 @@ import sys
 import threading
 import time
 import urllib.request
+from concurrent.futures import FIRST_COMPLETED, Future, ThreadPoolExecutor, wait
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 from riskagent_agenticrag.evaluation.judge_llm import get_judge_llm
 
@@ -20,7 +20,7 @@ class CitationPrecisionResult:
     ok: bool
     metrics: dict[str, float]
     details: list[dict[str, Any]]
-    error: Optional[str] = None
+    error: str | None = None
 
 
 @dataclass(frozen=True)
@@ -61,7 +61,7 @@ def _strip_markdown_json(text: str) -> str:
 
 def _read_content(x: Any) -> str:
     if hasattr(x, "content"):
-        return _to_text(getattr(x, "content"))
+        return _to_text(x.content)
     return _to_text(x)
 
 

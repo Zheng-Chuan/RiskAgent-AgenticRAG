@@ -7,8 +7,15 @@ from unittest.mock import patch
 class FailureTaxonomyCoverageTest(unittest.TestCase):
     def test_failure_categories_have_use_cases(self) -> None:
         from riskagent_agenticrag.agents.data_agent import run_data_agent
-        from riskagent_agenticrag.contracts.structured import StructuredRequest, try_parse_structured_response
-        from riskagent_agenticrag.validators.gates import evidence_gate, numeric_consistency_gate, refusal_gate
+        from riskagent_agenticrag.contracts.structured import (
+            StructuredRequest,
+            try_parse_structured_response,
+        )
+        from riskagent_agenticrag.validators.gates import (
+            evidence_gate,
+            numeric_consistency_gate,
+            refusal_gate,
+        )
 
         # evidence_missing
         f = evidence_gate(

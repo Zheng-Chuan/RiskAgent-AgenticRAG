@@ -9,6 +9,7 @@ from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from riskagent_agenticrag.llm.generate import call_llm_json_with_model
 
+
 # LLM chunking 使用的模型 (从 settings 读取, 可用 RISKAGENT_LLM_CHUNKING_MODEL 覆盖)
 def _default_chunking_model() -> str:
     """返回 LLM 语义切割使用的模型名, 默认跟随 settings.llm.model."""

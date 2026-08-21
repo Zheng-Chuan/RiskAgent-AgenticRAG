@@ -9,7 +9,7 @@ from langchain_core.documents import Document
 
 def _build_simple_pdf_bytes(text: str) -> bytes:
     def obj(n: int, body: str) -> bytes:
-        return f"{n} 0 obj\n{body}\nendobj\n".encode("utf-8")
+        return f"{n} 0 obj\n{body}\nendobj\n".encode()
 
     content_stream = f"BT /F1 24 Tf 100 700 Td ({text}) Tj ET"
     stream_obj = f"<< /Length {len(content_stream)} >>\nstream\n{content_stream}\nendstream"
@@ -42,7 +42,7 @@ def _build_simple_pdf_bytes(text: str) -> bytes:
     trailer = (
         "trailer\n<< /Size 6 /Root 1 0 R >>\n"
         f"startxref\n{xref_start}\n%%EOF\n"
-    ).encode("utf-8")
+    ).encode()
 
     return b"".join(parts) + xref + trailer
 

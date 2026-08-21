@@ -10,6 +10,7 @@ from typing import Any
 
 from langchain_core.documents import Document
 
+
 def extract_citations(docs: list[Document]) -> list[dict[str, Any]]:
     # citations 是一个最小可展示结构.
     # UI 会将其渲染为 markdown 列表.

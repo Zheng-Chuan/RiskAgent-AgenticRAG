@@ -6,10 +6,8 @@ import time
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from riskagent_agenticrag.llm.governance import LLMGovernanceError
-from riskagent_agenticrag.llm.llm_cache import CachedResponse, LLMCache
-
+from riskagent_agenticrag.llm.llm_cache import CachedResponse
 
 # ---------------------------------------------------------------------------
 # Helpers

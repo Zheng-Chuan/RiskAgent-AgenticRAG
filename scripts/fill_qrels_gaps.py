@@ -12,9 +12,7 @@ from __future__ import annotations
 
 import argparse
 import json
-import re
 from pathlib import Path
-
 
 # 空标注题目的关键词 (按区分度排序, 小写)
 GAP_KEYWORDS: dict[str, list[str]] = {

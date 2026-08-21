@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import json
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
 
 import pytest
 from langchain_core.documents import Document
-
 
 # ---------------------------------------------------------------------------
 # rewrite_query

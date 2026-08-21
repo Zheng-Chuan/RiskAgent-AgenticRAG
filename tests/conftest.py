@@ -37,11 +37,11 @@ def ensure_src_on_path() -> None:
     """兼容旧测试文件中的显式调用, 实际路径已在模块级别设置."""
 
 
-import pytest
-import tempfile
 import shutil
 from pathlib import Path
-from unittest.mock import patch, MagicMock
+from unittest.mock import patch
+
+import pytest
 
 
 # ---- HuggingFace / Embedding 模型可用性检查 ----
@@ -131,7 +131,8 @@ def settings_override():
 def test_client(settings_override):
     """FastAPI TestClient with auth disabled."""
     from fastapi.testclient import TestClient
-    from riskagent_agenticrag.api.server import app, settings as server_settings
+    from riskagent_agenticrag.api.server import app
+    from riskagent_agenticrag.api.server import settings as server_settings
 
     # settings 是模块级别单例，环境变量在实例化后不再生效，需要直接 mock
     original_enabled = server_settings.api_auth.enabled

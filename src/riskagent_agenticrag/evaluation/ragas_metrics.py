@@ -22,7 +22,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Any, List, Optional
+from typing import Any
 
 from riskagent_agenticrag.config.settings import settings
 
@@ -34,7 +34,7 @@ class RagasMetricsResult:
     ok: bool
     metrics: dict[str, float]
     raw_scores: dict[str, list[float]]  # Per-sample scores
-    error: Optional[str] = None
+    error: str | None = None
 
 
 # 指标分类定义
@@ -75,16 +75,16 @@ METRIC_REQUIREMENTS = {
     "faithfulness": {"required": ["question", "answer", "contexts"], "optional": []},
     "answer_relevancy": {"required": ["question", "answer", "contexts"], "optional": []},
     "context_relevancy": {"required": ["question", "contexts"], "optional": []},
-    
+
     # 需要 ground_truth（参考答案）
     "context_recall": {"required": ["question", "contexts", "ground_truth"], "optional": []},
     "answer_correctness": {"required": ["question", "answer", "ground_truth"], "optional": []},
     "answer_similarity": {"required": ["question", "answer", "ground_truth"], "optional": []},
-    
+
     # 需要 reference（参考上下文）
     "context_precision": {"required": ["question", "contexts", "reference"], "optional": []},
     "context_entity_recall": {"required": ["question", "contexts", "reference"], "optional": []},
-    
+
     # 需要特殊处理
     "noise_sensitivity": {"required": ["question", "answer", "contexts"], "optional": ["noise_rate"]},
     "response_completeness": {"required": ["question", "answer", "contexts"], "optional": []},
@@ -159,14 +159,14 @@ def compute_all_ragas_metrics(
     """
     import warnings
     warnings.filterwarnings('ignore', category=DeprecationWarning, module='ragas')
-    
+
     try:
         from datasets import Dataset
     except ImportError as e:
         return RagasMetricsResult(
             enabled=True, ok=False, metrics={}, raw_scores={}, error=f"datasets not available: {e}"
         )
-    
+
     try:
         # 逐个导入 RAGAS 指标, 缺失的跳过 (不同 ragas 版本指标集合不同:
         # 如 context_relevancy 仅 0.1.9 前存在, noise_sensitivity/response_completeness 为 0.2.x 新增)
@@ -189,40 +189,40 @@ def compute_all_ragas_metrics(
         return RagasMetricsResult(
             enabled=True, ok=False, metrics={}, raw_scores={}, error=f"ragas metrics import failed: {e}"
         )
-    
+
     # 准备数据
     rows = []
     has_ground_truth = False
     has_reference_contexts = False
-    
+
     for s in samples:
         row = {
             "question": str(s.get("question", "")),
             "answer": str(s.get("answer", "")),
             "contexts": [str(c) for c in s.get("contexts", []) if c],
         }
-        
+
         # ground_truth (参考答案)
         ref_answer = s.get("reference_answer")
         if ref_answer:
             row["ground_truth"] = str(ref_answer)
             has_ground_truth = True
-        
+
         # reference (参考上下文，用于 context_precision)
         ref_ctx = s.get("reference_contexts")
         if ref_ctx and isinstance(ref_ctx, list) and ref_ctx:
             row["reference"] = [str(c) for c in ref_ctx if c]
             has_reference_contexts = True
-        
+
         rows.append(row)
-    
+
     if not rows:
         return RagasMetricsResult(
             enabled=True, ok=False, metrics={}, raw_scores={}, error="no samples provided"
         )
-    
+
     ds = Dataset.from_list(rows)
-    
+
     # 初始化 LLM 和 Embeddings
     try:
         llm = _get_ragas_llm()
@@ -231,7 +231,7 @@ def compute_all_ragas_metrics(
         return RagasMetricsResult(
             enabled=True, ok=False, metrics={}, raw_scores={}, error=f"setup failed: {e}"
         )
-    
+
     # 构建指标列表 (过滤当前 ragas 版本不存在的指标)
     metrics_list = []
     enabled_metrics = []
@@ -326,12 +326,12 @@ def compute_all_ragas_metrics(
             m.embeddings = embeddings
         metrics_list.append(m)
         enabled_metrics.append(name)
-    
+
     if not metrics_list:
         return RagasMetricsResult(
             enabled=True, ok=False, metrics={}, raw_scores={}, error="no metrics to evaluate"
         )
-    
+
     # 执行评估
     try:
         from ragas import evaluate
@@ -345,7 +345,7 @@ def compute_all_ragas_metrics(
         return RagasMetricsResult(
             enabled=True, ok=False, metrics={}, raw_scores={}, error=f"evaluation failed: {e}"
         )
-    
+
     # 提取结果 (兼容新旧 ragas: 0.1.x 早期为 _scores_dict, 0.1.19+ 的 Result 为 dict + scores Dataset)
     metrics_out = {}
     raw_scores = {}
@@ -382,17 +382,17 @@ def compute_all_ragas_metrics(
         return RagasMetricsResult(
             enabled=True, ok=False, metrics={}, raw_scores={}, error=f"result extraction failed: {e}"
         )
-    
+
     # 计算新增指标：无 Reference 的 Context Precision 和 Contradiction Detection
     try:
         cp_no_ref_scores = []
         contradiction_scores = []
-        
+
         for s in samples:
             question = str(s.get("question", ""))
             answer = str(s.get("answer", ""))
             contexts = [str(c) for c in s.get("contexts", []) if c]
-            
+
             # 计算 Context Precision (No Reference)
             if question and contexts:
                 try:
@@ -400,7 +400,7 @@ def compute_all_ragas_metrics(
                     cp_no_ref_scores.append(cp_result.score)
                 except Exception:
                     cp_no_ref_scores.append(0.0)
-            
+
             # 计算 Contradiction Detection
             if question and answer and contexts:
                 try:
@@ -408,26 +408,26 @@ def compute_all_ragas_metrics(
                     contradiction_scores.append(cont_result.contradiction_score)
                 except Exception:
                     contradiction_scores.append(0.0)
-        
+
         # 添加到结果
         if cp_no_ref_scores:
             valid_cp = [s for s in cp_no_ref_scores if s is not None]
             if valid_cp:
                 metrics_out["ragas_context_precision_no_ref"] = sum(valid_cp) / len(valid_cp)
                 raw_scores["ragas_context_precision_no_ref"] = valid_cp
-        
+
         if contradiction_scores:
             valid_cont = [s for s in contradiction_scores if s is not None]
             if valid_cont:
                 metrics_out["ragas_contradiction_score"] = sum(valid_cont) / len(valid_cont)
                 raw_scores["ragas_contradiction_score"] = valid_cont
-    except Exception as e:
+    except Exception:
         pass
-    
+
     # 添加元数据
     metrics_out["ragas_samples_evaluated"] = len(rows)
     metrics_out["ragas_enabled_metrics_count"] = len(enabled_metrics)
-    
+
     return RagasMetricsResult(
         enabled=True,
         ok=True,
@@ -447,7 +447,7 @@ class RagasResult:
     enabled: bool
     ok: bool
     metrics: dict[str, float]
-    error: Optional[str] = None
+    error: str | None = None
 
 
 def try_compute_ragas_metrics(
@@ -478,13 +478,13 @@ def try_compute_ragas_metrics(
 class ContextPrecisionNoRefResult:
     """无 Reference 的 Context Precision 结果."""
     score: float
-    per_context_scores: List[float]
+    per_context_scores: list[float]
     reasoning: str
 
 
 def compute_context_precision_no_ref(
     question: str,
-    contexts: List[str],
+    contexts: list[str],
     llm: Any = None,
 ) -> ContextPrecisionNoRefResult:
     """计算无 Reference 版本的 Context Precision.
@@ -556,13 +556,13 @@ class ContradictionDetectionResult:
     """矛盾检测结果."""
     has_contradiction: bool
     contradiction_score: float
-    contradiction_details: List[dict]
+    contradiction_details: list[dict]
 
 
 def compute_contradiction_detection(
     question: str,
     answer: str,
-    contexts: List[str],
+    contexts: list[str],
     llm: Any = None,
 ) -> ContradictionDetectionResult:
     """检测答案与上下文之间是否存在矛盾，以及答案内部是否自相矛盾.

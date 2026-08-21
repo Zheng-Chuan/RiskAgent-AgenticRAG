@@ -7,7 +7,6 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-
 # ===========================================================================
 # _bump_config_k
 # ===========================================================================
@@ -98,8 +97,8 @@ def test_expand_retriever_k_updates_config_recursively():
 @pytest.mark.unit
 def test_expand_retrieval_returns_docs():
     """expand_retrieval 应返回检索到的文档列表."""
-    from riskagent_agenticrag.rag.crag_strategies import expand_retrieval
     from langchain_core.documents import Document
+    from riskagent_agenticrag.rag.crag_strategies import expand_retrieval
 
     doc = Document(page_content="FRTB content", metadata={"chunk_id": "c1"})
     retriever = MagicMock(invoke=MagicMock(return_value=[doc]))
@@ -112,8 +111,8 @@ def test_expand_retrieval_returns_docs():
 @pytest.mark.unit
 def test_expand_retrieval_caps_at_max_k():
     """expand_retrieval 返回的文档不应超过 max_k."""
-    from riskagent_agenticrag.rag.crag_strategies import expand_retrieval
     from langchain_core.documents import Document
+    from riskagent_agenticrag.rag.crag_strategies import expand_retrieval
 
     docs = [Document(page_content=f"doc {i}", metadata={"chunk_id": f"c{i}"}) for i in range(15)]
     retriever = MagicMock(invoke=MagicMock(return_value=docs))
@@ -129,8 +128,8 @@ def test_expand_retrieval_caps_at_max_k():
 @pytest.mark.unit
 def test_expand_retrieval_falls_back_on_error():
     """expand_retrieval 在调整失败时应回退为原样 invoke."""
-    from riskagent_agenticrag.rag.crag_strategies import expand_retrieval
     from langchain_core.documents import Document
+    from riskagent_agenticrag.rag.crag_strategies import expand_retrieval
 
     doc = Document(page_content="fallback content", metadata={"chunk_id": "c1"})
     retriever = MagicMock(invoke=MagicMock(return_value=[doc]))
@@ -149,8 +148,8 @@ def test_expand_retrieval_falls_back_on_error():
 @patch("riskagent_agenticrag.rag.agentic_primitives.revise_query", return_value="revised query")
 def test_rewrite_and_retrieve_returns_new_query_and_docs(mock_revise):
     """rewrite_and_retrieve 应返回 (new_query, docs)."""
-    from riskagent_agenticrag.rag.crag_strategies import rewrite_and_retrieve
     from langchain_core.documents import Document
+    from riskagent_agenticrag.rag.crag_strategies import rewrite_and_retrieve
 
     doc = Document(page_content="content", metadata={"chunk_id": "c1"})
     retriever = MagicMock(invoke=MagicMock(return_value=[doc]))
@@ -166,8 +165,8 @@ def test_rewrite_and_retrieve_returns_new_query_and_docs(mock_revise):
 @patch("riskagent_agenticrag.rag.agentic_primitives.revise_query", side_effect=RuntimeError("LLM failed"))
 def test_rewrite_and_retrieve_falls_back_on_error(mock_revise):
     """rewrite_and_retrieve 在改写失败时应回退到原 query 检索."""
-    from riskagent_agenticrag.rag.crag_strategies import rewrite_and_retrieve
     from langchain_core.documents import Document
+    from riskagent_agenticrag.rag.crag_strategies import rewrite_and_retrieve
 
     doc = Document(page_content="fallback", metadata={"chunk_id": "c1"})
     retriever = MagicMock(invoke=MagicMock(return_value=[doc]))

@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import datetime
 import re
-from typing import Any, Optional
+from typing import Any
 
 from langchain_core.documents import Document
 
@@ -26,7 +26,7 @@ def _utc_now_iso() -> str:
     return datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
 
 
-def _parse_float(raw: str) -> Optional[float]:
+def _parse_float(raw: str) -> float | None:
     text = str(raw or "").strip().replace(",", "")
     if not text:
         return None
@@ -36,7 +36,7 @@ def _parse_float(raw: str) -> Optional[float]:
         return None
 
 
-def extract_structured_request(*, question: str, request_id: str) -> Optional[StructuredRequest]:
+def extract_structured_request(*, question: str, request_id: str) -> StructuredRequest | None:
     q = str(question or "").strip()
     if not q:
         return None
@@ -115,8 +115,8 @@ def tool_output_to_document(*, tool_output: dict[str, Any], tool_trace: ToolTrac
 def run_data_agent(
     request: StructuredRequest,
     *,
-    as_of: Optional[str] = None,
-) -> tuple[dict[str, Any], ToolTrace, Optional[FailureReason]]:
+    as_of: str | None = None,
+) -> tuple[dict[str, Any], ToolTrace, FailureReason | None]:
     # 中文注释: 返回 tool_output, tool_trace, failure_reason.
     tool_name = "monitor_desk_exposure"
     tool_input = {

@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
-from unittest.mock import patch, MagicMock
+from unittest.mock import MagicMock, patch
 
 import pytest
 from langchain_core.documents import Document
-
 
 # ---------------------------------------------------------------------------
 # Chunking: chunk size, overlap, short documents, long paragraphs
@@ -120,8 +119,9 @@ class TestEmbeddingsFactory:
 
     def test_hash_embeddings_normalized(self):
         """HashEmbeddings vectors should be approximately unit-normalized."""
-        from riskagent_agenticrag.rag.embeddings import HashEmbeddings
         from math import sqrt
+
+        from riskagent_agenticrag.rag.embeddings import HashEmbeddings
 
         emb = HashEmbeddings(dimension=64)
         vec = emb.embed_query("delta risk exposure")
@@ -148,7 +148,7 @@ class TestEmbeddingsFactory:
 
     def test_build_embeddings_hash_provider(self):
         """build_embeddings with hash provider should return HashEmbeddings."""
-        from riskagent_agenticrag.rag.embeddings import build_embeddings, HashEmbeddings
+        from riskagent_agenticrag.rag.embeddings import HashEmbeddings, build_embeddings
 
         with patch("riskagent_agenticrag.rag.embeddings.settings") as mock_settings:
             mock_settings.embeddings.provider = "hash"
@@ -201,8 +201,8 @@ class TestQueryIntelligence:
     def test_generate_query_variants_basic(self):
         """generate_query_variants should produce at least the base query."""
         from riskagent_agenticrag.rag.query_intelligence import (
-            generate_query_variants,
             QueryIntelConfig,
+            generate_query_variants,
         )
 
         config = QueryIntelConfig()
@@ -335,7 +335,7 @@ class TestSelfRag:
 
     def test_grade_docs_structure(self):
         """SelfRagRetrievalGrade should have expected fields."""
-        from riskagent_agenticrag.rag.self_rag import grade_docs, SelfRagRetrievalGrade
+        from riskagent_agenticrag.rag.self_rag import SelfRagRetrievalGrade, grade_docs
 
         docs = [Document(page_content="test content", metadata={"parent_id": "p", "chunk_id": "c"})]
         result = grade_docs(question="test", docs=docs)

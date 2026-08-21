@@ -4,7 +4,6 @@ import unittest
 from unittest.mock import MagicMock, patch
 
 from langchain_core.documents import Document
-
 from riskagent_agenticrag.agents.data_agent import extract_structured_request, run_data_agent
 from riskagent_agenticrag.orchestration.langgraph_runner import run_langgraph_agentic_chat
 

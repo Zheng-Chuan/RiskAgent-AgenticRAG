@@ -9,16 +9,14 @@ import pathlib
 
 import pytest
 from langchain_core.documents import Document
-
 from riskagent_agenticrag.rag.utils import (
     doc_key,
     load_docs_jsonl,
     persist_docs_jsonl,
     rrf_scores,
-    tokenize,
     token_set,
+    tokenize,
 )
-
 
 # ---------------------------------------------------------------------------
 # tokenize / token_set

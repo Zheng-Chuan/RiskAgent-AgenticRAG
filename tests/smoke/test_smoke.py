@@ -21,29 +21,34 @@ class TestModuleImports:
         from riskagent_agenticrag.config import settings  # noqa: F401
 
     def test_import_llm_modules(self):
-        from riskagent_agenticrag.llm import generate, governance, token_tracker, llm_cache  # noqa: F401
+        from riskagent_agenticrag.llm import (  # noqa: F401
+            generate,
+            governance,
+            llm_cache,
+            token_tracker,
+        )
 
     def test_import_rag_modules(self):
         from riskagent_agenticrag.rag import (  # noqa: F401
             agentic_primitives,
-            source_loader,
-            ingestion,
             chunking,
             embeddings,
+            ingestion,
             query_intelligence,
             self_rag,
+            source_loader,
             utils,
         )
 
     def test_import_rag_retrieval_modules(self):
         from riskagent_agenticrag.rag import (  # noqa: F401
-            hybrid_retriever,
-            dense_milvus_retriever,
-            sparse_index,
             advanced_index,
             advanced_index_retriever,
-            retriever_factory,
+            dense_milvus_retriever,
+            hybrid_retriever,
             pipeline,
+            retriever_factory,
+            sparse_index,
         )
 
     def test_import_orchestration(self):
@@ -55,7 +60,7 @@ class TestModuleImports:
         )
 
     def test_import_api(self):
-        from riskagent_agenticrag.api import server, schemas  # noqa: F401
+        from riskagent_agenticrag.api import schemas, server  # noqa: F401
 
     def test_import_validators(self):
         from riskagent_agenticrag.validators import gates  # noqa: F401
@@ -64,7 +69,7 @@ class TestModuleImports:
         from riskagent_agenticrag.artifacts import storage  # noqa: F401
 
     def test_import_exceptions(self):
-        from riskagent_agenticrag import exceptions, constants  # noqa: F401
+        from riskagent_agenticrag import constants, exceptions  # noqa: F401
 
     def test_import_contracts(self):
         from riskagent_agenticrag.contracts import structured  # noqa: F401
@@ -74,11 +79,11 @@ class TestModuleImports:
 
     def test_import_evaluation(self):
         from riskagent_agenticrag.evaluation import (  # noqa: F401
-            ragas_metrics,
             advanced_metrics,
-            report_generator,
             citation_precision,
             domain_consistency,
+            ragas_metrics,
+            report_generator,
         )
 
     def test_import_agents(self):
@@ -121,7 +126,7 @@ class TestComponentInit:
         assert cache.size() == 0
 
     def test_llm_cache_put_get(self):
-        from riskagent_agenticrag.llm.llm_cache import CachedResponse, LLMCache
+        from riskagent_agenticrag.llm.llm_cache import LLMCache
 
         cache = LLMCache(max_size=5)
         key = cache.make_key(
@@ -156,10 +161,10 @@ class TestComponentInit:
 
     def test_exceptions_hierarchy(self):
         from riskagent_agenticrag.exceptions import (
-            RiskAgentError,
-            LLMError,
-            LLMAPIError,
             ConfigurationError,
+            LLMAPIError,
+            LLMError,
+            RiskAgentError,
         )
 
         assert issubclass(LLMError, RiskAgentError)

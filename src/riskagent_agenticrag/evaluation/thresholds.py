@@ -12,7 +12,7 @@ def _to_float(v: Any, fallback: float) -> float:
 
 
 def load_thresholds(path: str) -> dict[str, Any]:
-    with open(path, "r", encoding="utf-8") as f:
+    with open(path, encoding="utf-8") as f:
         text = f.read()
     try:
         obj = json.loads(text)

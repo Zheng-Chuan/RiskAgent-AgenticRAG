@@ -9,14 +9,12 @@ from unittest.mock import patch
 
 import pytest
 from langchain_core.documents import Document
-
 from riskagent_agenticrag.rag.chunking import (
     _build_chunk_doc,
     _fallback_chunking,
     _llm_semantic_chunking,
     llm_semantic_split_document,
 )
-
 
 # ---------------------------------------------------------------------------
 # _fallback_chunking

@@ -78,7 +78,7 @@ class EvidenceBudget:
             替换旧证据的次数 (0 表示全部为新增或全部被丢弃)
         """
         replaced = 0
-        for doc, score in zip(docs, scores):
+        for doc, score in zip(docs, scores, strict=False):
             if self.add(doc, score, round, source):
                 replaced += 1
         return replaced

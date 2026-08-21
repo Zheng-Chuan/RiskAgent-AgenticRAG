@@ -7,7 +7,6 @@ import urllib.request
 from pathlib import Path
 
 from pydantic import SecretStr
-
 from riskagent_agenticrag.config.settings import settings
 from riskagent_agenticrag.evaluation.report_generator import generate_markdown_report
 from riskagent_agenticrag.evaluation.reporting import write_report

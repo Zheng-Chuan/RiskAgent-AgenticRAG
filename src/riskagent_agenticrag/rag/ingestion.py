@@ -5,13 +5,11 @@ from __future__ import annotations
 import hashlib
 import pathlib
 import re
-from typing import Any
 
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from riskagent_agenticrag.rag.chunking import llm_semantic_split_document
-
 
 # ---------------------------------------------------------------------------
 # Markdown 解析工具
@@ -111,7 +109,7 @@ def _markdown_sections(text: str) -> list[tuple[str, str, int, int, int]]:
 
 
 def _stable_parent_id(*, source: str, section_path: str, start_char: int, page: int) -> str:
-    material = f"{source}:{section_path}:{int(start_char)}:{int(page)}".encode("utf-8")
+    material = f"{source}:{section_path}:{int(start_char)}:{int(page)}".encode()
     return hashlib.sha1(material).hexdigest()[:12]
 
 
@@ -336,7 +334,7 @@ def _enrich_chunk_metadata(chunks: list[Document]) -> None:
             )
             c.metadata["parent_id"] = parent_id
 
-        material = f"{source}:{start_index}:{c.page_content}".encode("utf-8")
+        material = f"{source}:{start_index}:{c.page_content}".encode()
         digest = hashlib.sha1(material).hexdigest()[:12]
 
         c.metadata["chunk_index"] = i

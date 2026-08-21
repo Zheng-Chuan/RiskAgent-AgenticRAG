@@ -10,11 +10,10 @@ import pathlib
 
 import pytest
 from langchain_core.documents import Document
-
 from riskagent_agenticrag.rag.advanced_index import (
+    HYDE_CORPUS_FILENAME,
     PARENT_CORPUS_FILENAME,
     SUMMARY_CORPUS_FILENAME,
-    HYDE_CORPUS_FILENAME,
     _extractive_summary,
     _hyde_question,
     advanced_index_stats,
@@ -28,7 +27,6 @@ from riskagent_agenticrag.rag.advanced_index import (
     persist_parent_corpus,
     persist_summary_corpus,
 )
-
 
 # ---------------------------------------------------------------------------
 # _extractive_summary

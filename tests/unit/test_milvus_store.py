@@ -12,7 +12,6 @@ from pathlib import Path
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from riskagent_agenticrag.indexing.milvus_store import (
     MilvusStoreConfig,
     _default_lite_uri,
@@ -23,7 +22,6 @@ from riskagent_agenticrag.indexing.milvus_store import (
     insert_chunks,
     search,
 )
-
 
 # ---------------------------------------------------------------------------
 # _default_lite_uri

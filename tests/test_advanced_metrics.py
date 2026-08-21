@@ -3,8 +3,6 @@ from __future__ import annotations
 import importlib
 import unittest
 
-
-
 metrics_mod = importlib.import_module("riskagent_agenticrag.evaluation.advanced_metrics")
 compute_retrieval_metrics = metrics_mod.compute_retrieval_metrics
 compute_gate_metrics = metrics_mod.compute_gate_metrics

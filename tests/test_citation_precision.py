@@ -8,7 +8,9 @@ import unittest
 
 class Week6CitationPrecisionQualityTest(unittest.TestCase):
     def test_heuristic_citation_precision(self) -> None:
-        from riskagent_agenticrag.evaluation.citation_precision import try_compute_citation_precision
+        from riskagent_agenticrag.evaluation.citation_precision import (
+            try_compute_citation_precision,
+        )
 
         os.environ["EVAL_CITATION_JUDGE_MODE"] = "heuristic"
 
@@ -27,7 +29,9 @@ class Week6CitationPrecisionQualityTest(unittest.TestCase):
         self.assertEqual(out.details[0]["unsupported_sentences"], [])
 
     def test_heuristic_hallucination_rate(self) -> None:
-        from riskagent_agenticrag.evaluation.citation_precision import try_compute_citation_precision
+        from riskagent_agenticrag.evaluation.citation_precision import (
+            try_compute_citation_precision,
+        )
 
         os.environ["EVAL_CITATION_JUDGE_MODE"] = "heuristic"
 
@@ -56,7 +60,9 @@ class Week6CitationPrecisionQualityTest(unittest.TestCase):
     def test_llm_mode_falls_back_to_heuristic_when_judge_output_is_invalid(self) -> None:
         from unittest.mock import MagicMock, patch
 
-        from riskagent_agenticrag.evaluation.citation_precision import try_compute_citation_precision
+        from riskagent_agenticrag.evaluation.citation_precision import (
+            try_compute_citation_precision,
+        )
 
         samples = [
             {
@@ -79,7 +85,6 @@ class Week6CitationPrecisionQualityTest(unittest.TestCase):
         from unittest.mock import patch
 
         from pydantic import SecretStr
-
         from riskagent_agenticrag.config.settings import get_settings, settings
         from riskagent_agenticrag.evaluation.judge_llm import get_judge_llm
 
@@ -132,7 +137,9 @@ class Week6CitationPrecisionQualityTest(unittest.TestCase):
         from threading import Lock
         from unittest.mock import patch
 
-        from riskagent_agenticrag.evaluation.citation_precision import try_compute_citation_precision
+        from riskagent_agenticrag.evaluation.citation_precision import (
+            try_compute_citation_precision,
+        )
 
         samples = [
             {

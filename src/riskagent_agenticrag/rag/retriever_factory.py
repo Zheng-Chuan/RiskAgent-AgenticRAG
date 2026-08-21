@@ -3,8 +3,14 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
-from riskagent_agenticrag.rag.advanced_index_retriever import AdvancedIndexConfig, AdvancedIndexRetriever
-from riskagent_agenticrag.rag.dense_milvus_retriever import DenseMilvusRetriever, DenseMilvusRetrieverConfig
+from riskagent_agenticrag.rag.advanced_index_retriever import (
+    AdvancedIndexConfig,
+    AdvancedIndexRetriever,
+)
+from riskagent_agenticrag.rag.dense_milvus_retriever import (
+    DenseMilvusRetriever,
+    DenseMilvusRetrieverConfig,
+)
 from riskagent_agenticrag.rag.hybrid_retriever import HybridConfig, HybridRetriever
 from riskagent_agenticrag.rag.query_intelligence import QueryIntelConfig, QueryIntelligentRetriever
 from riskagent_agenticrag.rag.sparse_index import load_sparse_corpus

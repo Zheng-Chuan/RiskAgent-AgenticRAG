@@ -6,6 +6,7 @@ from dataclasses import dataclass
 from statistics import mean
 from typing import Any
 
+
 @dataclass(frozen=True)
 class RetrievalMetrics:
     metrics: dict[str, float]

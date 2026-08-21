@@ -11,7 +11,10 @@ from langchain_core.documents import Document
 @patch("riskagent_agenticrag.rag.advanced_index_retriever.load_summary_corpus", return_value=[])
 @patch("riskagent_agenticrag.rag.advanced_index_retriever.parent_corpus_by_id")
 def test_default_route_does_not_expand_without_parent_signal(mock_parent_by_id, _mock_summary, _mock_hyde):
-    from riskagent_agenticrag.rag.advanced_index_retriever import AdvancedIndexConfig, AdvancedIndexRetriever
+    from riskagent_agenticrag.rag.advanced_index_retriever import (
+        AdvancedIndexConfig,
+        AdvancedIndexRetriever,
+    )
 
     mock_parent_by_id.return_value = {
         "p1": Document(page_content="parent context " * 200, metadata={"parent_id": "p1", "parent_type": "section"})
@@ -54,7 +57,10 @@ def test_default_route_does_not_expand_without_parent_signal(mock_parent_by_id, 
 @patch("riskagent_agenticrag.rag.advanced_index_retriever.load_summary_corpus", return_value=[])
 @patch("riskagent_agenticrag.rag.advanced_index_retriever.parent_corpus_by_id")
 def test_default_route_expands_when_parent_signal_is_strong(mock_parent_by_id, _mock_summary, _mock_hyde):
-    from riskagent_agenticrag.rag.advanced_index_retriever import AdvancedIndexConfig, AdvancedIndexRetriever
+    from riskagent_agenticrag.rag.advanced_index_retriever import (
+        AdvancedIndexConfig,
+        AdvancedIndexRetriever,
+    )
 
     mock_parent_by_id.return_value = {
         "p1": Document(page_content="parent context " * 200, metadata={"parent_id": "p1", "parent_type": "section"})
@@ -98,7 +104,10 @@ def test_default_route_expands_when_parent_signal_is_strong(mock_parent_by_id, _
 @patch("riskagent_agenticrag.rag.advanced_index_retriever.load_summary_corpus", return_value=[])
 @patch("riskagent_agenticrag.rag.advanced_index_retriever.parent_corpus_by_id")
 def test_compare_route_expands_multiple_top_docs(mock_parent_by_id, _mock_summary, _mock_hyde):
-    from riskagent_agenticrag.rag.advanced_index_retriever import AdvancedIndexConfig, AdvancedIndexRetriever
+    from riskagent_agenticrag.rag.advanced_index_retriever import (
+        AdvancedIndexConfig,
+        AdvancedIndexRetriever,
+    )
 
     mock_parent_by_id.return_value = {
         "p1": Document(page_content="compare parent one " * 120, metadata={"parent_id": "p1", "parent_type": "section"}),
@@ -243,7 +252,10 @@ class TestExpandPolicy:
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.load_summary_corpus", return_value=[])
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.parent_corpus_by_id", return_value={})
     def test_compare_policy(self, _a, _b, _c):
-        from riskagent_agenticrag.rag.advanced_index_retriever import AdvancedIndexConfig, AdvancedIndexRetriever
+        from riskagent_agenticrag.rag.advanced_index_retriever import (
+            AdvancedIndexConfig,
+            AdvancedIndexRetriever,
+        )
 
         retriever = AdvancedIndexRetriever(
             base_retriever=MagicMock(),
@@ -258,7 +270,10 @@ class TestExpandPolicy:
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.load_summary_corpus", return_value=[])
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.parent_corpus_by_id", return_value={})
     def test_numeric_policy(self, _a, _b, _c):
-        from riskagent_agenticrag.rag.advanced_index_retriever import AdvancedIndexConfig, AdvancedIndexRetriever
+        from riskagent_agenticrag.rag.advanced_index_retriever import (
+            AdvancedIndexConfig,
+            AdvancedIndexRetriever,
+        )
 
         retriever = AdvancedIndexRetriever(
             base_retriever=MagicMock(),
@@ -273,7 +288,10 @@ class TestExpandPolicy:
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.load_summary_corpus", return_value=[])
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.parent_corpus_by_id", return_value={})
     def test_unknown_route_returns_default(self, _a, _b, _c):
-        from riskagent_agenticrag.rag.advanced_index_retriever import AdvancedIndexConfig, AdvancedIndexRetriever
+        from riskagent_agenticrag.rag.advanced_index_retriever import (
+            AdvancedIndexConfig,
+            AdvancedIndexRetriever,
+        )
 
         retriever = AdvancedIndexRetriever(
             base_retriever=MagicMock(),
@@ -350,7 +368,10 @@ class TestDebugStats:
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.load_summary_corpus", return_value=[])
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.parent_corpus_by_id", return_value={})
     def test_debug_stats_returns_all_fields(self, _a, _b, _c):
-        from riskagent_agenticrag.rag.advanced_index_retriever import AdvancedIndexConfig, AdvancedIndexRetriever
+        from riskagent_agenticrag.rag.advanced_index_retriever import (
+            AdvancedIndexConfig,
+            AdvancedIndexRetriever,
+        )
 
         base = MagicMock()
         retriever = AdvancedIndexRetriever(
@@ -370,7 +391,10 @@ class TestDebugStats:
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.load_summary_corpus", return_value=[])
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.parent_corpus_by_id", return_value={})
     def test_debug_stats_includes_base_debug(self, _a, _b, _c):
-        from riskagent_agenticrag.rag.advanced_index_retriever import AdvancedIndexConfig, AdvancedIndexRetriever
+        from riskagent_agenticrag.rag.advanced_index_retriever import (
+            AdvancedIndexConfig,
+            AdvancedIndexRetriever,
+        )
 
         base = MagicMock()
         base.debug_stats.return_value = {"dense_count": 10}
@@ -386,7 +410,10 @@ class TestDebugStats:
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.load_summary_corpus", return_value=[])
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.parent_corpus_by_id", return_value={})
     def test_debug_stats_handles_base_exception(self, _a, _b, _c):
-        from riskagent_agenticrag.rag.advanced_index_retriever import AdvancedIndexConfig, AdvancedIndexRetriever
+        from riskagent_agenticrag.rag.advanced_index_retriever import (
+            AdvancedIndexConfig,
+            AdvancedIndexRetriever,
+        )
 
         base = MagicMock()
         base.debug_stats.side_effect = RuntimeError("fail")
@@ -407,7 +434,10 @@ class TestInvokeEdgeCases:
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.load_summary_corpus", return_value=[])
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.parent_corpus_by_id", return_value={})
     def test_invoke_empty_base_returns_empty(self, _a, _b, _c):
-        from riskagent_agenticrag.rag.advanced_index_retriever import AdvancedIndexConfig, AdvancedIndexRetriever
+        from riskagent_agenticrag.rag.advanced_index_retriever import (
+            AdvancedIndexConfig,
+            AdvancedIndexRetriever,
+        )
 
         base = MagicMock(invoke=MagicMock(return_value=[]))
         retriever = AdvancedIndexRetriever(
@@ -422,7 +452,10 @@ class TestInvokeEdgeCases:
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.load_summary_corpus", return_value=[])
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.parent_corpus_by_id", return_value={})
     def test_invoke_strips_empty_query(self, _a, _b, _c):
-        from riskagent_agenticrag.rag.advanced_index_retriever import AdvancedIndexConfig, AdvancedIndexRetriever
+        from riskagent_agenticrag.rag.advanced_index_retriever import (
+            AdvancedIndexConfig,
+            AdvancedIndexRetriever,
+        )
 
         base = MagicMock(invoke=MagicMock(return_value=[]))
         retriever = AdvancedIndexRetriever(
@@ -438,7 +471,10 @@ class TestInvokeEdgeCases:
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.load_summary_corpus", return_value=[])
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.parent_corpus_by_id", return_value={})
     def test_invoke_limits_to_final_k(self, _a, _b, _c):
-        from riskagent_agenticrag.rag.advanced_index_retriever import AdvancedIndexConfig, AdvancedIndexRetriever
+        from riskagent_agenticrag.rag.advanced_index_retriever import (
+            AdvancedIndexConfig,
+            AdvancedIndexRetriever,
+        )
 
         base_docs = [
             Document(page_content=f"doc {i} " * 20, metadata={"coarse_score": 0.5, "chunk_id": f"c{i}"})
@@ -462,7 +498,10 @@ class TestParentScoreMap:
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.load_summary_corpus", return_value=[])
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.parent_corpus_by_id", return_value={})
     def test_empty_bm25_returns_empty(self, _a, _b, _c):
-        from riskagent_agenticrag.rag.advanced_index_retriever import AdvancedIndexConfig, AdvancedIndexRetriever
+        from riskagent_agenticrag.rag.advanced_index_retriever import (
+            AdvancedIndexConfig,
+            AdvancedIndexRetriever,
+        )
 
         base = MagicMock()
         retriever = AdvancedIndexRetriever(
@@ -477,8 +516,11 @@ class TestParentScoreMap:
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.load_summary_corpus", return_value=[])
     @patch("riskagent_agenticrag.rag.advanced_index_retriever.parent_corpus_by_id", return_value={})
     def test_empty_query_tokens_returns_empty(self, _a, _b, _c):
-        from riskagent_agenticrag.rag.advanced_index_retriever import AdvancedIndexConfig, AdvancedIndexRetriever
         from rank_bm25 import BM25Okapi
+        from riskagent_agenticrag.rag.advanced_index_retriever import (
+            AdvancedIndexConfig,
+            AdvancedIndexRetriever,
+        )
 
         summary_docs = [Document(page_content="text", metadata={"parent_id": "p1"})]
         base = MagicMock()

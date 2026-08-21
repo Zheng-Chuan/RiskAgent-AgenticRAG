@@ -7,8 +7,9 @@ import json
 import logging
 import pickle
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from functools import wraps
-from typing import Any, Callable, Generic, TypeVar
+from typing import Any, Generic, TypeVar
 
 from riskagent_agenticrag.config.settings import settings
 from riskagent_agenticrag.exceptions import CacheConnectionError, CacheError
@@ -24,27 +25,22 @@ class CacheBackend(ABC, Generic[T]):
     @abstractmethod
     def get(self, key: str) -> T | None:
         """获取缓存值."""
-        pass
 
     @abstractmethod
     def set(self, key: str, value: T, ttl: int | None = None) -> None:
         """设置缓存值."""
-        pass
 
     @abstractmethod
     def delete(self, key: str) -> None:
         """删除缓存值."""
-        pass
 
     @abstractmethod
     def clear(self) -> None:
         """清空所有缓存."""
-        pass
 
     @abstractmethod
     def exists(self, key: str) -> bool:
         """检查 key 是否存在."""
-        pass
 
 
 class InMemoryCache(CacheBackend[T]):

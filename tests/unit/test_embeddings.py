@@ -9,14 +9,12 @@ import os
 from unittest.mock import MagicMock, patch
 
 import pytest
-
 from riskagent_agenticrag.rag.embeddings import (
     HashEmbeddings,
     _build_openai_embeddings,
     build_embeddings,
     preload_embeddings_model,
 )
-
 
 # ---------------------------------------------------------------------------
 # HashEmbeddings
@@ -298,6 +296,7 @@ class TestHfCacheEnv:
     def test_local_embeddings_dir_replaces_slash(self):
         """_local_embeddings_dir 应把模型名中的 / 替换为 __."""
         from pathlib import Path
+
         from riskagent_agenticrag.rag.embeddings import _local_embeddings_dir
 
         with patch("riskagent_agenticrag.rag.embeddings.settings") as mock_settings:

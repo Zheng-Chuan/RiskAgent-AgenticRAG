@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-import pytest
-
 from riskagent_agenticrag.exceptions import (
     APIError,
     AuthenticationError,

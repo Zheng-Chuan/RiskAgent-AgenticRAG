@@ -6,8 +6,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
-
 mod = importlib.import_module("riskagent_agenticrag.evaluation.thresholds")
 evaluate_threshold_gate = mod.evaluate_threshold_gate
 load_thresholds = mod.load_thresholds

@@ -83,7 +83,7 @@ class TestWeek10AdvancedIndexingAcceptance(unittest.TestCase):
             saw_adv_score = True
 
             expanded = str(meta.get("expanded_text") or "")
-            if expanded and len(expanded) > len((d.page_content or "")):
+            if expanded and len(expanded) > len(d.page_content or ""):
                 saw_expanded = True
 
             sources = meta.get("indexing_sources") or []

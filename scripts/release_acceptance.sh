@@ -25,57 +25,40 @@ run_in_selected_env() {
 
 run_in_selected_env bash scripts/run_offline_regression.sh
 
+# 发布验收必须跑 fresh eval, 无 LLM key 直接报错终止, 不再回退样例报告
+if [ -z "${OPENAI_API_KEY:-}${LLM_API_KEY:-}" ]; then
+  echo "ERROR: release acceptance requires a fresh evaluation run." >&2
+  echo "Set OPENAI_API_KEY or LLM_API_KEY and re-run. Sample-report fallback has been removed." >&2
+  exit 1
+fi
+
 run_in_selected_env python - <<'PY'
-import os
 from pathlib import Path
 
-from riskagent_agenticrag.evaluation.reporting import load_report
+from riskagent_agenticrag.evaluation.run import run_evaluation
 from riskagent_agenticrag.evaluation.thresholds import evaluate_threshold_gate, load_thresholds
 
-threshold_path = Path("config/eval_thresholds.json")
-config = load_thresholds(threshold_path)
-sample_report_path = Path(".artifacts/reports/rag_eval_baseline_sample.json")
+config = load_thresholds(Path("config/eval_thresholds.json"))
 
-llm_key = (
-    os.getenv("OPENAI_API_KEY", "").strip()
-    or os.getenv("LLM_API_KEY", "").strip()
+report = run_evaluation(
+    corpus_dir=Path("corpus"),
+    dataset_path=Path("tests/data/questions.json"),
+    persist_dir=Path(".milvus"),
+    enable_ragas=False,
+    profile="all",
+    retrieval_ks=[1, 3, 5],
+    include_cost=False,
+    include_latency=False,
+    with_gate=True,
 )
-fresh_report_path = None
-
-if llm_key:
-    from riskagent_agenticrag.evaluation.run import run_evaluation
-
-    report = run_evaluation(
-        corpus_dir=Path("corpus"),
-        dataset_path=Path("tests/data/questions.json"),
-        persist_dir=Path(".milvus"),
-        enable_ragas=False,
-        profile="all",
-        retrieval_ks=[1, 3, 5],
-        include_cost=False,
-        include_latency=False,
-        with_gate=True,
-    )
-    gate = evaluate_threshold_gate(
-        report=report,
-        baseline_diff=None,
-        config=config,
-    )
-    report["threshold_gate"] = gate
-    assert report.get("answer_eval", {}).get("ok") is True
-    assert report.get("retrieval_metrics", {}).get("gold_metrics")
-    assert report.get("threshold_gate", {}).get("verdict") in {"pass", "warning"}
-    print("release acceptance passed with fresh evaluation")
-else:
-    report = load_report(sample_report_path)
-    gate = evaluate_threshold_gate(
-        report=report,
-        baseline_diff=((report.get("baseline") or {}).get("diff")),
-        config=config,
-    )
-    assert report.get("answer_eval", {}).get("ok") is True
-    assert report.get("retrieval_metrics", {}).get("gold_metrics")
-    assert report.get("threshold_gate", {}).get("verdict") == "pass"
-    assert gate.get("verdict") in {"pass", "warning"}
-    print("release acceptance passed with sample baseline fallback")
+gate = evaluate_threshold_gate(
+    report=report,
+    baseline_diff=None,
+    config=config,
+)
+report["threshold_gate"] = gate
+assert report.get("answer_eval", {}).get("ok") is True
+assert report.get("retrieval_metrics", {}).get("gold_metrics")
+assert report.get("threshold_gate", {}).get("verdict") in {"pass", "warning"}
+print("release acceptance passed with fresh evaluation")
 PY

@@ -35,10 +35,10 @@
 ## 当前仍未完成
 
 - gate_labels 样本量仍然偏小 统计显著性有限
-- ragas 副指标 `context_precision_no_ref=0.565` `answer_correctness=0.371` 偏低 未进 gate 属 slice 分析范畴
+- ragas 副指标 `context_precision_no_ref=0.543` `answer_correctness=0.328` 偏低 (v10d 口径) 未进 gate 属 slice 分析范畴
 - ragas judge 偶发 API 噪声 (400 `n should not greater than 1` 与超时), judge 稳定性待加固
-- v10c 后的 `50` 题全量复评尚未执行 (预期 `50/50`)
-- release acceptance 尚未用 v10b/v10c 报告重新执行
+
+(2026-08-21 更新: v10d 全量复评 50/50 已执行, release acceptance 已用 v10d 报告重跑通过, 两项收尾完成, 详见 [评测台账](../evaluations/EVALUATION_LOG.md))
 
 ## P0 必须先做
 

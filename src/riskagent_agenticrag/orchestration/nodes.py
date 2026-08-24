@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import logging
 import os
 import uuid
 from pathlib import Path
@@ -34,6 +35,8 @@ from riskagent_agenticrag.rag.self_rag import (
     should_require_numeric_backing,
 )
 from riskagent_agenticrag.validators.gates import validate_response
+
+logger = logging.getLogger(__name__)
 
 
 def _extract_doc_score(doc: Any) -> tuple[float, str]:
@@ -349,6 +352,17 @@ def node_retrieve_and_critique(state: AgenticState) -> AgenticState:
     if seal_error is not None:
         debug["seal_error"] = seal_error
     state["debug"] = debug
+
+    # SEAL-RAG 行为日志: 替换数 > 0 说明新证据挤掉了旧弱证据 (SEAL 真正生效的信号)
+    logger.info(
+        "seal_rag: round=%d docs_in=%d replacements=%d final_docs=%d capacity=%d%s",
+        next_round,
+        len(docs),
+        seal_replacements,
+        len(state["docs"]),
+        _seal_rag_capacity(),
+        f" error={seal_error}" if seal_error else "",
+    )
 
     state["critique_reason"] = critique_reason
     state["improved_query"] = improved_query

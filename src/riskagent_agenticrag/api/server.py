@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import logging
 import os
 import time
 import uuid
@@ -380,6 +381,12 @@ def v1_chat(request: Request, response: Response, req_body: dict[str, Any] = Bod
 def main() -> None:
     """启动 API 服务器."""
     import uvicorn
+    # 应用包默认无 logging 配置, INFO 级日志 (如 seal_rag 行为日志) 会被 root logger 吞掉.
+    # basicConfig 幂等: root 已有 handler 时不生效, 不影响 uvicorn 自身的日志配置.
+    logging.basicConfig(
+        level=os.getenv("RISKAGENT_LOG_LEVEL", "INFO"),
+        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    )
     host = os.getenv("RISKAGENT_API_HOST", DEFAULT_API_HOST)
     port = int(os.getenv("RISKAGENT_API_PORT", str(DEFAULT_API_PORT)))
     uvicorn.run("riskagent_agenticrag.api.server:app", host=host, port=port, reload=False)

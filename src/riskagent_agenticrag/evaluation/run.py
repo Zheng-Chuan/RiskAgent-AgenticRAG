@@ -19,6 +19,7 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 import argparse
 import json
+import logging
 import subprocess
 import time
 import urllib.request
@@ -642,6 +643,12 @@ def run_evaluation(
 
 
 def main() -> None:
+    # 应用包默认无 logging 配置, INFO 级日志 (如 seal_rag 行为日志) 会被 root logger 吞掉.
+    # basicConfig 幂等: root 已有 handler 时不生效, 不影响 uvicorn 等宿主的日志配置.
+    logging.basicConfig(
+        level=os.getenv("RISKAGENT_LOG_LEVEL", "INFO"),
+        format="%(asctime)s %(levelname)s %(name)s %(message)s",
+    )
     parser = argparse.ArgumentParser()
     parser.add_argument("--corpus-dir", default="corpus")
     parser.add_argument("--dataset", default="tests/data/questions.json")

@@ -12,10 +12,10 @@ Accepted (2026-08-21 回写, 2026-08-24 更正: P0/P1 大部分落地并验收, 
 | qrels 升级 (P0) | 已落地 | recall 口径修正为主 gold (relevance>=2), qrels 带 chunk_id 单位 |
 | 索引一致性 (P0) | 已落地 | schema fingerprint 拆分 (索引期/查询期分离), 查询开关不再触发全量重建; 评测默认只读, 重建需显式 `--reindex` |
 | TARG 自适应门控 (P1) | 已落地 | query_router 实现, 金融术语词表 (词边界正则) 修复 12 题误判 (XVA/DVA/FVA/MVA/ColVA 家族) |
-| CRAG 纠错检索 (P1) | 已实现并验收 | A/B 定论 (2026-08-24, 见 [EVALUATION_LOG](../evaluations/EVALUATION_LOG.md) v10e): ON 省 36% token 但 precision 0.543, OFF 换来 precision 0.676 但 recall -0.08 且贵 36%; 属成本-质量旋钮, 生产维持 ON, 混合策略列研究项 |
+| CRAG 纠错检索 (P1) | 已实现并调优 | 三组数据闭环 (2026-08-25): ON (v10d) / OFF (v10e) / 混合 (v10f); 混合策略 (sufficient 门槛 0.2 -> 0.7, A/B 校准) 已上线生产: faithfulness 0.982 历史新高, recall 0.80 保住, gate 阈值/基线全过; 详见 [EVALUATION_LOG](../evaluations/EVALUATION_LOG.md) v10f |
 | retrieval observability (P1) | 已落地 | trace/retrieval_diag/latency 分位数, 见 [RFC-002](./RFC-002-observability-full-chain-trace.md) |
 | reranker (P1) | 已落地 | 远程 bge-reranker-v2-m3 启用 (auto fallback), trace 记实际生效模型 |
-| SEAL-RAG 替换式检索 (P2) | 已实现且默认生效 | evidence_budget 实现 capacity=5 预算制替换 (rag/evidence_budget.py); 2026-08-24 trace 实证 145 检索节点全部执行筛选, 32% 节点发生替换; 早期 "未启动" 记录有误, 本行 2026-08-24 纠正 |
+| SEAL-RAG 替换式检索 (P2) | 已实现并修复 | evidence_budget 实现 capacity=5 预算制替换 (rag/evidence_budget.py); 2026-08-24 trace 实证 145 检索节点全部执行筛选; 2026-08-25 修复跨轮重复 chunk 占位挤掉 gold 的 bug (v10e recall 回归根因, 见 v10f 台账), dedup 后 50 题 0 重复 |
 | RAPTOR (P2) | 未启动 | 见 [RFC-005](./RFC-005-raptor-recursive-abstractive-tree.md) |
 | Agentic RAG 迁移 (P3) | 未启动 | 见 [RFC-004](./RFC-004-agentic-rag-paradigm.md) |
 

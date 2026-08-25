@@ -131,6 +131,7 @@ def compare_reports(
         "ragas_context_recall",
         "ragas_answer_correctness",
         "ragas_response_completeness",
+        "sentence_support_rate",
     }
     lower_better_explicit = {
         "hallucination_rate_in_citations",
@@ -142,6 +143,7 @@ def compare_reports(
         "latency_p99_ms",
         "cost_estimated_usd",
         "ragas_contradiction_score",
+        "contradiction_score",
     }
     out: dict[str, Any] = {}
     baseline_regression_metrics: list[str] = []

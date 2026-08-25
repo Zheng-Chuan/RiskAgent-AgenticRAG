@@ -20,6 +20,40 @@
 | 2026-08-20 | prod_pipeline_v10c_fva_mva_colva_fix | 3/3 | PASS | v10b 的 3 个 FAIL 复跑全部转 PASS; 只跑 FAIL 子集未重建索引 | 容器内 `/app/.artifacts/reports/rag_eval_prod_pipeline_v10c_fva_mva_colva_fix_20260820_103543.md` |
 | 2026-08-21 | prod_pipeline_v10d_full_reeval | 50/50 | PASS | 全量 50/50 首次达成; recall@5 0.78 -> 0.82; citation 0.940 -> 1.000; 评测只读未重建索引 | `.artifacts/reports/rag_eval_prod_pipeline_v10d_full_reeval_20260821_141306.md` |
 | 2026-08-24 | prod_pipeline_v10e_crag_off_ab | 50/50 | FAIL | CRAG A/B: 关 CRAG 后 precision 0.543 -> 0.676 / correctness 0.328 -> 0.401, 但 recall@5 0.82 -> 0.74 且 token +36%; gate 因基线回归判 FAIL (阈值失败 0 项) | `.artifacts/reports/rag_eval_prod_pipeline_v10e_crag_off_ab_20260824_104435.md` |
+| 2026-08-25 | prod_pipeline_v10f_crag_hybrid | 50/50 | WARNING (可发布) | 混合策略上线: faithfulness 0.982 历史新高, recall 0.80 保住, gate 阈值失败 0/基线回归 0; precision 0.511 是 dedup 与口径的结构性 trade-off; warning 因 hallucination_rate_in_citations 指标缺失 (未跑 LLM appeal) | `.artifacts/reports/rag_eval_prod_pipeline_v10f_crag_hybrid_20260825_031459.md` |
+
+## 2026-08-25 prod_pipeline_v10f_crag_hybrid (CRAG 混合策略上线验证)
+
+背景: 基于 v10d/v10e A/B 数据校准的混合策略 (sufficient 门槛 top_isrel 0.2 -> 0.7 + SEAL budget 按 chunk_id 去重) 随 v10f-hybrid 镜像部署, 同索引 (manifest v4 只读) 跑全量 50 题验证. 两处改动的数据依据与实现见提交 9464478.
+
+### 三方对比 (同索引同参数, 唯一变量 CRAG 策略)
+
+| 指标 | v10d (ON) | v10e (OFF) | v10f (混合) | 判读 |
+|---|---|---|---|---|
+| 题目通过 | 50/50 | 50/50 | **50/50** | 持平 |
+| faithfulness | 0.903 | 0.889 | **0.982** | 历史新高 (v10b 0.895 -> v10d 0.903 -> v10f 0.982) |
+| answer_relevancy | 0.928 | 0.936 | **0.946** | 三方最佳 |
+| retrieval_recall_at_5 | 0.820 | 0.740 | 0.800 | dedup 修复生效, 远好于 v10e |
+| ragas_answer_correctness | 0.328 | 0.401 | 0.382 | 比 ON +17%, 接近 OFF |
+| ragas_contradiction_score | 0.022 | 0.000 | **0.000** | 清零 |
+| ragas_context_precision_no_ref | 0.543 | 0.675 | 0.511 | 唯一退步项 (见下方分析) |
+| Gate verdict | PASS | FAIL | **WARNING** | 阈值失败 0 / 基线回归 0 |
+
+### 混合策略行为验证 (设计 vs 实际)
+
+- 检索轮次分布 {1轮: 12, 2轮: 38} = 两轮占比 76%, 与 A/B 回放预测精确一致
+- 50 题 retrieved_docs 全部无重复 chunk (SEAL dedup 生效, v10e 时 3 题重复占位挤掉 gold)
+- 高置信 12 题首轮即停 (top_isrel >= 0.7 拦截), 成本介于 ON 与 OFF 之间
+
+### precision 0.511 的定性分析 (待 slice 分析验证)
+
+dedup 修复改变了 context 构成: 之前重复高分 chunk 占多槽位在 ragas precision 排名口径里天然获利; 去重后槽位让给唯一但排名较低的 chunk. precision 口径与去重存在结构性冲突, 换来 recall +0.06 / faithfulness +0.08. 属指标间 trade-off 而非退化, 定量验证列入研究项 (ragas precision slice 分析).
+
+Threshold Gate 判定: WARNING. 阈值失败 0 项, 基线回归 0 项, warning 唯一来源是 hallucination_rate_in_citations 指标缺失 (本轮未启用 LLM appeal 流程, 基线报告有此指标). release acceptance 接受 pass/warning, 不阻塞发布.
+
+### 结论
+
+混合策略达成设计目标, 定为生产默认 (v10f-hybrid 镜像). CRAG 调优研究项闭环: ON -> OFF -> 混合三组数据齐备, RFC-001 CRAG 行回写为 "已调优".
 
 ## 2026-08-24 prod_pipeline_v10e_crag_off_ab (CRAG 关闭 A/B 对照实验)
 

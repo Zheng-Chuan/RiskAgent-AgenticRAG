@@ -44,6 +44,8 @@ WORKDIR /app
 COPY src/ /app/src/
 COPY corpus/ /app/corpus/
 COPY config/ /app/config/
+# 评测数据集 (50 题 + qrels) bake 进镜像, 避免每次重建 pod 后手动 kubectl cp
+COPY tests/data/ /app/tests/data/
 COPY pyproject.toml /app/
 
 # 持久化目录

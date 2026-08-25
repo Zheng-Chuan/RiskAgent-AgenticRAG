@@ -36,6 +36,27 @@ class EvaluationReportingTest(unittest.TestCase):
         diff = compare_reports(current_report=current, baseline_report=baseline, tolerance=0.05, minimum=0.0)
         self.assertTrue(diff["comparisons"]["citations_coverage"]["baseline_regression"])
 
+    def test_compare_reports_lower_is_better_improvement_not_regression(self) -> None:
+        """contradiction_score 属 lower-is-better, 下降是改善不应判回归 (v10e 误判案例)."""
+        baseline = {"metrics": {"contradiction_score": 0.022}}
+        current = {"metrics": {"contradiction_score": 0.0}}
+        diff = compare_reports(current_report=current, baseline_report=baseline, tolerance=0.0, minimum=0.0)
+        self.assertFalse(diff["comparisons"]["contradiction_score"]["baseline_regression"])
+
+    def test_compare_reports_lower_is_better_increase_is_regression(self) -> None:
+        """contradiction_score 上升是真回归."""
+        baseline = {"metrics": {"contradiction_score": 0.0}}
+        current = {"metrics": {"contradiction_score": 0.05}}
+        diff = compare_reports(current_report=current, baseline_report=baseline, tolerance=0.0, minimum=0.0)
+        self.assertTrue(diff["comparisons"]["contradiction_score"]["baseline_regression"])
+
+    def test_compare_reports_sentence_support_rate_is_higher_better(self) -> None:
+        """sentence_support_rate 以 _rate 结尾但属 higher-is-better, 上升不应判回归 (v10e 误判案例)."""
+        baseline = {"metrics": {"sentence_support_rate": 0.828}}
+        current = {"metrics": {"sentence_support_rate": 0.858}}
+        diff = compare_reports(current_report=current, baseline_report=baseline, tolerance=0.0, minimum=0.0)
+        self.assertFalse(diff["comparisons"]["sentence_support_rate"]["baseline_regression"])
+
     def test_write_report_keeps_gold_and_slice_retrieval_metrics(self) -> None:
         report = {
             "metrics": {"retrieval_recall_at_5": 0.8},

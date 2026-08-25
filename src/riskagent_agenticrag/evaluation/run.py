@@ -56,6 +56,8 @@ from riskagent_agenticrag.orchestration.langgraph_runner import run_langgraph_ag
 from riskagent_agenticrag.rag.pipeline import extract_citations
 from riskagent_agenticrag.rag.retriever_factory import build_retriever
 
+logger = logging.getLogger(__name__)
+
 
 def _utc_now_iso() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
@@ -337,12 +339,23 @@ def run_evaluation(
             retriever_debug = {}
 
     samples: list[dict[str, Any]] = []
-    for item in items:
+    total = len(items)
+    logger.info("eval_progress: phase=main_chain start total=%d", total)
+    for item_idx, item in enumerate(items, start=1):
         qid = str(item.item_id)
         question = str(item.question)
         t0 = time.perf_counter()
         out = run_langgraph_agentic_chat(question=question, retriever=retriever)
         latency_ms = (time.perf_counter() - t0) * 1000.0
+        # 每题进度日志: 序号/总数/题号/耗时/检索轮数, 便于长评测监控
+        _rounds_done = sum(
+            1 for _d in (out.get("decision_log") or [])
+            if "grade_docs" in str((_d or {}).get("step_id", ""))
+        )
+        logger.info(
+            "eval_progress: %d/%d qid=%s latency=%.1fs rounds=%d",
+            item_idx, total, qid, latency_ms / 1000.0, _rounds_done,
+        )
         answer = str(out.get("answer", ""))
         docs = out.get("docs", [])
         citations = out.get("citations")
@@ -413,8 +426,10 @@ def run_evaluation(
         )
 
     _debug_emit("A", "post_loop_complete", data={"samples": len(samples), "profile": str(profile or "all")})
+    logger.info("eval_progress: phase=main_chain done samples=%d", len(samples))
     cov = compute_citations_coverage(samples)
     citation_mode = os.getenv("EVAL_CITATION_JUDGE_MODE", "auto")
+    logger.info("eval_progress: phase=citation_precision start mode=%s samples=%d", citation_mode, len(samples))
     _debug_emit("A", "citation_precision_start", data={"mode": citation_mode, "samples": len(samples)})
     citation_precision_out = try_compute_citation_precision(samples=samples, mode=citation_mode)
     _debug_emit(
@@ -433,16 +448,19 @@ def run_evaluation(
         "details": citation_precision_out.details,
         "error": citation_precision_out.error,
     }
+    logger.info("eval_progress: phase=citation_precision done ok=%s", citation_precision_out.ok)
 
     # RAGAS metrics - Full metrics evaluation
     ragas_result = None
     if enable_ragas:
+        logger.info("eval_progress: phase=ragas start samples=%d (LLM judge 较慢, 可能需要 20-40 分钟)", len(samples))
         ragas_out = compute_all_ragas_metrics(
             samples=samples,
             include_reference_based=True,
             include_context_precision=True,
             include_low_priority=False,
         )
+        logger.info("eval_progress: phase=ragas done ok=%s metrics=%d", ragas_out.ok, len(ragas_out.metrics))
         ragas_result = {
             "enabled": ragas_out.enabled,
             "ok": ragas_out.ok,
@@ -750,7 +768,9 @@ def main() -> None:
     label = str(args.label).strip()
     if not label and args.stage:
         label = str(args.stage).strip()
+    logger.info("eval_progress: phase=report_write start label=%s", label or "default")
     out_path = write_report(report, artifacts_dir=args.artifacts_dir, label=label)
+    logger.info("eval_progress: ALL DONE report=%s", out_path)
     print(f"JSON Report: {out_path}")
 
     # Generate Markdown report

@@ -395,6 +395,58 @@ class TestSelfRag:
         assert strong.numeric_evidence is True
         assert strong.sufficient is True
 
+    def test_grade_docs_crag_hybrid_gating_high_confidence_sufficient(self):
+        """高置信检索 (top_isrel>=0.7) 应判 sufficient, 首轮即停."""
+        from riskagent_agenticrag.rag.self_rag import CRAG_SUFFICIENT_TOP_ISREL, grade_docs_crag
+
+        docs = [
+            Document(
+                page_content="FRTB trading book is the Fundamental Review of the Trading Book regulation framework",
+                metadata={"parent_id": "p1", "chunk_id": "c1"},
+            )
+        ]
+        result = grade_docs_crag(question="What is FRTB trading book?", docs=docs)
+        assert result.top_isrel >= CRAG_SUFFICIENT_TOP_ISREL
+        assert result.crag_tier == "sufficient"
+        assert result.sufficient is True
+
+    def test_grade_docs_crag_hybrid_gating_borderline_triggers_second_round(self):
+        """边界区 (top_isrel 在 [0.2, 0.7)) 应判 insufficient 触发纠错检索.
+
+        2026-08-24 v10d/v10e A/B 校准: 该区间第二轮平均 precision 收益 +0.165,
+        旧门槛 (top>=0.2) 会误判 sufficient 导致首轮即停.
+        """
+        from riskagent_agenticrag.rag.self_rag import CRAG_SUFFICIENT_TOP_ISREL, grade_docs_crag
+
+        docs = [
+            Document(
+                page_content="FRTB trading book framework overview",
+                metadata={"parent_id": "p1", "chunk_id": "c1"},
+            )
+        ]
+        result = grade_docs_crag(question="What is FRTB trading book?", docs=docs)
+        # 落在边界区: 旧门槛之上, 新门槛之下
+        assert 0.2 <= result.top_isrel < CRAG_SUFFICIENT_TOP_ISREL
+        assert result.claim_coverage >= 0.3
+        assert result.crag_tier == "insufficient"
+        assert result.sufficient is False
+
+    def test_grade_docs_crag_irrelevant_tier(self):
+        """完全不相关检索 (top<0.1 且 claim<0.15) 应判 irrelevant 触发降级."""
+        from riskagent_agenticrag.rag.self_rag import grade_docs_crag
+
+        docs = [
+            Document(
+                page_content="weather forecast sunny",
+                metadata={"parent_id": "p1", "chunk_id": "c1"},
+            )
+        ]
+        result = grade_docs_crag(question="What is FRTB trading book?", docs=docs)
+        assert result.top_isrel < 0.1
+        assert result.claim_coverage < 0.15
+        assert result.crag_tier == "irrelevant"
+        assert result.sufficient is False
+
     def test_grade_generation_ok(self):
         """grade_generation with no failure returns ok."""
         from riskagent_agenticrag.rag.self_rag import grade_generation

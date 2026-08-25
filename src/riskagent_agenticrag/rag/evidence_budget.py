@@ -24,6 +24,14 @@ class EvidenceEntry:
     source: str           # 来源 (dense/sparse/rerank/hybrid/coarse/unknown)
 
 
+def _doc_identity(doc: Document) -> str:
+    """文档唯一标识: chunk_id 优先, 缺失时退化为内容文本."""
+    cid = str((doc.metadata or {}).get("chunk_id") or "").strip()
+    if cid:
+        return f"cid:{cid}"
+    return f"content:{doc.page_content or ''}"
+
+
 class EvidenceBudget:
     """固定容量的证据集, 新证据替换最弱的.
 
@@ -31,6 +39,8 @@ class EvidenceBudget:
     - 容量固定 (默认 5)
     - 新证据进来时, 如果比最弱的强, 替换之
     - 避免 context dilution
+    - 同一 chunk 多轮重复出现时只占一个槽位 (按 chunk_id 去重, 分数取 max),
+      防止重复项挤掉其他 gold 证据 (2026-08-24 v10e 评测发现的 recall 回归根因)
     """
 
     def __init__(self, capacity: int = 5):
@@ -50,6 +60,16 @@ class EvidenceBudget:
             True 表示替换了已有最弱证据; False 表示直接新增或被丢弃
         """
         entry = EvidenceEntry(doc=doc, score=score, round=round, source=source)
+
+        # 去重: 同一 chunk 已在 budget 中时不占新槽位, 分数取 max 并刷新轮次
+        identity = _doc_identity(doc)
+        for existing in self._entries:
+            if _doc_identity(existing.doc) == identity:
+                if score > existing.score:
+                    existing.score = score
+                    existing.round = round
+                    self._entries.sort(key=lambda e: e.score, reverse=True)
+                return False  # 已存在, 未发生替换
 
         # 容量未满, 直接加入并按分数降序排序
         if len(self._entries) < self.capacity:

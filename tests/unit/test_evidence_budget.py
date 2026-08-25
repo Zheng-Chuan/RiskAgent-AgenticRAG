@@ -143,3 +143,71 @@ def test_stats_with_entries():
     assert abs(stats["avg_score"] - 0.7) < 0.01
     assert set(stats["sources"]) == {"dense", "sparse"}
     assert set(stats["rounds"]) == {1, 2}
+
+
+# ===========================================================================
+# dedup: 同一 chunk 跨轮重复出现只占一个槽位
+# ===========================================================================
+
+@pytest.mark.unit
+def test_add_duplicate_chunk_does_not_occupy_new_slot():
+    """同一 chunk_id 重复 add 不应占新槽位 (v10e recall 回归根因修复)."""
+    from riskagent_agenticrag.rag.evidence_budget import EvidenceBudget
+
+    budget = EvidenceBudget(capacity=5)
+    budget.add(_make_doc("doc1", "c1"), score=0.8, round=1, source="dense")
+    # 第二轮检索又检回同一 chunk, 分数更低
+    budget.add(_make_doc("doc1", "c1"), score=0.5, round=2, source="rerank")
+    assert len(budget.get_docs()) == 1
+    # 分数保留较高的那个
+    assert budget.get_scores() == [0.8]
+
+@pytest.mark.unit
+def test_add_duplicate_chunk_updates_score_to_max():
+    """同一 chunk 以更高分数再次出现时应更新分数, 仍只占一个槽位."""
+    from riskagent_agenticrag.rag.evidence_budget import EvidenceBudget
+
+    budget = EvidenceBudget(capacity=5)
+    budget.add(_make_doc("doc1", "c1"), score=0.5, round=1, source="dense")
+    budget.add(_make_doc("doc1", "c1"), score=0.9, round=2, source="rerank")
+    assert len(budget.get_docs()) == 1
+    assert budget.get_scores() == [0.9]
+
+@pytest.mark.unit
+def test_merge_duplicate_frees_slot_for_gold():
+    """重复 chunk 不再挤占槽位, 其他证据能进入 budget.
+
+    场景还原 v10e q14: 第一轮 5 个 chunk, 第二轮检索回其中 2 个重复项.
+    修复前: 重复项占 2 个槽位, 挤掉 gold; 修复后: gold 保留.
+    """
+    from riskagent_agenticrag.rag.evidence_budget import EvidenceBudget
+
+    budget = EvidenceBudget(capacity=3)
+    # 第一轮: 3 个 chunk 装满
+    budget.merge(
+        [_make_doc("a", "c1"), _make_doc("b", "c2"), _make_doc("gold", "c3")],
+        [0.9, 0.8, 0.3], round=1, source="dense",
+    )
+    # 第二轮: c1 c2 重复出现 (分数更高), 另有新 chunk c4
+    replaced = budget.merge(
+        [_make_doc("a", "c1"), _make_doc("b", "c2"), _make_doc("new", "c4")],
+        [0.95, 0.85, 0.4], round=2, source="rerank",
+    )
+    docs = budget.get_docs()
+    chunk_ids = [d.metadata["chunk_id"] for d in docs]
+    # 重复项只占一个槽位, c4 得以进入, gold (c3) 被更强的新证据替换属正常竞争
+    assert chunk_ids.count("c1") == 1
+    assert chunk_ids.count("c2") == 1
+    assert len(chunk_ids) == len(set(chunk_ids))  # 无重复
+    assert replaced == 1  # 只有 c4 替换了 gold, 两个重复项不再挤占
+
+@pytest.mark.unit
+def test_add_doc_without_chunk_id_dedup_by_content():
+    """无 chunk_id 的 doc 按内容去重."""
+    from riskagent_agenticrag.rag.evidence_budget import EvidenceBudget
+
+    budget = EvidenceBudget(capacity=5)
+    budget.add(Document(page_content="same content"), score=0.5, round=1, source="dense")
+    budget.add(Document(page_content="same content"), score=0.7, round=2, source="rerank")
+    assert len(budget.get_docs()) == 1
+    assert budget.get_scores() == [0.7]

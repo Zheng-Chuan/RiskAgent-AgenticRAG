@@ -2,12 +2,23 @@
 
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass, replace
 from typing import Any
 
 from langchain_core.documents import Document
 
 from riskagent_agenticrag.rag.utils import token_set
+
+# CRAG 混合门控阈值 (2026-08-24 v10d/v10e A/B 数据校准):
+# - v10d (CRAG ON, sufficient 门槛 top_isrel>=0.2): 50 题全部首轮即停, precision 0.543
+# - v10e (CRAG OFF, LLM critique 门控): 90% 题两轮, precision 0.676 但 token +36% 且 recall@5 -0.08
+# - A/B 回放显示 top_isrel>=0.7 的高置信题跑第二轮收益仅 +0.027 且含 2 个受损题;
+#   [0.2, 0.7) 边界区第二轮平均 precision 收益 +0.165
+# 因此把 sufficient 门槛提到 0.7: 高置信题首轮即停 (省成本), 边界区触发纠错检索 (拿精度)
+CRAG_SUFFICIENT_TOP_ISREL = float(
+    os.getenv("RISKAGENT_CRAG_SUFFICIENT_TOP_ISREL", "0.7")
+)
 
 _QUESTION_STOPWORDS = {
     "a",
@@ -408,12 +419,13 @@ def grade_docs(*, question: str, docs: list[Document]) -> SelfRagRetrievalGrade:
 
 
 def grade_docs_crag(*, question: str, docs: list[Document]) -> SelfRagRetrievalGrade:
-    """CRAG 三档纠错检索评估 (FR-10).
+    """CRAG 三档纠错检索评估 (FR-10, 混合门控版).
 
     复用现有 grade_docs 的二档评估结果, 基于相关性信号映射到三档:
     - irrelevant: top_isrel < 0.1 且 claim_coverage < 0.15 (检索完全不相关, 触发扩大 top_k)
-    - sufficient: top_isrel >= 0.2 且 claim_coverage >= 0.3 (检索充分, 保持原 sufficient 逻辑)
-    - insufficient: 其他情况 (检索部分相关但不充分, 触发重写查询再检索)
+    - sufficient: top_isrel >= CRAG_SUFFICIENT_TOP_ISREL (默认 0.7) 且 claim_coverage >= 0.3
+      (高置信检索, 首轮即停; 门槛由 v10d/v10e A/B 数据校准, 见常量注释)
+    - insufficient: 其他情况 (含 [0.2, 0.7) 边界区, 触发重写查询再检索)
 
     crag_tier="sufficient" 时同步设置 sufficient=True, 其余档位 sufficient=False.
     该函数不修改 grade_docs, 通过 dataclasses.replace 生成带 crag_tier 的副本.
@@ -422,10 +434,10 @@ def grade_docs_crag(*, question: str, docs: list[Document]) -> SelfRagRetrievalG
     top_isrel = float(base.top_isrel)
     claim_coverage = float(base.claim_coverage)
 
-    # 三档映射: 先判 irrelevant, 再判 sufficient, 剩余归 insufficient
+    # 三档映射: 先判 irrelevant, 再判 sufficient (高置信), 剩余归 insufficient (边界区 + 低置信)
     if top_isrel < 0.1 and claim_coverage < 0.15:
         tier = "irrelevant"
-    elif top_isrel >= 0.2 and claim_coverage >= 0.3:
+    elif top_isrel >= CRAG_SUFFICIENT_TOP_ISREL and claim_coverage >= 0.3:
         tier = "sufficient"
     else:
         tier = "insufficient"

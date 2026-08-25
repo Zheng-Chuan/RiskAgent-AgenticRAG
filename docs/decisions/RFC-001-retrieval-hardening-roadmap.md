@@ -2,9 +2,9 @@
 
 ## 状态
 
-Accepted (2026-08-21 回写: P0/P1 大部分落地, P2/P3 未启动, 见下方落地情况)
+Accepted (2026-08-21 回写, 2026-08-24 更正: P0/P1 大部分落地并验收, P2 中 SEAL-RAG 已实现且默认生效, RAPTOR 与 P3 未启动, 见下方落地情况)
 
-## 落地情况 (2026-08-21 核实)
+## 落地情况 (2026-08-21 核实, 2026-08-24 增补 CRAG 验收与 SEAL-RAG 纠正)
 
 | 提案项 | 状态 | 说明 |
 |---|---|---|
@@ -12,10 +12,10 @@ Accepted (2026-08-21 回写: P0/P1 大部分落地, P2/P3 未启动, 见下方�
 | qrels 升级 (P0) | 已落地 | recall 口径修正为主 gold (relevance>=2), qrels 带 chunk_id 单位 |
 | 索引一致性 (P0) | 已落地 | schema fingerprint 拆分 (索引期/查询期分离), 查询开关不再触发全量重建; 评测默认只读, 重建需显式 `--reindex` |
 | TARG 自适应门控 (P1) | 已落地 | query_router 实现, 金融术语词表 (词边界正则) 修复 12 题误判 (XVA/DVA/FVA/MVA/ColVA 家族) |
-| CRAG 纠错检索 (P1) | 已实现 | CRAG 三档策略代码已合入 (agents/strategies), 效果未单独验收 |
+| CRAG 纠错检索 (P1) | 已实现并验收 | A/B 定论 (2026-08-24, 见 [EVALUATION_LOG](../evaluations/EVALUATION_LOG.md) v10e): ON 省 36% token 但 precision 0.543, OFF 换来 precision 0.676 但 recall -0.08 且贵 36%; 属成本-质量旋钮, 生产维持 ON, 混合策略列研究项 |
 | retrieval observability (P1) | 已落地 | trace/retrieval_diag/latency 分位数, 见 [RFC-002](./RFC-002-observability-full-chain-trace.md) |
 | reranker (P1) | 已落地 | 远程 bge-reranker-v2-m3 启用 (auto fallback), trace 记实际生效模型 |
-| SEAL-RAG 替换式检索 (P2) | 未启动 | revise loop 仍为追加式 |
+| SEAL-RAG 替换式检索 (P2) | 已实现且默认生效 | evidence_budget 实现 capacity=5 预算制替换 (rag/evidence_budget.py); 2026-08-24 trace 实证 145 检索节点全部执行筛选, 32% 节点发生替换; 早期 "未启动" 记录有误, 本行 2026-08-24 纠正 |
 | RAPTOR (P2) | 未启动 | 见 [RFC-005](./RFC-005-raptor-recursive-abstractive-tree.md) |
 | Agentic RAG 迁移 (P3) | 未启动 | 见 [RFC-004](./RFC-004-agentic-rag-paradigm.md) |
 

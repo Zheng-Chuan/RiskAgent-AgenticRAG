@@ -19,6 +19,47 @@
 | 2026-08-18 | prod_pipeline_v10b_targ_rerank_recallfix | 47/50 | PASS | gate 首次全绿; recall@5 0.373 -> 0.78; 3 FAIL 均为 TARG 词表缺失 | `.artifacts/reports/rag_eval_prod_pipeline_v10b_targ_rerank_recallfix_20260818_073514.md` |
 | 2026-08-20 | prod_pipeline_v10c_fva_mva_colva_fix | 3/3 | PASS | v10b 的 3 个 FAIL 复跑全部转 PASS; 只跑 FAIL 子集未重建索引 | 容器内 `/app/.artifacts/reports/rag_eval_prod_pipeline_v10c_fva_mva_colva_fix_20260820_103543.md` |
 | 2026-08-21 | prod_pipeline_v10d_full_reeval | 50/50 | PASS | 全量 50/50 首次达成; recall@5 0.78 -> 0.82; citation 0.940 -> 1.000; 评测只读未重建索引 | `.artifacts/reports/rag_eval_prod_pipeline_v10d_full_reeval_20260821_141306.md` |
+| 2026-08-24 | prod_pipeline_v10e_crag_off_ab | 50/50 | FAIL | CRAG A/B: 关 CRAG 后 precision 0.543 -> 0.676 / correctness 0.328 -> 0.401, 但 recall@5 0.82 -> 0.74 且 token +36%; gate 因基线回归判 FAIL (阈值失败 0 项) | `.artifacts/reports/rag_eval_prod_pipeline_v10e_crag_off_ab_20260824_104435.md` |
+
+## 2026-08-24 prod_pipeline_v10e_crag_off_ab (CRAG 关闭 A/B 对照实验)
+
+背景: RFC-001 P1 的 CRAG 三档纠错检索已合入生产链路但从未单独验收. 本次在同容器同索引 (manifest v4 只读) 下, 仅通过环境变量 `RISKAGENT_SELF_RAG=false` 关闭 CRAG, 其余参数与 v10d 完全一致, 跑全量 50 题对照, 定量回答 "CRAG 值不值得开".
+
+环境: k8s 容器 `riskagent-api-868bb4d479-lmwnm` (镜像 v10d-fix), 索引 2393 chunks (manifest v4), 评测只读未重建索引, A 组基线复用 v10d 报告.
+
+### A/B 指标对比
+
+| 指标 | v10d (CRAG ON) | v10e (CRAG OFF) | Δ | 判读 |
+|---|---|---|---|---|
+| 题目通过 | 50/50 | 50/50 | 0 | 两组题目级均全过 |
+| citation_coverage | 1.000 | 1.000 | 0 | 持平 |
+| faithfulness | 0.903 | 0.889 | -0.015 | 微降 |
+| answer_relevancy | 0.928 | 0.936 | +0.007 | 微升 |
+| retrieval_recall_at_5 | 0.820 | 0.740 | **-0.080** | OFF 组召回下降但仍高于阈值 0.60 |
+| retrieval_mrr | 0.690 | 0.650 | -0.040 | OFF 组略降 |
+| ragas context_precision_no_ref | 0.543 | **0.676** | **+0.133** | OFF 组大幅改善 (v10d 最大短板) |
+| ragas answer_correctness | 0.328 | **0.401** | **+0.072** | OFF 组改善 |
+| ragas contradiction_score | 0.022 | 0.000 | -0.022 | OFF 组清零 |
+| ragas context_recall | 0.907 | 0.878 | -0.029 | OFF 组略降 |
+
+### 成本对比 (trace 层统计)
+
+| 维度 | CRAG ON | CRAG OFF | Δ |
+|---|---|---|---|
+| 检索轮次分布 | 50 题全部 1 轮 | 5 题 1 轮 / 45 题 2 轮 | OFF 组 90% 题目触发第二轮 |
+| 端到端延迟 p50 | 14.0s | 17.8s | OFF 组 +27% |
+| token 总量 (prompt+completion) | 71.7K | 97.2K | OFF 组 +36% |
+
+Threshold Gate 判定: **FAIL** (基线回归 6 项: context_recall -0.029 / faithfulness -0.015 / domain_consistency -0.009 / numeric_consistency -0.017 / contradiction_score -0.022 / ragas_faithfulness 同 faithfulness; 阈值失败 0 项). 注意 gate 的 baseline regression 判定以 v10d 为基线, A/B 实验组小幅回退被正确捕获.
+
+### 结论
+
+CRAG 是成本-质量交换旋钮, 无免费午餐: ON 组省 36% token 快 27% 但 precision 0.543 是短板; OFF 组用 36% 成本换 precision +0.133 / correctness +0.072, 代价是 recall -0.08 和 gate 基线回归. 两组题目级都是 50/50, 生产 default (CRAG ON) 维持现状仍过发布阈值; precision 短板的更优解是混合策略 (只对低置信题触发第二轮), 已列入研究项.
+
+### 观察项
+
+- gate 对 lower-is-better 指标方向疑似有 bug: `contradiction_score` 0.022 -> 0.0 是改善却被判 baseline_regression, 待修
+- A/B 期间实证 SEAL-RAG 行为: 145 个检索节点全部执行 capacity=5 筛选, CRAG ON 时替换数为 0 (首轮即停), CRAG OFF 时 46/145 节点发生 1-6 次替换; 结论: SEAL 替换机制依赖多轮循环, CRAG 开启会抑制替换行为
 
 ## 2026-08-21 prod_pipeline_v10d_full_reeval (50 题全量复评, 发布闭环)
 

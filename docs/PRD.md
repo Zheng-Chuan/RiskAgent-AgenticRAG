@@ -81,9 +81,12 @@
 | :--- | :--- | :--- | :--- |
 | Phase 0 | 对齐项目边界和文档口径 | ✓ 完成 | [phase-0-alignment.md](./phases/phase-0-alignment.md) |
 | Phase 1 | 收敛统一高可信 RAG 主链 | ✓ 完成 | [phase-1-unified-rag-pipeline.md](./phases/phase-1-unified-rag-pipeline.md) |
-| Phase 2 | 检索与召回强化 | △ 部分完成 | [phase-2-retrieval-hardening.md](./phases/phase-2-retrieval-hardening.md) |
-| Phase 3 | 评测与门禁强化 | △ 部分完成 | [phase-3-evaluation-hardening.md](./phases/phase-3-evaluation-hardening.md) |
-| Phase 4 | 发布与回归稳定化 | △ 部分完成 | [phase-4-release-readiness.md](./phases/phase-4-release-readiness.md) |
+| Phase 2 | 检索与召回强化 | ✓ 完成 | [phase-2-retrieval-hardening.md](./phases/phase-2-retrieval-hardening.md) |
+| Phase 3 | 评测与门禁强化 | ✓ 完成 | [phase-3-evaluation-hardening.md](./phases/phase-3-evaluation-hardening.md) |
+| Phase 4 | 发布与回归稳定化 | ✓ 完成 | [phase-4-release-readiness.md](./phases/phase-4-release-readiness.md) |
+| Phase 5 | 前沿对齐 (评测学 / 长上下文基线 / 语料索引 / 架构覆盖) | 计划中 | [phase-5-frontier-alignment.md](./phases/phase-5-frontier-alignment.md) |
+
+(第一轮 2026-08-25 收口: 全部阶段完成, 未启动的方向已取消, 见 [RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md); 2026-10-06 经业界前沿对齐审计重开第二轮, 见 [RFC-006](./decisions/RFC-006-frontier-gap-closing-roadmap.md))
 
 ---
 
@@ -94,11 +97,11 @@
 | 统一默认检索主链 | Decided | [ADR-001](./decisions/ADR-001-unified-retrieval-pipeline.md) |
 | 证据优先和后置 gate | Decided | [ADR-002](./decisions/ADR-002-evidence-first-validation.md) |
 | 评测优先于演示口径 | Decided | [ADR-003](./decisions/ADR-003-evaluation-first-release-gate.md) |
-| 下一阶段检索强化提案 | Accepted (P0/P1 已落地) | [RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md) |
-| 全链路可观测性 | Accepted (P0/P1 已落地) | [RFC-002](./decisions/RFC-002-observability-full-chain-trace.md) |
+| 下一阶段检索强化提案 | Closed (全部落地或取消) | [RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md) |
+| 全链路可观测性 | Closed (P0/P1 已落地) | [RFC-002](./decisions/RFC-002-observability-full-chain-trace.md) |
 | Contextual Retrieval | Implemented (默认关闭) | [RFC-003](./decisions/RFC-003-contextual-retrieval.md) |
-| Agentic RAG 范式迁移 | Proposed | [RFC-004](./decisions/RFC-004-agentic-rag-paradigm.md) |
-| RAPTOR 递归摘要树索引 | Proposed | [RFC-005](./decisions/RFC-005-raptor-recursive-abstractive-tree.md) |
+| Agentic RAG 检索工具化 | Closed (阶段一已实现默认关闭, 迁移取消) | [RFC-004](./decisions/RFC-004-agentic-rag-paradigm.md) |
+| 前沿差距收口路线图 (评测学/长上下文基线/语料索引/架构覆盖) | Proposed | [RFC-006](./decisions/RFC-006-frontier-gap-closing-roadmap.md) |
 
 ---
 
@@ -118,8 +121,6 @@
 | FR-10 | 系统必须支持 CRAG 三档纠错检索 (sufficient/insufficient/irrelevant) | [RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md) |
 | FR-11 | 系统必须支持 TARG 自适应检索门控 (简单查询跳过检索) | [RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md) |
 | FR-12 | 系统必须支持 SEAL-RAG 替换式检索 (固定 budget 避免膨胀) | [RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md) |
-| FR-13 | 系统必须支持 Agentic RAG 模型自主检索 (长期) | [RFC-004](./decisions/RFC-004-agentic-rag-paradigm.md) |
-| FR-14 | 系统必须支持 RAPTOR 递归摘要树索引 (长期) | [RFC-005](./decisions/RFC-005-raptor-recursive-abstractive-tree.md) |
 
 ---
 
@@ -133,15 +134,19 @@
 
 ---
 
-## 9. 当前主要问题
+## 9. 当前状态 (2026-08-25 收口终态)
 
-- qrels 已经优先使用 `chunk_id` gold 标注 且 retrieval eval 已进一步收紧为结构化定位优先
-- Self-RAG 充分性判断已经有题型感知版本 但整体仍偏轻量 主要依赖规则指标和 critique
-- 索引一致性已经引入 `schema_fingerprint` 和 manifest v2 但评测报告里还缺少稳定的 index version 回写
-- 发布门禁已经支持 `有 LLM key 跑 fresh eval 无 LLM key 回退 sample smoke`
-- 当前最新真实新报告是 `5` 题 smoke eval 它已经验证外部 LLM 配置可打通统一主链 但 `threshold gate` 仍然失败
-- full dataset fresh baseline 还没有正式落盘 因此还不能把当前版本当成新的强基线
-- 文档口径已经开始收口 但仍要持续和实现 测试 报告保持同频
+- qrels 已升级为 `chunk_id` 级 gold, recall 分母只计主 gold (relevance>=2), `qrels_gap_allowlist.json` 保持清空
+- Self-RAG 已升级为 CRAG 三档评估, v10f 混合策略 (sufficient 门槛 0.7) 为生产默认
+- 评测报告已落盘 `index_schema_version` `index_schema_fingerprint` `resolved_reranker_model` 等元信息, 可复现
+- 发布门禁强制 fresh eval 口径: 无 `LLM key` 直接报错终止 (2026-08-21 起样例报告回退已移除)
+- 最新全量报告 v10f: `50/50` PASS, `faithfulness=0.982` `retrieval_recall_at_5=0.80` `citation_coverage=1.000`, gate 阈值/基线全过, release acceptance 已以此重跑通过
+- 文档口径已收口: 关键数字均可映射到具体报告文件
+
+### 已知边界
+
+- gate_labels 样本量偏小, 统计显著性有限 (由 [Phase 5](./phases/phase-5-frontier-alignment.md) A1/A2 解决)
+- ragas 副指标 `context_precision_no_ref` / `answer_correctness` 偏低且未进 gate, 已由 [PRECISION_SLICE_ANALYSIS](./evaluations/PRECISION_SLICE_ANALYSIS.md) 定量归因 (口径假象为主), 不再调整口径
 
 ---
 

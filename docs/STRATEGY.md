@@ -23,8 +23,8 @@
 - 做高可信回答和结构化证据链
 - 做 retrieval first 的评测和发布门禁
 - 做可复现的索引 评测 报告和回归
-- 做全链路可观测和退化告警
-- 持续对齐业界最新 RAG 范式
+- 做全链路可观测 (退化告警经评估后不做, 见 [RFC-002](./decisions/RFC-002-observability-full-chain-trace.md))
+- 选择性引入业界最新 RAG 范式 (第一轮 2026-08-25 收口; 2026-10-06 经前沿对齐审计重开第二轮, 见 [RFC-006](./decisions/RFC-006-frontier-gap-closing-roadmap.md))
 
 ### 2.2 我们不做什么
 
@@ -57,9 +57,9 @@
 
 ### 3.4 范式前沿
 
-- 持续追踪学术界 2025-2026 最新 RAG 范式
-- 选择性引入: Contextual Retrieval / CRAG / TARG / SEAL-RAG / Agentic RAG / RAPTOR
+- 项目期内追踪并选择性引入了学术界 2025-2026 RAG 范式: Contextual Retrieval (已实现默认关闭) / CRAG / TARG / SEAL-RAG 已落地, Agentic RAG 检索工具化已实现 (默认关闭), RAPTOR 评估后取消
 - 不盲目追新, 只引入能直接提升召回/精度/效率的范式
+- 第一轮已收口 (2026-08-25); 2026-10 前沿对齐审计判断下一瓶颈在评测学 (评测集规模与题型锁死了技术决策的可验证性), 第二轮 [RFC-006](./decisions/RFC-006-frontier-gap-closing-roadmap.md) 聚焦评测学 / 长上下文基线 / 语料索引 / 架构覆盖, 不动检索主链
 
 ---
 
@@ -68,70 +68,44 @@
 - 对这个项目最值钱的不是继续堆重型 agent 流程
 - 更值钱的是把 `qrels` `检索充分性判断` `索引一致性` `rerank` `领域评测` 做硬
 - Enhanced RAG 在很多真实场景下仍然比重型 agentic RAG 更稳 更便宜 更容易验收
-- 但要持续吸收新范式的优点, 不能停在 2023 年的 Advanced RAG 水平
+- 项目期内已吸收新范式的优点 (CRAG/TARG/SEAL-RAG 等), 未停留在 2023 年的 Advanced RAG 水平
 
 ---
 
-## 5. 接下来最值得投入的方向
+## 5. 已完成的投入 (2026-08-25 收口)
 
 ### 5.1 第一优先级 (P0)
 
-- Contextual Retrieval: 索引时注入上下文摘要, 直接提升 recall ([RFC-003](./decisions/RFC-003-contextual-retrieval.md))
-- 把 retrieval eval 从宽松 text 匹配继续升级到更硬的 evidence unit
-- 把索引和 retriever cache 做成真正的版本化一致性机制
+- Contextual Retrieval: 已实现, 默认关闭 (Qwen3-Embedding-4B 下 briefs 稀释术语信号), 见 [RFC-003](./decisions/RFC-003-contextual-retrieval.md)
+- retrieval eval 从宽松 text 匹配升级到 chunk_id 级 evidence unit
+- 索引和 retriever cache 版本化一致性机制 (schema fingerprint 拆分)
 
 ### 5.2 第二优先级 (P1)
 
-- CRAG 纠错检索: 把 Self-RAG 升级为三档评估 (sufficient/insufficient/irrelevant) ([RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md))
-- TARG 自适应门控: 简单查询跳过检索, 减少 50%+ 不必要调用 ([RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md))
-- 强化数值型问题上的 typed evidence 和 numeric gate
-- 做 token latency budget 和降级策略
+- CRAG 纠错检索: Self-RAG 升级为三档评估, ON/OFF/混合三组 A/B 数据闭环, 混合策略已上线生产 ([RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md))
+- TARG 自适应门控: 简单查询跳过 fanout, 金融术语词表修复 12 题误判 ([RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md))
+- 数值型问题上的 typed evidence 和 numeric gate
+- token latency budget 与降级策略
 
 ### 5.3 可观测性 (跨阶段基础设施)
 
 - 全链路 trace: 每次请求的 rewrite -> retrieve -> critique -> revise -> synthesize -> validate 全过程可追踪
 - 检索诊断: dense/sparse/rerank/diversity 每个环节的延迟 返回数 过滤原因
-- 退化告警: 自动发现 recall / faithfulness 退化 不依赖人工跑评测
-- 详见 [RFC-002](./decisions/RFC-002-observability-full-chain-trace.md)
+- 退化告警未实现 (收口决策: 不做, 质量退化依赖人工跑评测), 见 [RFC-002](./decisions/RFC-002-observability-full-chain-trace.md)
 
 ### 5.4 第三优先级 (P2)
 
-- SEAL-RAG 替换式检索: 固定 budget 替换最弱证据, 避免 context 膨胀 ([RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md))
-- RAPTOR 递归摘要树: 多层级索引, 支持宏观问题 ([RFC-005](./decisions/RFC-005-raptor-recursive-abstractive-tree.md))
-- 只在复杂多跳问题上引入有限度的多步 retrieval
-- 不对全链路做无限扩张式 agent 化
+- SEAL-RAG 替换式检索: capacity=5 预算制替换, 跨轮 dedup 修复后 50 题 0 重复 ([RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md))
+- RAPTOR 递归摘要树: 已取消 (评测集无宏观题型, 收益无法验证)
+- Agentic RAG 范式迁移: 检索工具化阶段一已实现 (默认关闭), 完整迁移已取消, 见 [RFC-004](./decisions/RFC-004-agentic-rag-paradigm.md)
 
-### 5.5 长期方向 (P3)
+### 5.5 范式落地时间线 (实际)
 
-- Agentic RAG 范式迁移: 从预定义 pipeline 到模型自主检索 ([RFC-004](./decisions/RFC-004-agentic-rag-paradigm.md))
-- 引入 A-RAG 层次化检索接口, 让模型自主决定检索策略
-- 引入 MARAG-R1 多工具协调思路 (semantic/keyword/filtering/aggregation)
-- 前置条件: P0-P2 全部落地 + 可观测性就绪
+P0-P2 计划于 2026 Q3 起排期, 实际全部在 2026-08-25 前完成闭环 (v10b gate 首次全绿 -> v10d 50/50 -> v10f 混合策略上线), 未启动方向 (RAPTOR / Agentic RAG 完整迁移 / 退化告警) 经评估后取消, 项目收口.
 
 ---
 
-## 6. 范式引入路线图
-
-```
-2026 Q3 (P0):
-  └── Contextual Retrieval → recall_at_5 >= 0.6
-
-2026 Q4 (P1):
-  ├── CRAG 纠错检索 → sufficiency 三档评估
-  ├── TARG 自适应门控 → 简单查询跳过检索
-  └── 全链路 trace (RFC-002) → 可观测性就绪
-
-2027 Q1 (P2):
-  ├── SEAL-RAG 替换式检索 → 避免 context 膨胀
-  └── RAPTOR 递归摘要树 → 多层级索引
-
-2027 Q2+ (P3):
-  └── Agentic RAG 范式迁移 → 模型自主检索
-```
-
----
-
-## 7. 一句话战略口径
+## 6. 一句话战略口径
 
 `RiskAgent-AgenticRAG` 不是要做一个无边界 Agent 系统.  
 它要做的是一个在金融文档问答场景里 检索强 召回强 证据硬 评测硬 链路可观测 范式可持续 的顶级 RAG 项目.

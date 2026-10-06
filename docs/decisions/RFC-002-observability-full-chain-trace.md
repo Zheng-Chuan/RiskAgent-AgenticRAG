@@ -2,7 +2,7 @@
 
 ## 状态
 
-Accepted (2026-08-20 回写: P0 与 P1 大部分已落地, 见下方落地情况)
+Closed (2026-08-25 项目收口): P0/P1 除退化告警外全部落地并经生产评测验证; 退化告警经评估后不做 (质量退化依赖人工跑评测), P2 外部平台接入维持不做.
 
 ## 落地情况 (2026-08-20 核实)
 
@@ -15,11 +15,14 @@ Accepted (2026-08-20 回写: P0 与 P1 大部分已落地, 见下方落地情况
 - `trace 查询 CLI`: `scripts/trace_inspect.py` 支持 `--trace-id` / `--last N` / `--stats`
 - `保留策略`: `cleanup_traces` 默认 7 天
 
-尚未实现.
+未实现 (收口决策, 不做).
 
-- `退化告警` (P1 第 3 项): 尚未实现, 目前质量退化仍依赖人工跑评测
-- trace 的 `retriever_version.reranker_model` 字段记录的是环境变量名而非实际生效模型 (远程 fallback 时有歧义), 已列入观察项
+- `退化告警` (原 P1 第 3 项): 未实现, 质量退化依赖人工跑评测
 - P2 外部平台接入维持不做
+
+已闭环的观察项.
+
+- trace 的 `retriever_version.reranker_model` 曾记录环境变量名而非实际生效模型, 已在 v10c 修复: 报告元信息区分记录 `resolved_reranker_model` (实际生效) 与配置值, 见 [EVALUATION_LOG](../evaluations/EVALUATION_LOG.md) v10c 条目
 
 ## 目标
 

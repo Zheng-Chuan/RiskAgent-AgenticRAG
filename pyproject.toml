@@ -166,6 +166,8 @@ extend-ignore = []
 [tool.ruff.lint.per-file-ignores]
 # 测试访问私有成员/字面量断言/assert 语句属常规做法
 "tests/**" = ["SLF001", "PLR2004", "TRY003", "S108", "S101"]
+# 离线分析脚本: 一次性探查代码, 放宽分支复杂度/魔法值/assert 限制
+"scripts/**" = ["INP001", "PLR0912", "PLR0915", "PLR2004", "S101", "F841"]
 
 [tool.coverage.run]
 # 覆盖率度量聚焦核心模块: RAG 检索/编排/代理/LLM 治理/可观测性/校验器

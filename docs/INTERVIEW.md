@@ -215,7 +215,7 @@
   - coarse_score 来自 `rrf_score + 0.5 * bm25_score + metadata_boost`
   - advanced_index_score 在 base_score 上再叠 summary 和 hyde
   - 这套方案的优点是可解释和易调
-  - 缺点是不同分数项量纲不完全一致 需要后续做 calibration 或 learning to rank
+  - 缺点是不同分数项量纲不完全一致 更强做法是 calibration 或 learning to rank (项目收口后不再实施)
 - 继续追问
   - 为什么不是统一归一化后再学一个融合器
   - 现在这套启发式如何避免某一项 dominate
@@ -461,11 +461,11 @@
   - 但 retrieval eval 里仍保留了 `source + section_path + 文本包含` 的兜底命中逻辑 这部分还不够硬
   - gate_labels 样本规模还偏小
   - answer_relevancy 在没有 ragas 时会退化成 heuristic overlap
-  - release acceptance 目前依赖静态 baseline sample
-  - 这几个点都是真实边界 但项目已经把问题显式化 并且有明确补强方向
+  - release acceptance 已强制 fresh eval 口径 (无 LLM key 直接报错终止)
+  - 这几个点都是真实边界 项目已收口 作为已知边界显式保留 不再补强
 - 继续追问
-  - 下一步最优先补哪个
-  - 为什么先补那个
+  - 为什么这些边界不再补
+  - (答: 项目 2026-08-25 收口, 边界已显式记录在 PRD 和 ARCHITECTURE, gate 全绿后剩余价值不在无限加固)
 
 ---
 
@@ -485,7 +485,7 @@
 - 这道题的推荐回答
   - 不要再按旧口径说成只看 source sha1
   - 应该直接说明现在已经通过 `schema_fingerprint + source sha1` 两层判断来控制增量索引
-  - 继续可补强的点不在是否重建 而在于把 manifest version 更稳定地回写到评测报告和 release gate
+  - manifest version 已随评测报告落盘 (`index_schema_version` / `index_schema_fingerprint`)
 
 ---
 
@@ -522,7 +522,7 @@
   - 金融复合问句容易误拆
 - 推荐回答
   - 错拆会导致 variant 检索偏移 和 recall 噪声变高
-  - 解决方向是
+  - 可选解法是 (项目收口后未实施)
     - 加实体边界保护
     - 对缩写和产品名做 lexicon
     - 记录 variant-level ablation
@@ -559,10 +559,10 @@
   - 纯 RAG 路径下 numeric gate 主要看有无 evidence
   - 不足以判断数字真伪
 - 推荐回答
-  - 这是当前已知边界
+  - 这是已知边界
   - 线上 gate 做的是 fail-fast
   - 更细的数字一致性现在主要在离线 eval
-  - 下一步要做的是数字型问题识别扩展 和 evidence 数字重算
+  - 数字型问题识别已实现 (numeric gate + 数值题型路由), evidence 数字重算经评估后不做 (项目收口)
 
 ---
 
@@ -586,7 +586,7 @@
 - 推荐回答
   - 这是有意识地用硬截断控制污染
   - 当前先做简单稳定版
-  - 后续如果要做更强 多轮摘要和 retrieval memory 会是下一步
+  - 多轮摘要和 retrieval memory 未实现 项目收口后也不再规划
 
 ---
 
@@ -607,39 +607,38 @@
 
 ---
 
-### 1. `release_acceptance.sh` 只校验静态 baseline sample report
+### 1. release acceptance 曾依赖静态 baseline sample report (已闭环)
 
-- 你要主动承认它不是 fresh eval
-- 你要说明它当前的价值是发布 smoke check
-- 你要给出后续整改方向
-  - 先现跑 `evaluation.run`
-  - 再加载当前 report 做 gate
+- 2026-08-21 起样例回退已移除: 无 LLM key 直接报错终止, 强制 fresh eval 口径
+- v10d 报告已以 fresh 口径重跑通过
+- 被追问历史演进时如实讲升级路径即可
 
 ### 2. `answer_eval.ok` 当前更多表示执行成功 不是达标通过
 
 - 这里最容易被抓语义不清
 - 你要主动把 `execution_ok` 和 `threshold_pass` 分开讲
 
-### 3. qrels 目前更接近文本匹配 不是严格 chunk_id 对齐
+### 3. qrels 已升级为 chunk_id 级 gold
 
-- 这是 retrieval eval 可信度的第一风险点
-- 正确应对方式不是硬辩
-- 而是明确说下一步要改成 chunk_id 级 gold
+- 早期版本确实只是文本匹配, 这是当时的可信度风险点
+- 现已修复: qrels 带 chunk_id 单位, recall 分母只计主 gold (relevance>=2)
+- 被追问历史演进时如实讲升级路径即可
 
 ### 4. gate_labels 样本太小 且正样本不足
 
 - 这会导致 gate benefit false kill miss rate 统计意义偏弱
-- 你要直接承认样本规模仍需扩
+- 你要直接承认样本规模小是已知边界 项目收口后不再扩
 
 ### 5. retriever cache key 太窄
 
 - 只看 persist_dir 不看 mode 和配置
 - 这是运行态一致性风险
 
-### 6. 索引 skip 条件太弱
+### 6. 索引 skip 条件 (已闭环)
 
-- 只看 source sha1 不看 embedding version
-- 这是索引漂移风险
+- 早期版本只看 source sha1 不看 embedding version, 是索引漂移风险
+- 现已修复: `schema_fingerprint` 覆盖 embedding/chunking/advanced index 版本键, 指纹变化时拒绝 partial include 并要求全量重建
+- 被追问历史演进时如实讲升级路径即可
 
 ### 7. 分数融合是 heuristic 不是 calibrated fusion
 
@@ -767,11 +766,11 @@
 - 这个项目最关键的设计不是多加一个 fancy retriever 而是把 retrieval generation gate evaluation 拆清楚
 - 我们刻意把主链收敛成统一证据链路 默认固定走 hybrid query intelligence advanced index 数值型问题再按需补风险工具 这样评测口径和证据边界更稳定
 - 当前线上口径不再切换 step mode advanced index 已经并入默认主链 Self-RAG 负责检索充分性判断和 early stopping 而不是单独代表另一套检索模式
-- 当前 retrieval eval 已经比最早版本更可信 因为引入了 qrels 但它还没有走到 chunk_id 级 gold 这是下一步要补的
+- retrieval eval 的 qrels 已经走到 chunk_id 级 gold recall 分母只计主 gold (relevance>=2) 与 IR 惯例对齐
 - 我们默认关闭 LLM appeal 是因为 release gate 必须 deterministic
 - 离线回归真正解决的是可复现性 而不是证明真实线上效果已经最优
-- 我知道当前代码里最脆弱的点是索引一致性 证据链 heuristic fallback 和发布验收还没现跑 fresh eval
-- 如果要继续做强 我会优先补 release gate 绑定当前报告 qrels chunk_id 对齐 以及更强的数字真实性校验
+- release acceptance 已绑定 fresh eval 报告 (无 LLM key 直接报错终止) v10d/v10f 全量 50/50 验收通过
+- 项目已收口: 把可验证的事情做完 (recall 0.5 -> 0.8, gate 全绿, 混合策略上线) 比堆未验证的新范式更有价值 RAPTOR 和 Agentic RAG 完整迁移都是评估收益无法验证后主动取消的
 
 ---
 

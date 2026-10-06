@@ -88,17 +88,29 @@
 [RiskAgentSystem.chat]
     | 检查索引 manifest 是否存在
     | 根据 persist_dir 初始化或复用 retriever
-    | 主路径固定为统一检索链路
-    | 默认走 LangGraph
+    | 默认走 LangGraph 主链
+    | settings.features.agentic_mode 开启时改走 Agentic RAG 工具循环
+    |   (RFC-004 阶段一 默认关闭 见 agents/agentic_rag_runner.py)
     | docs 只在图内流转 对外返回前会移除
     v
 [LangGraph 工作流]
     |
-    +-> [Step 1] rewrite
-    |       | 用 LLM 把原始问题压缩成单个主检索 query
+    +-> [Step 1] rewrite (含 TARG 门控 FR-11)
+    |       | 先用 assess_query_complexity 做规则复杂性评估 分三档
+    |       |   simple:   长度<15字符 且无比较/数值/多跳信号 且不含金融术语
+    |       |             (金融术语如 XVA/DVA/FVA 即使很短也必须检索 grounding)
+    |       |   complex:  含 compare / numeric / multi-hop 信号
+    |       |   moderate: 其余默认
+    |       | complex / moderate 档用 LLM 把问题压缩成单个主检索 query
     |       | 目标是短 小 关键词化 偏领域术语 且尽量控制在 20 tokens 内
-    |       | 输出写入 state.current_query 作为后续统一检索主链的 base query
-    |       | 记录 decision_log 与 trace
+    |       | simple 档跳过改写 直接用原问题
+    |       | moderate 档额外标记 skip_fanout 供 Step 2 读取
+    |       | 输出写入 state.current_query 记录 decision_log 与 trace
+    |       v
+    +-> [条件边 route_after_rewrite]
+    |       | simple 且 needs_retrieval=False 时直接路由到 Step 4
+    |       |   (跳过整个检索链 由 LLM 自身知识直接回答)
+    |       | 其余进入 Step 2
     |       v
     +-> [Step 2] retrieve_and_critique
     |       |
@@ -110,6 +122,8 @@
     |       |       | 运行时不再切 dense only / hybrid / summary mode
     |       |       | 只是调 dense_k sparse_k candidate_k rerank_k summary_k hyde_k 等参数
     |       |       | 调用顺序是 Advanced 先接 query 然后把 query 传给 QueryIntel 再由 QueryIntel 调 Hybrid
+    |       |       | TARG: skip_fanout 置位时 (moderate 档) 节点会下钻到 HybridRetriever
+    |       |       |       做单次 dense+sparse 检索 完全跳过 variants fanout 和 advanced index
     |       |       v
     |       +-> [2.2] query intelligence 默认发生
     |       |       | 这一层不是再产出新的全局 current_query
@@ -153,21 +167,37 @@
     |       |       | tool_output 转成 Document 追加到 docs
     |       |       | tool_trace 写入 state.tool_traces 与 debug.numeric_tool
     |       |       v
-    |       +-> [2.6] critique
-    |               | LLM 判断当前 docs 是否足够回答问题
-    |               | Self-RAG 先做题型感知 sufficiency scorer
+    |       +-> [2.6] critique (CRAG 三档纠错 FR-10)
+    |               | Self-RAG 用 grade_docs_crag 做题型感知充分性打分
     |               | 至少区分 definition compare numeric procedure
-    |               | 结合 top_isrel query_coverage source_diversity parent_diversity numeric_evidence
-    |               | 产出 sufficient / critique_reason / improved_query
-    |               | insufficient 时进入 revise_query 循环
+    |               | 结合 top_isrel claim_coverage query_coverage source_diversity
+    |               |       parent_diversity numeric_evidence 等指标
+    |               | 输出 CRAG 三档判定 (RISKAGENT_SELF_RAG=true 生产默认):
+    |               |   sufficient:   top_isrel>=0.7 且 claim_coverage>=0.3 -> 立即停止进入合成
+    |               |   insufficient: 其余情况 (含 [0.2,0.7) 边界区)      -> 标记 rewrite_and_retrieve
+    |               |   irrelevant:  top_isrel<0.2                        -> 标记 expand_topk
+    |               | LLM critique 产出 critique_reason 与 improved_query 供 revise 使用
+    |               | sufficient 档判定优先于 LLM critique (v10f 混合策略 A/B 校准结果)
+    |               v
+    |       +-> [2.7] SEAL-RAG 证据预算 (FR-12)
+    |               | 每轮检索结果合并进固定容量 evidence budget (默认 capacity=5)
+    |               | 新证据比最弱旧证据强则替换 抑制 context dilution
+    |               | 跨轮按 chunk_id 去重 同一 chunk 分数取 max 不占新槽位
+    |               |       (v10f 修复: 重复占位曾挤掉 gold 导致 recall 回归)
+    |               | budget 内容写回 state.docs 作为合成输入
+    |               | 替换数与预算统计写入 debug.seal_replacements / seal_budget_stats
     |       v
     +-> [Step 3] revise_query
-    |       | 若检索结果不足则修正 query
-    |       | 回到 Step 2
-    |       | 受 max_rounds 限制 防止死循环
+    |       | 按 CRAG action 选择降级策略:
+    |       |   rewrite_and_retrieve (insufficient): LLM 重写查询再检索
+    |       |   expand_topk (irrelevant): 推断当前 top_k 并翻倍 放宽过滤重新检索
+    |       |   无 action: 用 critique 的 improved_query 或原问题做普通修订
+    |       | 所有 CRAG 分支失败时回退普通修订 实际 action 写入 decision_log
+    |       | 回到 Step 2 受 max_rounds 限制 防止死循环
     |       v
     +-> [Step 4] synthesize_answer
-    |       | 严格基于 docs 生成答案
+    |       | 严格基于 docs (即 SEAL budget 内容) 生成答案
+    |       | simple 查询跳过检索时 docs 为空 由 LLM 自身知识直接回答
     |       | 若前一步命中数值型风险工具
     |       | 工具输出会以一类可引用上下文参与生成
     |       | 从 docs 中抽取 citations
@@ -277,12 +307,15 @@
 
 ## 2.2 两层结构
 
-### 第一层. 主检索 Query Rewrite
+### 第一层. 主检索 Query Rewrite (含 TARG 门控)
 
 - 入口在 `rewrite` 节点
-- 用 LLM 把原始问题压缩成单个 base query
-- 目标是短, 小, 关键词化, 领域词优先, 尽量控制在 20 tokens 内
-- 这一层解决的是 first hop 检索对齐问题
+- 先用 TARG (`assess_query_complexity`) 做规则复杂性评估, 分 `simple` `moderate` `complex` 三档
+- `simple` 档 (短查询且无金融术语等复杂信号) 跳过 LLM 改写, 且经条件边直接路由到合成节点跳过检索
+- `moderate` 档做 LLM 改写, 但标记 `skip_fanout`, 检索时下钻 HybridRetriever 单次 dense+sparse
+- `complex` 档做 LLM 改写并保留完整 fanout 链路
+- 改写目标是短, 小, 关键词化, 领域词优先, 尽量控制在 20 tokens 内
+- 这一层解决的是 first hop 检索对齐问题和"简单查询不应过重"的成本问题
 
 ### 第二层. Route Aware Query Intelligence
 
@@ -813,7 +846,7 @@ advanced_index_score = base_score + summary_weight * summary_score + hyde_weight
 
 - 这仍然是启发式加权
 - 不同分数项量纲并不完全等价
-- 后续如果要更强, 需要做 calibration 或 learned fusion
+- 若要更强需要 calibration 或 learned fusion (项目已收口, 不再实施)
 
 Parent expand 的触发也不是拍脑袋.
 
@@ -951,10 +984,12 @@ advanced_index_score = base_score + 0.35 * summary_score + 0.35 * hyde_score
 
 这里说的自适应检索, 在当前项目里不是指运行时在很多检索 mode 之间来回切换. 更准确地说, 它是统一主链上的动态决策层.
 
+- 入口处 TARG 门控决定查询要不要走检索链 (`simple` 直答, `moderate` 轻量检索, `complex` 完整链路)
 - 主检索链路始终还是 `rewrite -> hybrid retrieval -> advanced index`
-- 自适应部分负责判断当前证据是否已经够回答
-- 如果不够, 再决定是否继续下一轮检索和 query 修正
+- 检索后 CRAG 三档判定当前证据是否已经够回答
+- 如果不够, 再按档位选择降级策略 (重写查询或扩大检索)
 - 如果够了, 就提前停止, 不再多跑一轮
+- 多轮结果经 SEAL budget 收口后再进入合成
 
 所以它的核心不是换模型, 而是做 `continue / stop / revise` 的受控循环.
 
@@ -966,13 +1001,13 @@ advanced_index_score = base_score + 0.35 * summary_score + 0.35 * hyde_score
 
 ## 5.2 具体技术组成
 
-当前自适应检索策略主要由 4 个技术部件组成.
+当前自适应检索策略主要由 5 个技术部件组成.
 
 ### 1. Self-RAG 文档充分性评分
 
 这是当前 adaptive retrieval 的第一层判断器.
 
-- 对每轮检索出来的 docs 做 `grade_docs`
+- 对每轮检索出来的 docs 做 `grade_docs_crag` (题型感知打分 + CRAG 三档分级)
 - 先识别题型, 至少区分 `definition` `compare` `procedure` `numeric` `default`
 - 再计算一组轻量但可解释的指标
 
@@ -1010,58 +1045,79 @@ advanced_index_score = base_score + 0.35 * summary_score + 0.35 * hyde_score
 
 ### 2. LLM Critique
 
-这是第二层判断器.
+这是第二层信号, 在 CRAG 开启时 (生产默认) 不参与停止判定.
 
 - 输入是 `question + top docs`
 - 输出是 `sufficient / improved_query / reason`
 
-它的作用不是重新检索, 而是从问答视角判断当前上下文是否足够支撑回答.
+它的作用不是重新检索, 而是从问答视角判断当前上下文是否足够支撑回答, 并产出 `improved_query` 供 revise 使用.
 
 和 Self-RAG 的区别是.
 
-- Self-RAG 更像规则化和题型感知的证据审查
-- LLM critique 更像语义层面的整体 answerability 判断
+- Self-RAG 更像规则化和题型感知的证据审查, 且直接驱动 CRAG 三档判停
+- LLM critique 更像语义层面的整体 answerability 判断, 负责给出修订建议
 
-### 3. 双门判停
+### 3. CRAG 三档判停 (v10f 生产默认)
 
-这是当前策略里最关键的保守设计.
+当 `RISKAGENT_SELF_RAG=true` (生产默认) 时, 判停由 CRAG 三档分级驱动, LLM critique 降为辅助信号.
 
-当 `RISKAGENT_SELF_RAG=true` 时, 系统不是任意一侧说够就停, 而是要求两侧都说够.
+三档判定基于 Self-RAG 打分 (`grade_docs_crag`).
 
 ```text
-retrieval_sufficient = critique_sufficient and self_rag_sufficient
+irrelevant  : top_isrel < 0.2                           -> expand_topk (扩大检索)
+sufficient  : top_isrel >= 0.7 且 claim_coverage >= 0.3  -> 立即停止进入合成
+insufficient: 其余情况 (含 [0.2, 0.7) 边界区)            -> rewrite_and_retrieve
 ```
 
-这意味着.
+判停规则.
 
-- 只有 LLM critique 认为足够, 但 Self-RAG 认为覆盖不够, 不能停
-- 只有 Self-RAG 指标看起来够, 但 LLM critique 认为上下文还不足, 也不能停
+- sufficient 档立即停止, 判定优先于 LLM critique
+- insufficient / irrelevant 档继续循环, 仍受 max_rounds 约束
+- LLM critique 不再参与停止判定, 只负责产出 `improved_query` 与 `critique_reason` 供 revise 使用
+- 三档判定与替换数等信号写入 debug.self_rag 与 decision_log, 可回溯
 
-它本质上是在减少单侧误判 sufficient 带来的过早停止风险.
+0.7 的 sufficient 门槛来自 v10d/v10e A/B 回放校准 (2026-08-25): `top_isrel>=0.7` 的高置信题跑第二轮平均收益仅 +0.027 且含受损题; `[0.2, 0.7)` 边界区第二轮平均 precision 收益 +0.165. 因此高置信题首轮即停 (省成本), 边界区触发第二轮纠错 (拿精度). 这就是 v10f 混合策略的核心. 门槛可用环境变量 `RISKAGENT_CRAG_SUFFICIENT_TOP_ISREL` 调整.
 
-### 4. Revise Query Loop
+`RISKAGENT_SELF_RAG=false` 时回退为二档逻辑: 仅由 LLM critique 的 sufficient 决定是否继续 (v10e A/B 实验口径, 非生产默认).
 
-如果当前轮判定不足, 系统不会直接失败, 而是进入 `revise_query`.
+历史注记: 早期版本曾是 critique 与 Self-RAG 的双门 AND 判停 (`critique_sufficient and self_rag_sufficient`), CRAG 三档合入生产后该逻辑已被三档优先判定取代.
 
-- critique 会给出 `improved_query`
-- 下一轮检索直接用 `improved_query`
-- 循环上限由 `max_rounds` 控制
-- 当前默认 `max_rounds = 2`
+### 4. Revise Query Loop (CRAG 降级策略)
+
+如果当前轮判定不足, 系统不会直接失败, 而是进入 `revise_query`, 按 CRAG 档位选择降级策略.
+
+- `rewrite_and_retrieve` (insufficient 档): LLM 重写查询后再检索
+- `expand_topk` (irrelevant 档): 推断当前检索 top_k 并翻倍, 放宽过滤重新检索
+- 无 CRAG action 时 (含 self_rag 关闭): 用 critique 的 `improved_query` 或原问题做普通修订
+- 所有 CRAG 分支均以 try/except 包裹, 失败回退普通修订
+- 实际执行的 action 写入 decision_log 与 trace, 便于评测回溯
+- 循环上限由 `max_rounds` 控制, 当前默认 `max_rounds = 2`
 
 所以这个 adaptive retrieval 的最小闭环是.
 
-`retrieve -> self_rag + critique -> continue or stop -> revise_query -> retrieve`
+`retrieve -> self_rag 三档打分 -> stop or 降级策略 -> revise_query -> retrieve -> SEAL budget 合并`
+
+### 5. SEAL-RAG 证据预算
+
+多轮检索的证据不再直接覆盖 `state.docs`, 而是合并进固定容量的 `EvidenceBudget` (默认 capacity=5).
+
+- 新证据比 budget 中最弱的旧证据强则替换, 抑制 context dilution
+- 跨轮按 `chunk_id` 去重, 同一 chunk 分数取 max, 不占新槽位 (v10f 修复: 此前重复占位曾挤掉 gold 导致 recall 回归)
+- budget 内容写回 `state.docs`, 合成节点无感知, 仍然只读 `state.docs`
+- 替换数与预算统计写入 `debug.seal_replacements` / `debug.seal_budget_stats`, 报告级有 `seal_rag` 聚合
 
 ## 5.3 决策流程与停止条件
 
 当前决策流程可以概括成下面这样.
 
-1. 先做首轮检索
-2. 用 Self-RAG 对 docs 打分
-3. 用 LLM critique 判断当前证据是否足够
-4. 如果两者都认为足够, 提前停止
-5. 如果不足且还没到 `max_rounds`, 进入 query revise
-6. 如果不足但已经到轮次上限, 停止继续检索并进入后续生成与 gate
+1. 先做 TARG 复杂性评估, `simple` 查询跳过检索直接由 LLM 知识合成
+2. 首轮检索 (`moderate` 档下钻单次 dense+sparse, `complex` 档走完整变体融合)
+3. 用 Self-RAG 对 docs 打分并输出 CRAG 三档判定
+4. LLM critique 产出 `improved_query` 与 `critique_reason` (不参与停止判定)
+5. `sufficient` 档提前停止
+6. `insufficient` / `irrelevant` 且还没到 `max_rounds`, 进入 query revise 执行对应降级策略
+7. 到轮次上限仍未 `sufficient`, 停止检索并进入后续生成与 gate
+8. 每轮检索结果合并进 SEAL evidence budget, budget 内容作为合成输入
 
 其中 Self-RAG 的判断不是一个统一阈值, 而是题型感知的.
 
@@ -1133,10 +1189,11 @@ retrieval_sufficient = critique_sufficient and self_rag_sufficient
 
 所以当前方案选择了.
 
-- 用题型感知的 Self-RAG 先做硬一点的 evidence check
-- 再用 LLM critique 做语义层面的补充判断
-- 两者同时通过才停
-- 否则进入 revise loop
+- 用 TARG 先在入口拦掉不需要检索的简单查询
+- 用题型感知的 Self-RAG 做 evidence check 并输出 CRAG 三档判定
+- `sufficient` 档立即停, 边界区触发第二轮降级检索
+- LLM critique 负责产出修订建议 (`improved_query`)
+- SEAL budget 保证多轮检索不稀释最终证据
 
 这个设计的核心 trade-off 是.
 
@@ -1159,9 +1216,9 @@ retrieval_sufficient = critique_sufficient and self_rag_sufficient
 
 很多问题首轮就够了, 没必要为了形式统一把所有轮次跑满.
 
-### 4. 单侧判断容易误停
+### 4. 单一阈值判停容易两头失误
 
-只看 LLM critique 容易过于乐观, 只看规则指标又可能过于死板. 双门判停能降低误判.
+固定一个阈值判停, 容易在高置信题上浪费轮次, 又容易在边界题上过早停止. 三档分级加 A/B 校准的 0.7 门槛同时降低这两类误判.
 
 ### 5. 数值题和高风险题需要更硬的 stopping 条件
 
@@ -1175,9 +1232,9 @@ retrieval_sufficient = critique_sufficient and self_rag_sufficient
 
 Self-RAG 的很多阈值和题型规则本质上还是 hand-crafted, 不是 learned policy.
 
-### 2. 双门判停会更保守
+### 2. 三档门槛是静态校准的
 
-只有一侧觉得不够就继续, 这会减少误停, 但也可能增加额外轮次和延迟.
+0.7 的 sufficient 门槛来自一次性 A/B 回放校准, 不是随题型或数据分布自适应的 learned 阈值. 分布漂移时需要人工重新校准.
 
 ### 3. Query revise 还比较轻
 
@@ -1195,9 +1252,9 @@ Self-RAG 的很多阈值和题型规则本质上还是 hand-crafted, 不是 lear
 
 它主要判断 docs 是否够, 还不是 claim-level 的 end-to-end answerability verifier.
 
-## 5.7 怎么改进
+## 5.7 怎么改进 (分析性记录, 项目已收口不再实施)
 
-如果后面继续演进, 我觉得可以往下面 5 个方向升级.
+以下是工程分析视角的升级方向, 项目 2026-08-25 收口后不再规划实施. 其中第 5 项 (回放驱动阈值校准) 的方法论已在 v10f 落地过一次: CRAG sufficient 门槛 0.7 正是 v10d/v10e A/B 回放校准的产物.
 
 ### 1. Learned Sufficiency Scorer
 
@@ -1236,11 +1293,11 @@ Self-RAG 的很多阈值和题型规则本质上还是 hand-crafted, 不是 lear
 - 难问题多给预算
 - 让 adaptive retrieval 不只是决定是否继续, 还决定每轮花多少检索预算
 
-### 5. 线上回放驱动阈值校准
+### 5. 线上回放驱动阈值校准 (方法论已应用一次)
 
-当前很多阈值是工程经验值.
+当前很多阈值是工程经验值. v10f 已用此方法校准过 CRAG sufficient 门槛 (0.2 -> 0.7, 依据 v10d/v10e A/B 回放).
 
-更好的做法是.
+具体做法是.
 
 - 保留每轮 `self_rag` 和 critique 的 debug traces
 - 对比最终 qrels 和 gate 结果
@@ -2185,18 +2242,13 @@ gate_miss_rate = false_negative / labeled_total
 - numeric 侧也还不理解单位换算和公式链
 - 这个分数有用, 但还不是最终形态
 
-### 6. 还缺更强的成本视角
+### 6. 成本视角未系统化
 
-当前虽然已有 `reliability_cost_metrics`, 但主叙事还是质量导向. 后面还应该更系统地纳入.
+当前已有 `reliability_cost_metrics`, 但主叙事仍以质量为导向, latency / rerank pairs / fanout / token cost 未系统纳入主叙事 (收口后不再调整).
 
-- latency
-- rerank pairs
-- fanout
-- token cost
+### 7. release acceptance 的边界
 
-### 7. release acceptance 仍然不是最硬的 fresh full eval
-
-它已经能检查报告结构和门禁闭环, 但在没有外部 LLM key 时, 仍可能退回样例报告路径. 这意味着发布验收的严格度还有提升空间.
+2026-08-21 起样例报告回退已移除: 无外部 `LLM key` 时直接报错终止, 强制 fresh eval 口径. 它能检查报告结构和门禁闭环, v10d 报告已以此重跑通过.
 
 整体上看, 这套评估体系最大的价值不是"指标很多", 而是它把 retrieval, answer, gate, release decision 这几层拆开了. 这样每次指标波动时, 我们能更快知道应该改哪里, 也更能诚实地说明系统到底强在哪, 弱在哪.
 

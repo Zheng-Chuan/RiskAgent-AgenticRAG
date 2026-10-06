@@ -32,15 +32,15 @@
 - 评测结果台账模块已建立 (`docs/evaluations/EVALUATION_LOG.md`) 历次评测 FAIL 根因可回溯
 - 2026-08-20 报告元信息已补 `index_schema_version` `index_schema_fingerprint` (只读 manifest, 不触发索引操作); 同日完成 schema fingerprint 拆分: 查询期 features (retrieval_pipeline/prompt_version/query_intel/self_rag) 移出 mismatch 比较范围, 改开关不再触发全量重建, 老 manifest 平滑迁移无需重建 (生产 manifest 已验证)
 
-## 当前仍未完成
+## 已知限制 (2026-08-25 收口, 不再处理)
 
-- gate_labels 样本量仍然偏小 统计显著性有限
-- ragas 副指标 `context_precision_no_ref=0.543` `answer_correctness=0.328` 偏低 (v10d 口径) 未进 gate 属 slice 分析范畴
-- ragas judge 偶发 API 噪声 (400 `n should not greater than 1` 与超时), judge 稳定性待加固
+- gate_labels 样本量偏小, 统计显著性有限
+- ragas 副指标 `context_precision_no_ref=0.543` `answer_correctness=0.328` 偏低 (v10d 口径), 未进 gate; 已由 [PRECISION_SLICE_ANALYSIS](../evaluations/PRECISION_SLICE_ANALYSIS.md) 定量归因闭环 (口径假象为主)
+- ragas judge 偶发 API 噪声 (400 `n should not greater than 1` 与超时), v10d/v10f 全量评测未再复现
 
 (2026-08-21 更新: v10d 全量复评 50/50 已执行, release acceptance 已用 v10d 报告重跑通过, 两项收尾完成, 详见 [评测台账](../evaluations/EVALUATION_LOG.md))
 
-## P0 必须先做
+## P0 必须先做 (收口终态: 1-3 全部落地, 明细见上方 "当前已落地"; 4 见条目标注)
 
 ### 1. retrieval eval 单位继续做硬
 
@@ -75,7 +75,9 @@
 
 让 gate benefit false kill miss rate 更有统计意义
 
-## P1 随后做
+收口终态: gate_labels 样本量仍偏小, 已列为已知限制, 不再扩充
+
+## P1 随后做 (收口终态: 见各条标注)
 
 ### 5. 题型 slice 报告强化
 
@@ -86,6 +88,8 @@
 
 按题型稳定输出 retrieval 和 answer 两层 slice 结果
 
+收口终态: 题型 slice 已在 [PRECISION_SLICE_ANALYSIS](../evaluations/PRECISION_SLICE_ANALYSIS.md) 以一次性分析完成 (v10e/v10f 分题型对比), 每期评测稳定输出 slice 报告不再做
+
 ### 6. retrieval cost latency 指标
 
 - fanout 数量
@@ -95,10 +99,14 @@
 
 让召回优化不脱离成本视角
 
+收口终态: 已落地, latency 分位数 (`observability/latency.py`) 与 retrieval_diag (dense/sparse/rerank 各段 count/latency) 随 trace 持续输出
+
 ### 7. 数值题专项评测
 
 - 更细地统计 numeric consistency
 - 继续增强金融术语和数值口径的失败明细
+
+收口终态: `numeric_consistency_score` 已进金融专项指标, 更细的失败明细不再扩展
 
 ## 建议交付
 
@@ -128,4 +136,4 @@
 
 ## 状态
 
-In Progress (2026-08-20 更新: threshold gate 已在 v10b 首次全绿, v10c 后全量复评与 release acceptance 重跑为剩余收尾项)
+Completed (2026-08-25 收口: threshold gate v10b 首次全绿, v10d 全量复评 50/50 + release acceptance 重跑通过; 遗留限制见上方 "已知限制" 段)

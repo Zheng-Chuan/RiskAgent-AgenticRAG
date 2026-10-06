@@ -32,10 +32,12 @@
 - `docs/STRATEGY.md`: 项目长期方向和核心取舍
 - `docs/RESUME.md`: 对外表述和简历口径收敛
 - `docs/decisions/ADR-*.md`: 已接受的架构决策和 trade-off
-- `docs/decisions/RFC-*.md`: 大改动提案和待决问题
-- `docs/phases/*.md`: 分阶段迭代计划 checkpoint exit criteria 和交付物
+- `docs/decisions/RFC-*.md`: 已收口的提案记录 (落地情况与取消决策)
+- `docs/phases/*.md`: 分阶段迭代 checkpoint exit criteria 和交付物 (全部完成)
 - `docs/evaluations/EVALUATION_LOG.md`: 每次正式评测的结果台账 FAIL 根因和修复追踪
 - `docs/INTERVIEW.md`: 面向高压面试追问的专项问答
+
+项目已于 2026-08-25 收口: 全部阶段完成, 未启动方向 (RAPTOR / Agentic RAG 完整迁移) 经评估后取消, 详见 [docs/decisions/RFC-001-retrieval-hardening-roadmap.md](docs/decisions/RFC-001-retrieval-hardening-roadmap.md).
 
 文档迭代流程.
 
@@ -99,27 +101,14 @@ make test CONDA_ENV=riskagent-agenticrag
 
 ## 报告引用
 
-- 样例基准报告 JSON: [rag_eval_baseline_sample.json](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts/reports/rag_eval_baseline_sample.json)
-- 样例基准报告 Markdown: [rag_eval_baseline_sample.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts/reports/rag_eval_baseline_sample.md)
-- 当前仓库里的样例报告主要用于验证报告结构和 threshold gate 流程
-- 该样例报告仍带有旧字段 `retriever_mode=step4` 不应被当成当前统一检索主链的正式新基线
-- `scripts/release_acceptance.sh` 现在支持两条路径
-- 有可用 `LLM key` 时优先跑 fresh eval
-- 没有可用 `LLM key` 时回退到样例报告做 smoke 级校验
-- 当前最新的真实新报告已经是 `50` 题 full baseline fresh eval
+- 历史样例报告 (用于验证报告结构和 threshold gate 流程, 带旧字段 `retriever_mode=step4`, 不代表当前主链): [rag_eval_baseline_sample.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts/reports/rag_eval_baseline_sample.md)
+- `scripts/release_acceptance.sh` 要求可用 `LLM key` 跑 fresh eval, 无 key 直接报错终止 (2026-08-21 起样例报告回退已移除, 强制 fresh 口径)
 - 历次评测结果 FAIL 根因和修复追踪见 [docs/evaluations/EVALUATION_LOG.md](docs/evaluations/EVALUATION_LOG.md)
-- 当前最新 gate 全绿报告: `prod_pipeline_v10b_targ_rerank_recallfix` (2026-08-18, `passed=47/50` `faithfulness=0.895` `citation_coverage=0.940` `answer_relevancy=0.943` `retrieval_recall_at_5=0.78`, gate PASS)
-- v10b 报告 Markdown: [rag_eval_prod_pipeline_v10b_targ_rerank_recallfix_20260818_073514.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts/reports/rag_eval_prod_pipeline_v10b_targ_rerank_recallfix_20260818_073514.md)
-- full baseline 报告 JSON: [rag_eval_unified_full_baseline_after_judge_parallel_bugfix_20260718_20260718_065654.json](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts_fresh/reports/rag_eval_unified_full_baseline_after_judge_parallel_bugfix_20260718_20260718_065654.json)
-- full baseline 报告 Markdown: [rag_eval_unified_full_baseline_after_judge_parallel_bugfix_20260718_20260718_065654.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts_fresh/reports/rag_eval_unified_full_baseline_after_judge_parallel_bugfix_20260718_20260718_065654.md)
-- smoke 报告 JSON: [rag_eval_unified_smoke_5q_20260706_20260706_103824.json](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts_fresh/reports/rag_eval_unified_smoke_5q_20260706_20260706_103824.json)
-- smoke 报告 Markdown: [rag_eval_unified_smoke_5q_20260706_20260706_103824.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts_fresh/reports/rag_eval_unified_smoke_5q_20260706_20260706_103824.md)
-- 这份 smoke 报告已经证明外部 `LLM key` 和当前统一主链能够真实打通
-- 2026-07-18 full baseline 的关键结果是 `passed=38/50` `citation_coverage=0.960` `faithfulness=0.775` `answer_relevancy=0.848` `retrieval_recall_at_5=0.500` gate `fail`
-- 该瓶颈已在 2026-08-18 `v10b` 报告中解决 (`retrieval_recall_at_5=0.78` gate 首次全绿), 详见评测台账
-- `release acceptance` 尚未用 `v10b` 报告重跑
-- 遗留: v10b 3 个 FAIL (`FVA` `MVA` `ColVA`) 根因是 TARG 词表缺失, 修复已合入待部署, 详见评测台账
-- 后续在 `README.md` `docs/ARCHITECTURE.md` `docs/PRD.md` 中出现的关键数字 都应该能映射到具体报告文件
+- 当前最新全量报告: `prod_pipeline_v10f_crag_hybrid` (2026-08-25, `passed=50/50` `faithfulness=0.982` `retrieval_recall_at_5=0.80` `citation_coverage=1.000`, gate 阈值/基线全过, CRAG 混合策略生产上线)
+- v10f 报告 Markdown: [rag_eval_prod_pipeline_v10f_crag_hybrid_20260825_031459.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts/reports/rag_eval_prod_pipeline_v10f_crag_hybrid_20260825_031459.md)
+- v10d 全量复评报告 (50/50 首次达成, release acceptance 以此重跑通过): `rag_eval_prod_pipeline_v10d_full_reeval_20260821_141306.json`
+- 2026-07-18 full baseline 关键结果 `passed=38/50` `retrieval_recall_at_5=0.500` gate `fail`, 该瓶颈已在 v10b (2026-08-18, recall@5 0.78 gate 首次全绿) 解决, v10b 3 个 FAIL (TARG 词表缺失) 已在 v10c/v10d 闭环
+- `README.md` `docs/ARCHITECTURE.md` `docs/PRD.md` 中出现的关键数字 都应能映射到具体报告文件
 
 ## 当前工程现实
 
@@ -137,5 +126,5 @@ make test CONDA_ENV=riskagent-agenticrag
 - 覆盖率口径说明: `pyproject.toml` `[tool.coverage.run]` 的 `omit` 排除了 `evaluation/*` 与 `cli/*` (分别由顶层集成测试和场景测试独立覆盖), 度量聚焦 RAG 检索/编排/代理/LLM 治理/可观测性/校验器
 - 2026-08-20 修复了 `Makefile` `PYTEST` 定义的存量 bug: `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1` 禁用插件后未显式加载 `pytest_cov`, 导致 `--cov` 参数从未被识别 (历史 "33%" 数据源于该 bug, 实际覆盖率远高于此)
 - 历史低覆盖大缺口已补齐: `rag/remote_reranker.py` (0% -> 全覆盖, 新增 11 个测试), `artifacts/storage.py` bundle 分支 (73% -> 92%+)
-- 存量技术债: 全仓 `ruff check` 尚有约 755 个历史告警 (之前因 `W503` 配置 parse error 从未跑通过), 其中约半数可 `--fix` 自动修复, 待专项治理
+- 存量风格告警: 全仓 `ruff check` 当前约 397 个 (2026-08-24 已 `--fix` 自动修复 348 个, 剩余为 TRY003/PLR2004/E402 等需手动处理的风格类告警), 项目收口后不再专项治理
 - 当前测试文件共 `55+` 个 覆盖 unit smoke scenario performance milestone acceptance 等多个层次

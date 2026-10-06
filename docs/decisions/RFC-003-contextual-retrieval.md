@@ -14,7 +14,7 @@ Implemented (feature flag, 默认关闭) — 2026-08-20 定论
 - 默认关闭, 原因: 实验发现 Qwen/Qwen3-Embedding-4B 配合 contextual briefs 时, 文档级摘要会稀释 chunk 自身的术语信号 (如 FRTB/Delta 等术语被摘要摊薄), 检索准确率反而下降; 该现象对弱 embedding 模型尤其明显
 - 适用条件: 换用更强的 embedding 模型 (或 chunk 独立性极弱的语料) 时可重新开启评估, 开启会触发索引全量重建 (schema fingerprint 变化)
 
-后续动作: 维持默认关闭, 在更换 embedding 模型的评测计划中作为对照项重新验证.
+处置: 维持默认关闭 (2026-08-25 项目收口, 不再规划重新验证).
 
 ## 目标
 

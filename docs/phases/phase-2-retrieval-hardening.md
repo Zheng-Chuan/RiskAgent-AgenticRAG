@@ -64,7 +64,7 @@
 ### 6. retrieval observability
 
 - 记录 fanout 数量 rerank pairs node latency token 预算
-- 为后续做 retrieval budget 提供依据
+- 已落地, 为 retrieval budget 分析提供运行数据
 
 ## 建议交付
 
@@ -96,4 +96,4 @@
 
 ## 状态
 
-In Progress
+Completed (2026-08-25 收口: 本阶段范围 qrels 升级 / manifest 版本化 / sufficiency scorer / query intelligence / advanced index / observability 全部落地, 明细见 [RFC-001 落地情况](../decisions/RFC-001-retrieval-hardening-roadmap.md))

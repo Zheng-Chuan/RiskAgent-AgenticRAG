@@ -45,9 +45,9 @@
 - 50 题 retrieved_docs 全部无重复 chunk (SEAL dedup 生效, v10e 时 3 题重复占位挤掉 gold)
 - 高置信 12 题首轮即停 (top_isrel >= 0.7 拦截), 成本介于 ON 与 OFF 之间
 
-### precision 0.511 的定性分析 (待 slice 分析验证)
+### precision 0.511 的 slice 定量归因 (已完成, 2026-08-25)
 
-dedup 修复改变了 context 构成: 之前重复高分 chunk 占多槽位在 ragas precision 排名口径里天然获利; 去重后槽位让给唯一但排名较低的 chunk. precision 口径与去重存在结构性冲突, 换来 recall +0.06 / faithfulness +0.08. 属指标间 trade-off 而非退化, 定量验证列入研究项 (ragas precision slice 分析).
+per-sample 对齐分析完成, 详见 [PRECISION_SLICE_ANALYSIS](./PRECISION_SLICE_ANALYSIS.md). 归因: 口径假象 0.675 -> 0.599 (v10e 重复片段计分灌水, 34/50 题重复, 有效片段率仅 3.28/4.00) + 补位损耗 0.599 -> 0.511 (换入 d457/d488 其他章节弱相关但无害, faithfulness 0.982 佐证) + 混合策略本身 -0.05 (噪声内). 判定不构成回滚理由; 评测口径对齐改动 (judge 前去重 contexts) 经评审后决定不做 (2026-08-25 项目收口).
 
 Threshold Gate 判定: WARNING. 阈值失败 0 项, 基线回归 0 项, warning 唯一来源是 hallucination_rate_in_citations 指标缺失 (本轮未启用 LLM appeal 流程, 基线报告有此指标). release acceptance 接受 pass/warning, 不阻塞发布.
 
@@ -88,11 +88,11 @@ Threshold Gate 判定: **FAIL** (基线回归 6 项: context_recall -0.029 / fai
 
 ### 结论
 
-CRAG 是成本-质量交换旋钮, 无免费午餐: ON 组省 36% token 快 27% 但 precision 0.543 是短板; OFF 组用 36% 成本换 precision +0.133 / correctness +0.072, 代价是 recall -0.08 和 gate 基线回归. 两组题目级都是 50/50, 生产 default (CRAG ON) 维持现状仍过发布阈值; precision 短板的更优解是混合策略 (只对低置信题触发第二轮), 已列入研究项.
+CRAG 是成本-质量交换旋钮, 无免费午餐: ON 组省 36% token 快 27% 但 precision 0.543 是短板; OFF 组用 36% 成本换 precision +0.133 / correctness +0.072, 代价是 recall -0.08 和 gate 基线回归. 两组题目级都是 50/50, 生产 default (CRAG ON) 维持现状仍过发布阈值; precision 短板的更优解是混合策略 (只对低置信题触发第二轮), 已列入研究项 (后由 v10f 落地).
 
 ### 观察项
 
-- gate 对 lower-is-better 指标方向疑似有 bug: `contradiction_score` 0.022 -> 0.0 是改善却被判 baseline_regression, 待修
+- gate 对 lower-is-better 指标方向疑似有 bug: `contradiction_score` 0.022 -> 0.0 是改善却被判 baseline_regression. ~~待修~~ 已修复 (2026-08-24, reporting.py 方向分类修正 + 默认回归容差 0.02): contradiction_score 归入 lower-better, sentence_support_rate 归入 higher-better, v10e 数据重放验证误报回归 15 -> 9 (剩余为真实 recall 回归)
 - A/B 期间实证 SEAL-RAG 行为: 145 个检索节点全部执行 capacity=5 筛选, CRAG ON 时替换数为 0 (首轮即停), CRAG OFF 时 46/145 节点发生 1-6 次替换; 结论: SEAL 替换机制依赖多轮循环, CRAG 开启会抑制替换行为
 
 ## 2026-08-21 prod_pipeline_v10d_full_reeval (50 题全量复评, 发布闭环)
@@ -180,9 +180,9 @@ Threshold Gate 判定: PASS, 阈值失败 0 项, 基线回归 0 项.
 
 | 题号 | 题目 | 根因 | 修复 | 状态 |
 |---|---|---|---|---|
-| q19 | What is FVA? | TARG 判 simple 跳过检索, trace 节点为 `[rewrite, synthesize_answer, validate_and_save]` 无 retrieve, `fva` 不在金融术语词表 | query_router.py 词表补 `fva` | 已修复, 待部署生效 |
-| q21 | What is MVA? | 同上, `mva` 不在词表 | 词表补 `mva` | 已修复, 待部署生效 |
-| q22 | What is ColVA? | 同上, `colva` 不在词表 | 词表补 `colva` | 已修复, 待部署生效 |
+| q19 | What is FVA? | TARG 判 simple 跳过检索, trace 节点为 `[rewrite, synthesize_answer, validate_and_save]` 无 retrieve, `fva` 不在金融术语词表 | query_router.py 词表补 `fva` | 已修复, v10c 复跑 3/3 PASS 验证 |
+| q21 | What is MVA? | 同上, `mva` 不在词表 | 词表补 `mva` | 已修复, v10c 复跑 3/3 PASS 验证 |
+| q22 | What is ColVA? | 同上, `colva` 不在词表 | 词表补 `colva` | 已修复, v10c 复跑 3/3 PASS 验证 |
 
 根因证据: 三题 trace 的 nodes 均无 retrieve 节点, retrieval_diag 为空; 其余 XVA 家族 (XVA/DVA/KVA/CVA) 同轮全部 PASS, 差异仅在词表覆盖.
 
@@ -194,3 +194,14 @@ Threshold Gate 判定: PASS, 阈值失败 0 项, 基线回归 0 项.
 
 - ragas context_precision_no_ref=0.565 和 answer_correctness=0.371 偏低, 未进 gate, 属 phase-3 后续 slice 分析范畴
 - ~~trace 的 `retriever_version.reranker_model` 记录的是环境变量名而非实际生效模型~~ 已修复 (2026-08-20): 检索节点将 `active_reranker_model` 透传 state, trace/retriever_version 与 retrieval_diag 均记录实际生效模型, simple 直答回退环境变量; 需随下次镜像部署后在容器内生效
+
+## 2026-08-25 项目收口记录
+
+项目自此收口, 不再规划新评测与新方向. 历史条目中悬空观察项的终态:
+
+- v10c 条目的 ragas judge API 噪声 (400 与超时): v10d/v10f 全量评测未再复现, 闭环
+- v10b 条目的 ragas 副指标偏低 (context_precision_no_ref / answer_correctness): 已由 [PRECISION_SLICE_ANALYSIS](./PRECISION_SLICE_ANALYSIS.md) 定量归因 (口径假象为主), 闭环
+- v10f 条目的 precision 口径对齐改动: 经评审决定不做, 见该条目说明
+- q19/q21/q22 修复部署验证: 已由 v10c 复跑 3/3 PASS 及 v10d 全量 50/50 确认, 闭环
+
+最终生产状态: v10f 混合策略 (CRAG sufficient 门槛 0.7 + SEAL dedup), 50/50 PASS, faithfulness 0.982 / recall@5 0.80 / citation 1.000.

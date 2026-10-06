@@ -51,25 +51,12 @@
 
 - `q45` right-way risk
 
-## 当前未完成
+## 收口说明 (2026-08-25)
 
-- 语料 gap 本身不是当前 Phase 2 的主阻塞项
-- 当前更需要继续推进的是 `retrieval eval` 命中规则硬化 和 fresh baseline 报告更新
-- 在没有新的正式评测报告落盘前 不能把样例 baseline 当成最新能力证明
-
-## 原则
-
-- 不为了把 `qrels` 数字做漂亮而硬绑错误 chunk
-- 先补真实语料和 `chunk_id` 证据 再谈召回指标
+- 语料 gap 已完成最小闭环, qrels 全部 chunk_id 级, `qrels_gap_allowlist.json` 保持清空
+- `retrieval eval` 命中规则硬化与 fresh baseline 已完成 (v10b-v10f 全量评测落盘, 见 [评测台账](../evaluations/EVALUATION_LOG.md))
 - 文档中的 gap 关闭必须以语料和 qrels 都已经落盘为前提
 - gap 关闭后仍然要继续把 `retrieval eval` 做硬 不能靠旧 sample 掩盖问题
 - 当前仓库里的 `tests/data/qrels_gap_allowlist.json` 已经清空
 - 这表示当前数据集不再允许未审批的 text only qrel 直接混入评测
-- 如果后续必须临时保留 text only qrel 仍然要同步白名单和原因 否则数据加载会失败
-
-## 下一步
-
-1. 继续硬化 `retrieval eval` 命中规则
-2. 生成一份基于当前统一主链的 fresh eval baseline 报告
-3. 把新报告接入 `README` 和 `release gate`
-4. 继续补更难题型上的语料和 qrels
+- 如果必须临时保留 text only qrel 仍然要同步白名单和原因 否则数据加载会失败

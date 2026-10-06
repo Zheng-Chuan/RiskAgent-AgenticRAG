@@ -19,7 +19,7 @@
 - 默认 conda 环境口径已经收口到 `agenticrag`
 - 发布门禁要求 `LLM key` 跑 fresh eval, 无 key 直接报错终止 (2026-08-21 起样例回退已移除)
 - 已经验证 `RiskMonitor-MultiAgent` 的外部 `LLM` 配置能够打通当前统一主链 并生成 `5` 题 smoke 报告
-- k8s 部署链路已落地 (`deploy/k8s/` + `Dockerfile`), 镜像已迭代到 `v10d-fix`, secret 以 template 形式管理不入库
+- k8s 部署链路已落地 (`deploy/k8s/` + `Dockerfile`), 镜像已迭代到 `v10f-hybrid` (生产默认, 评测数据已 bake 进镜像), secret 以 template 形式管理不入库
 - 2026-08-18 `v10b` 报告实现 threshold gate 首次全绿 PASS (此前 `2026-07-18` baseline 的 `retrieval_recall_at_5=0.500 < 0.6` 瓶颈已解决, 现 `0.78`)
 - 2026-08-20 `v10c` FAIL 子集复跑 `3/3` 全 PASS, v10b 遗留的 3 个 FAIL 已闭环 (详见 [评测台账](../evaluations/EVALUATION_LOG.md))
 - 2026-08-21 `v10d` 全量复评 `50/50` PASS (recall@5 0.82 / citation 1.000 / gate 全绿), release acceptance 已用 v10d 报告重跑通过, 发布闭环

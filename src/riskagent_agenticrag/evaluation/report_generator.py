@@ -135,6 +135,32 @@ def generate_markdown_report(
         lines.append(f"- Baseline Regressions: {len(regressions) if isinstance(regressions, list) else 0}")
         lines.append("")
 
+    # Bootstrap 置信区间 (RFC-006 A2)
+    ci_section = report_data.get("confidence_intervals", {})
+    if isinstance(ci_section, dict):
+        ci_metrics = ci_section.get("metrics", {})
+        if isinstance(ci_metrics, dict) and ci_metrics:
+            n_boot = ci_section.get("n_boot", "N/A")
+            lines.append("## Confidence Intervals (Bootstrap 95%)")
+            lines.append("")
+            lines.append(f"Method: bootstrap percentile, n_boot={n_boot}, per-question resampling.")
+            lines.append("")
+            lines.append("| Metric | Mean | 95% CI | n |")
+            lines.append("|--------|------|--------|---|")
+            for key in sorted(ci_metrics.keys()):
+                entry = ci_metrics.get(key)
+                if not isinstance(entry, dict):
+                    continue
+                try:
+                    mean_v = float(entry.get("mean", 0.0))
+                    lo = float(entry.get("ci_low", 0.0))
+                    hi = float(entry.get("ci_high", 0.0))
+                    n_v = int(entry.get("n", 0))
+                except (TypeError, ValueError):
+                    continue
+                lines.append(f"| {key} | {mean_v:.3f} | [{lo:.3f}, {hi:.3f}] | {n_v} |")
+            lines.append("")
+
     # 详细样本结果
     if samples:
         lines.append("## Sample Details")

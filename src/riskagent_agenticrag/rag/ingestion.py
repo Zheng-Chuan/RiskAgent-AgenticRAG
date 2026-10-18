@@ -257,9 +257,13 @@ def split_documents(
         enriched_docs.append(d)
 
     # 2) 切割
+    # 表格 chunk (RFC-006 C1, chunk_type=table) 已是原子检索单元, 不做语义/字符切割,
+    # 避免 markdown 表格行被切散.
+    table_docs = [d for d in enriched_docs if str((d.metadata or {}).get("chunk_type", "")).lower() == "table"]
+    text_docs = [d for d in enriched_docs if str((d.metadata or {}).get("chunk_type", "")).lower() != "table"]
     if use_llm_chunking:
         chunks: list[Document] = []
-        for doc in enriched_docs:
+        for doc in text_docs:
             chunks.extend(
                 llm_semantic_split_document(doc, max_chunk_size=max_chunk_size, overlap=overlap)
             )
@@ -269,7 +273,8 @@ def split_documents(
             chunk_overlap=overlap,
             add_start_index=True,
         )
-        chunks = base_splitter.split_documents(enriched_docs)
+        chunks = base_splitter.split_documents(text_docs)
+    chunks = table_docs + chunks
 
     # 3) 轻量清洗: 去除维基百科式引用标记 ([13] / [edit] / ^[16]) 与多余空白
     _INLINE_NOISE_RE = re.compile(r"\[\s*(?:\d+|edit|citation needed)\s*\]|\^\s*\[\d+\]")
@@ -286,10 +291,17 @@ def split_documents(
     import os
 
     min_chunk_chars = int(os.getenv("RISKAGENT_MIN_CHUNK_CHARS", "30"))
+    # 表格 chunk 豁免 junk 过滤: 监管表格常含高密度年份/编号, 会被参考文献启发式误杀
     chunks = [
         c
         for c in chunks
-        if len((c.page_content or "").strip()) >= min_chunk_chars and not _is_junk_chunk(str(c.page_content or ""))
+        if (
+            len((c.page_content or "").strip()) >= min_chunk_chars
+            and (
+                str((c.metadata or {}).get("chunk_type", "")).lower() == "table"
+                or not _is_junk_chunk(str(c.page_content or ""))
+            )
+        )
     ]
 
     return chunks

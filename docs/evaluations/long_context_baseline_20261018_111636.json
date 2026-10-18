@@ -1,0 +1,224 @@
+{
+ "experiment": "long_context_baseline",
+ "rfc": "RFC-006 B",
+ "generated_at": "2026-10-18T11:16:36+00:00",
+ "meta": {
+  "corpus_dir": "corpus",
+  "dataset": "tests/data/questions.json",
+  "n_questions": 10,
+  "window_tokens": 128000,
+  "note": "map_reduce_full 模式已于 2026-10-18 移除 (每题约 2.9h 不可行); 本报告仅保留 rag_main / parent_stuffing 两模式"
+ },
+ "modes": [
+  "rag_main",
+  "parent_stuffing"
+ ],
+ "results": {
+  "rag_main": {
+   "run_stats": {
+    "n": 10.0,
+    "latency_p50_ms": 21507.148051499826,
+    "latency_p95_ms": 24750.484431950234,
+    "prompt_tokens_mean": 670.4,
+    "completion_tokens_mean": 418.8,
+    "total_tokens_mean": 1089.2,
+    "refusal_rate": 0.0,
+    "error_rate": 0.0
+   },
+   "metrics": {
+    "faithfulness": 1.0,
+    "numeric_consistency_score": 0.975,
+    "glossary_consistency_score": 1.0,
+    "domain_consistency_score": 0.9875
+   },
+   "ragas": {
+    "enabled": true,
+    "ok": true,
+    "metrics": {
+     "ragas_faithfulness": 1.0,
+     "ragas_context_recall": 0.8888888888888888,
+     "ragas_answer_correctness": 0.39331634411382166,
+     "ragas_context_precision_no_ref": 0.7900000000000001,
+     "ragas_contradiction_score": 0.0,
+     "ragas_samples_evaluated": 10,
+     "ragas_enabled_metrics_count": 4
+    },
+    "raw_scores": {
+     "ragas_faithfulness": [
+      1.0,
+      1.0,
+      1.0
+     ],
+     "ragas_context_recall": [
+      0.5,
+      1.0,
+      0.5,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0,
+      1.0
+     ],
+     "ragas_answer_correctness": [
+      0.35676782134024365,
+      0.39472869757146717,
+      0.48345679383935947,
+      0.5878869592082744,
+      0.5059115479057008,
+      0.2595793607388321,
+      0.49079995606885707,
+      0.24345608661043036,
+      0.4240058821625271,
+      0.18657033569252424
+     ],
+     "ragas_context_precision_no_ref": [
+      0.8500000000000001,
+      0.675,
+      0.65,
+      0.8,
+      0.875,
+      0.75,
+      0.9,
+      0.9,
+      0.65,
+      0.85
+     ],
+     "ragas_contradiction_score": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "error": null
+   },
+   "domain_consistency": {
+    "enabled": true,
+    "ok": true,
+    "metrics": {
+     "numeric_consistency_score": 0.975,
+     "glossary_consistency_score": 1.0,
+     "domain_consistency_score": 0.9875
+    },
+    "error": null
+   },
+   "confidence_intervals": {
+    "numeric_consistency_score": {
+     "mean": 0.975,
+     "ci_low": 0.925,
+     "ci_high": 1.0,
+     "n": 10.0
+    }
+   },
+   "wall_time_s": 640.2492121650002
+  },
+  "parent_stuffing": {
+   "run_stats": {
+    "n": 10.0,
+    "latency_p50_ms": 10918.37529600025,
+    "latency_p95_ms": 19452.205965500478,
+    "prompt_tokens_mean": 17481.1,
+    "completion_tokens_mean": 261.5,
+    "total_tokens_mean": 17742.6,
+    "refusal_rate": 0.2,
+    "error_rate": 0.0
+   },
+   "metrics": {
+    "faithfulness": 0.4296296296296296,
+    "numeric_consistency_score": 0.9857142857142858,
+    "glossary_consistency_score": 1.0,
+    "domain_consistency_score": 0.9928571428571429
+   },
+   "ragas": {
+    "enabled": true,
+    "ok": true,
+    "metrics": {
+     "ragas_faithfulness": 0.4296296296296296,
+     "ragas_context_recall": 0.75,
+     "ragas_answer_correctness": 0.3177467670196653,
+     "ragas_context_precision_no_ref": 0.5575,
+     "ragas_contradiction_score": 0.0,
+     "ragas_samples_evaluated": 10,
+     "ragas_enabled_metrics_count": 4
+    },
+    "raw_scores": {
+     "ragas_faithfulness": [
+      0.5555555555555556,
+      0.7333333333333333,
+      0.0
+     ],
+     "ragas_context_recall": [
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      1.0
+     ],
+     "ragas_answer_correctness": [
+      0.43754317109108276,
+      0.10728147359057172,
+      0.2637346194859157,
+      0.6756405199145767,
+      0.33594928686415,
+      0.2536494021469032,
+      0.15042889604445703
+     ],
+     "ragas_context_precision_no_ref": [
+      0.625,
+      0.65,
+      0.375,
+      0.0,
+      0.675,
+      0.475,
+      0.625,
+      0.8500000000000001,
+      0.8500000000000001,
+      0.45
+     ],
+     "ragas_contradiction_score": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+     ]
+    },
+    "error": null
+   },
+   "domain_consistency": {
+    "enabled": true,
+    "ok": true,
+    "metrics": {
+     "numeric_consistency_score": 0.9857142857142858,
+     "glossary_consistency_score": 1.0,
+     "domain_consistency_score": 0.9928571428571429
+    },
+    "error": null
+   },
+   "confidence_intervals": {
+    "numeric_consistency_score": {
+     "mean": 0.9857142857142858,
+     "ci_low": 0.9571428571428571,
+     "ci_high": 1.0,
+     "n": 10.0
+    }
+   },
+   "wall_time_s": 557.3893457140002
+  }
+ }
+}

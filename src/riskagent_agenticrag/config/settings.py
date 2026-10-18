@@ -146,6 +146,14 @@ class FeatureConfig(BaseSettings):
     # 实测 (2026-08): Qwen3-Embedding-4B 上 brief 前缀会稀释 chunk 专属词, hit@5 43.9% vs 51.2% (关闭)
     # 换更强 embedding 模型后可再开启验证
     contextual_briefs: bool = False
+    # Contextual Retrieval 变体 (RFC-006 C2): brief 是否注入 embedding 侧.
+    # False 时索引期仍生成 brief 存元数据 (供 BM25 变体用), 但 embedding 用纯 chunk 文本,
+    # 规避已实证的术语稀释.
+    contextual_briefs_embed: bool = True
+    # Contextual Retrieval 变体 (RFC-006 C2): BM25 侧注入模式.
+    # off: 不注入 (现状); llm_brief: 注入索引期 LLM brief (变体一, 需 contextual_briefs 索引);
+    # short_brief: 注入 title+section_path 短 brief (变体二, 纯元数据, 无需重建索引)
+    contextual_bm25_mode: str = "off"
 
 
 class RateLimitConfig(BaseSettings):

@@ -59,7 +59,7 @@
 
 - 项目期内追踪并选择性引入了学术界 2025-2026 RAG 范式: Contextual Retrieval (已实现默认关闭) / CRAG / TARG / SEAL-RAG 已落地, Agentic RAG 检索工具化已实现 (默认关闭), RAPTOR 评估后取消
 - 不盲目追新, 只引入能直接提升召回/精度/效率的范式
-- 第一轮已收口 (2026-08-25); 2026-10 前沿对齐审计判断下一瓶颈在评测学 (评测集规模与题型锁死了技术决策的可验证性), 第二轮 [RFC-006](./decisions/RFC-006-frontier-gap-closing-roadmap.md) 聚焦评测学 / 长上下文基线 / 语料索引 / 架构覆盖, 不动检索主链
+- 第一轮已收口 (2026-08-25); 2026-10 前沿对齐审计重开第二轮, [RFC-006](./decisions/RFC-006-frontier-gap-closing-roadmap.md) 聚焦统计置信区间 / 长上下文基线 / PDF 表格解析 / Contextual Retrieval 变体 (2026-10-18 范围收窄), 不动检索主链
 
 ---
 

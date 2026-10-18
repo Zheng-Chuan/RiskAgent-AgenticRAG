@@ -15,6 +15,7 @@ build
 
 # 测试和覆盖率
 tests/
+!tests/data
 .pytest_cache
 .coverage
 htmlcov

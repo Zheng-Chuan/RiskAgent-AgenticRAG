@@ -16,6 +16,22 @@ Implemented (feature flag, 默认关闭) — 2026-08-20 定论
 
 处置: 维持默认关闭 (2026-08-25 项目收口, 不再规划重新验证).
 
+## 变体重启 (RFC-006 C2, 2026-10-18)
+
+针对 2026-08 实验暴露的 "文档级摘要稀释 chunk 专属术语" 问题, 落地两个规避该缺陷的变体 (均不动 dense embedding):
+
+- **变体一 `llm_brief`**: 只对 BM25 侧注入 context brief, embedding 保持纯 chunk 文本.
+  索引期开关 `RISKAGENT_CONTEXTUAL_BRIEFS=true` + `RISKAGENT_CONTEXTUAL_BRIEFS_EMBED=false`
+  (生成 brief 存元数据但不注入 embedding), 检索期开关 `RISKAGENT_CONTEXTUAL_BM25_MODE=llm_brief`.
+- **变体二 `short_brief`**: 用 title + section_path 短 brief (约 30 token) 替代 LLM 文档级摘要,
+  纯元数据派生, 无 LLM 成本、无需重建索引, 检索期开关 `RISKAGENT_CONTEXTUAL_BM25_MODE=short_brief`.
+
+实现落点: `rag/hybrid_retriever.py` `bm25_effective_text` (BM25 词表按模式拼接 brief),
+`rag/retriever_factory.py` (模式从 env/settings 读取), `indexing/indexer.py` (brief 生成与 embedding 注入解耦).
+A/B 入口: `make eval-contextual-ab` (`scripts/run_contextual_ab.sh`), 单测 `tests/test_contextual_bm25.py`.
+
+终态: 待 A/B 结果回填. 无收益则关闭变体并维持 2026-08 定论.
+
 ## 目标
 
 在索引阶段为每个 chunk 注入文档级上下文摘要, 从根源上解决 chunk 脱离上下文后的语义歧义问题.  

@@ -29,6 +29,7 @@ from typing import Any
 
 from riskagent_agenticrag.config.settings import settings
 from riskagent_agenticrag.evaluation.advanced_metrics import (
+    compute_confidence_intervals,
     compute_gate_metrics,
     compute_reliability_cost_metrics,
     compute_retrieval_metrics,
@@ -675,6 +676,25 @@ def run_evaluation(
             "node_latency_p95": rc.node_latency_p95,
         }
         report["metrics"].update(rc.metrics)
+
+    # Bootstrap 95% CI (RFC-006 A2): 单题级重采样, 纯本地计算无 LLM 成本, 始终输出
+    try:
+        bootstrap_n = int(os.getenv("EVAL_BOOTSTRAP_N", "1000"))
+    except (TypeError, ValueError):
+        bootstrap_n = 1000
+    _debug_emit("C", "confidence_intervals_start", data={"n_boot": bootstrap_n, "samples": len(samples)})
+    confidence_intervals = compute_confidence_intervals(
+        samples=samples,
+        ks=retrieval_ks,
+        n_boot=bootstrap_n,
+    )
+    _debug_emit("C", "confidence_intervals_done", data={"metrics": len(confidence_intervals)})
+    report["confidence_intervals"] = {
+        "method": "bootstrap_percentile",
+        "n_boot": int(bootstrap_n),
+        "level": 0.95,
+        "metrics": confidence_intervals,
+    }
 
     _debug_emit("C", "run_evaluation_return", data={"metric_count": len(report.get("metrics", {})), "sample_count": len(samples)})
     return report

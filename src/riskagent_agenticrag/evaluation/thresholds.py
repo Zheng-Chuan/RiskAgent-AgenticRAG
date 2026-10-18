@@ -33,6 +33,16 @@ def load_thresholds(path: str) -> dict[str, Any]:
     raise ValueError(f"Cannot parse thresholds file: {path}")
 
 
+def _ci_bound(entry: Any, key: str, fallback: float | None) -> float | None:
+    """从 CI 条目取边界值, 无效或缺失时返回 fallback."""
+    if not isinstance(entry, dict):
+        return fallback
+    try:
+        return float(entry.get(key))
+    except (TypeError, ValueError):
+        return fallback
+
+
 def evaluate_threshold_gate(
     *,
     report: dict[str, Any],
@@ -51,6 +61,16 @@ def evaluate_threshold_gate(
         metric_rules = {}
 
     fail_on_regression = bool(config.get("fail_on_regression", True))
+
+    # CI 口径 (RFC-006 A2): 有置信区间的指标, 阈值判定用保守边界
+    # (higher_is_better 用 ci_low, lower_is_better 用 ci_high), 报告可配置关闭.
+    use_ci = bool(config.get("use_confidence_intervals", True))
+    ci_section = report.get("confidence_intervals")
+    ci_metrics: dict[str, Any] = {}
+    if use_ci and isinstance(ci_section, dict):
+        raw_ci = ci_section.get("metrics")
+        if isinstance(raw_ci, dict):
+            ci_metrics = raw_ci
 
     failures: list[dict[str, Any]] = []
     regressions: list[dict[str, Any]] = []
@@ -77,7 +97,20 @@ def evaluate_threshold_gate(
         if direction == "lower_is_better":
             check_min = False
 
-        if check_min and current < (minimum - tolerance):
+        ci_entry = ci_metrics.get(name) if name in ci_metrics else None
+
+        if check_min and check_max:
+            # 双侧检查: min 用下界, max 用上界
+            min_current = _ci_bound(ci_entry, "ci_low", current)
+            max_current = _ci_bound(ci_entry, "ci_high", current)
+        elif check_min:
+            min_current = _ci_bound(ci_entry, "ci_low", current)
+            max_current = current
+        else:
+            min_current = current
+            max_current = _ci_bound(ci_entry, "ci_high", current)
+
+        if check_min and min_current < (minimum - tolerance):
             failures.append(
                 {
                     "metric": name,
@@ -85,9 +118,11 @@ def evaluate_threshold_gate(
                     "current": current,
                     "minimum": minimum,
                     "tolerance": tolerance,
+                    "ci_low": _ci_bound(ci_entry, "ci_low", None),
+                    "judged_value": min_current,
                 }
             )
-        if check_max and current > (maximum + tolerance):
+        if check_max and max_current > (maximum + tolerance):
             failures.append(
                 {
                     "metric": name,
@@ -95,6 +130,8 @@ def evaluate_threshold_gate(
                     "current": current,
                     "maximum": maximum,
                     "tolerance": tolerance,
+                    "ci_high": _ci_bound(ci_entry, "ci_high", None),
+                    "judged_value": max_current,
                 }
             )
 
@@ -130,4 +167,6 @@ def evaluate_threshold_gate(
         "warnings": warnings,
         "checked_metrics": sorted([k for k, v in metric_rules.items() if isinstance(v, dict)]),
         "fail_on_regression": fail_on_regression,
+        "use_confidence_intervals": use_ci,
+        "confidence_interval_metrics": sorted(ci_metrics.keys()),
     }

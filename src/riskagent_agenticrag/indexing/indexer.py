@@ -29,6 +29,7 @@ from riskagent_agenticrag.rag.embeddings import build_embeddings
 from riskagent_agenticrag.rag.ingestion import build_parent_documents, split_documents
 from riskagent_agenticrag.rag.source_loader import load_sources
 from riskagent_agenticrag.rag.sparse_index import SPARSE_CORPUS_FILENAME
+from riskagent_agenticrag.rag.utils import embedding_texts as _embedding_texts
 
 MANIFEST_FILENAME = "index_manifest.json"
 # v3: +context_brief 字段; v4: chunking 循环 bug 修复 + 碎片/噪声过滤 (chunk 集合整体变化, 需全量重建)
@@ -37,7 +38,8 @@ MANIFEST_FILENAME = "index_manifest.json"
 # 新规则将在后续增量索引 (新文档接入) 时自然生效.
 # 2026-08-20: schema fingerprint 拆分 (查询期 features 移出比较范围) 同样未 bump 版本 --
 # 匹配逻辑改为逐块比较索引期字段, 老 manifest (含 features 的 schema) 可平滑迁移, 不触发重建.
-MANIFEST_VERSION = 4
+MANIFEST_VERSION = 5
+# v5: +chunk_type 字段 (PDF 表格感知解析, RFC-006 C1)
 
 
 def _env_use_llm_chunking() -> bool:
@@ -51,14 +53,29 @@ def _env_use_llm_chunking() -> bool:
     return os.getenv("RISKAGENT_USE_LLM_CHUNKING", "true").strip().lower() not in {"false", "0", "no"}
 
 
+def _env_pdf_tables() -> bool:
+    """PDF 表格感知解析开关, 与 source_loader 保持同一默认."""
+    import os
+
+    return os.getenv("RISKAGENT_PDF_TABLES", "true").strip().lower() not in {"false", "0", "no"}
+
+
 def _chunking_config() -> dict[str, Any]:
     """当前生效的分块配置, 计入 schema fingerprint 以便切换开关时触发全量重建."""
     use_llm = _env_use_llm_chunking()
+    pdf_tables = _env_pdf_tables()
+    # v2 policy: +PDF 表格感知解析 (pdfplumber, chunk_type=table 独立 chunk)
+    policy_version = (
+        ("split_documents_v2" if use_llm else "split_documents_rule_v2")
+        if pdf_tables
+        else ("split_documents_v1" if use_llm else "split_documents_rule_v1")
+    )
     return {
         "use_llm_chunking": use_llm,
         "max_chunk_size": 800,
         "overlap": 100,
-        "policy_version": "split_documents_v1" if use_llm else "split_documents_rule_v1",
+        "policy_version": policy_version,
+        "pdf_tables": pdf_tables,
     }
 
 
@@ -344,15 +361,10 @@ def incremental_index(
 
         delete_by_source(client=client, config=cfg, source=src)
 
-        # 使用 context_brief + chunk_text 拼接做 embedding
-        texts = []
-        for c in chunks:
-            brief = str(c.metadata.get("context_brief", "")).strip()
-            chunk_text = str(c.page_content or "")
-            if brief:
-                texts.append(f"{brief}\n{chunk_text}")
-            else:
-                texts.append(chunk_text)
+        # embedding 输入 (RFC-006 C2): contextual_briefs_embed=False 时 brief 只存元数据
+        # 供 BM25 变体使用, embedding 保持纯 chunk 文本 (规避已实证的术语稀释).
+        embed_inject_brief = settings.features.contextual_briefs and settings.features.contextual_briefs_embed
+        texts = _embedding_texts(chunks, inject_brief=embed_inject_brief)
         vecs = embeddings.embed_documents(texts) if texts else []
         rows: list[dict[str, Any]] = []
         for c, v in zip(chunks, vecs, strict=False):
@@ -367,6 +379,7 @@ def incremental_index(
                     "parent_id": str(meta.get("parent_id", "")),
                     "section_path": str(meta.get("section_path", "")),
                     "context_brief": str(meta.get("context_brief", "")),
+                    "chunk_type": str(meta.get("chunk_type", "text") or "text"),
                     "start_index": int(meta.get("start_index", 0) or 0),
                     "page": int(meta.get("page", 0) or 0),
                     "start_line": int(meta.get("start_line", 0) or 0),

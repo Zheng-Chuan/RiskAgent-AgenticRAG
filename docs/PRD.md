@@ -84,7 +84,7 @@
 | Phase 2 | 检索与召回强化 | ✓ 完成 | [phase-2-retrieval-hardening.md](./phases/phase-2-retrieval-hardening.md) |
 | Phase 3 | 评测与门禁强化 | ✓ 完成 | [phase-3-evaluation-hardening.md](./phases/phase-3-evaluation-hardening.md) |
 | Phase 4 | 发布与回归稳定化 | ✓ 完成 | [phase-4-release-readiness.md](./phases/phase-4-release-readiness.md) |
-| Phase 5 | 前沿对齐 (评测学 / 长上下文基线 / 语料索引 / 架构覆盖) | 计划中 | [phase-5-frontier-alignment.md](./phases/phase-5-frontier-alignment.md) |
+| Phase 5 | 前沿对齐 (置信区间 / 长上下文基线 / PDF 表格解析 / Contextual 变体) | 计划中 | [phase-5-frontier-alignment.md](./phases/phase-5-frontier-alignment.md) |
 
 (第一轮 2026-08-25 收口: 全部阶段完成, 未启动的方向已取消, 见 [RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md); 2026-10-06 经业界前沿对齐审计重开第二轮, 见 [RFC-006](./decisions/RFC-006-frontier-gap-closing-roadmap.md))
 
@@ -101,7 +101,7 @@
 | 全链路可观测性 | Closed (P0/P1 已落地) | [RFC-002](./decisions/RFC-002-observability-full-chain-trace.md) |
 | Contextual Retrieval | Implemented (默认关闭) | [RFC-003](./decisions/RFC-003-contextual-retrieval.md) |
 | Agentic RAG 检索工具化 | Closed (阶段一已实现默认关闭, 迁移取消) | [RFC-004](./decisions/RFC-004-agentic-rag-paradigm.md) |
-| 前沿差距收口路线图 (评测学/长上下文基线/语料索引/架构覆盖) | Proposed | [RFC-006](./decisions/RFC-006-frontier-gap-closing-roadmap.md) |
+| 前沿差距收口路线图 (置信区间/长上下文基线/表格解析/Contextual 变体) | Proposed | [RFC-006](./decisions/RFC-006-frontier-gap-closing-roadmap.md) |
 
 ---
 
@@ -145,7 +145,7 @@
 
 ### 已知边界
 
-- gate_labels 样本量偏小, 统计显著性有限 (由 [Phase 5](./phases/phase-5-frontier-alignment.md) A1/A2 解决)
+- gate_labels 样本量偏小, 统计显著性有限 (评测集扩充已评估后移出范围, 见 [RFC-006](./decisions/RFC-006-frontier-gap-closing-roadmap.md) 范围调整记录; CI 口径由 [Phase 5](./phases/phase-5-frontier-alignment.md) 提供)
 - ragas 副指标 `context_precision_no_ref` / `answer_correctness` 偏低且未进 gate, 已由 [PRECISION_SLICE_ANALYSIS](./evaluations/PRECISION_SLICE_ANALYSIS.md) 定量归因 (口径假象为主), 不再调整口径
 
 ---

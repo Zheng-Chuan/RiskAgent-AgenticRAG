@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from pathlib import Path
 
+from riskagent_agenticrag.config.settings import settings
 from riskagent_agenticrag.rag.advanced_index_retriever import (
     AdvancedIndexConfig,
     AdvancedIndexRetriever,
@@ -54,6 +55,10 @@ def build_retriever(*, persist_dir: Path, final_k: int = 4):
         config=DenseMilvusRetrieverConfig(k=int(dense_k)),
     )
     base_final_k = max(int(final_k), int(os.getenv("RISKAGENT_PIPELINE_BASE_FINAL_K", str(max(12, int(final_k) * 3)))))
+    # Contextual 变体 (RFC-006 C2): BM25 侧注入模式, env 可在进程启动时覆盖
+    bm25_context_mode = str(
+        os.getenv("RISKAGENT_CONTEXTUAL_BM25_MODE", settings.features.contextual_bm25_mode) or "off"
+    ).strip().lower()
     cfg = HybridConfig(
         dense_k=dense_k,
         sparse_k=sparse_k,
@@ -66,6 +71,7 @@ def build_retriever(*, persist_dir: Path, final_k: int = 4):
         min_chunk_chars=min_chunk_chars,
         max_per_source=max_per_source,
         max_per_section=max_per_section,
+        bm25_context_mode=bm25_context_mode,
     )
     hybrid = HybridRetriever(dense_retriever=dense_retriever, sparse_docs=sparse_docs, config=cfg)
     qi_cfg = QueryIntelConfig(

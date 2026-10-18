@@ -205,3 +205,11 @@ Threshold Gate 判定: PASS, 阈值失败 0 项, 基线回归 0 项.
 - q19/q21/q22 修复部署验证: 已由 v10c 复跑 3/3 PASS 及 v10d 全量 50/50 确认, 闭环
 
 最终生产状态: v10f 混合策略 (CRAG sufficient 门槛 0.7 + SEAL dedup), 50/50 PASS, faithfulness 0.982 / recall@5 0.80 / citation 1.000.
+
+## Phase 5 (RFC-006, 2026-10-18)
+
+| 日期 | 标签 | 题数 | 结果 | 说明 | 报告 |
+|------|------|------|------|------|------|
+| 2026-10-18 | phase5_pdf_tables_full | 50/50 | WARNING (归因受限) | 规则分块 v2 + 表格解析索引 (2498 chunks 含 107 表格); recall@5 0.820 (v10f 0.80 ↑), faithfulness 0.952 (↓0.030), context_precision 0.147 (↓0.364); gate 零阈值失败, 回归项主要来自 LLM→规则分块切换的混淆因素; CI 节 (n_boot=1000) 首次全量落地; 表格 chunk 入库但 50 题 qrels 无表格标注, 无法度量 C1 收益 | `.artifacts/reports/rag_eval_phase5_pdf_tables_full_20261018_100636.md` |
+| 2026-10-18 | contextual_ab_short_brief | 50/50 | 结论: 收益在上下文侧 | C2 A/B (同索引): short_brief 使 context_precision 0.147→0.266 (+81%), context_recall +0.036, faithfulness +0.014; 检索层 recall@5 0.820→0.780 / MRR 0.651→0.602 (CI 大幅重叠, 不显著); 定位为"以轻微检索代价换上下文精度"的变体, 默认保持 off | `.artifacts/reports/rag_eval_contextual_ab_short_brief_20261018_104805.md` |
+| 2026-10-18 | long_context_baseline (n=10) | 10 | rag_main 胜出 | RFC-006 B: rag_main 全面优于 parent_stuffing (faithfulness 1.0 vs 0.43, context_precision 0.79 vs 0.56, 1.1k vs 17.7k tokens/题, 误拒 0 vs 0.2); 实证"检索+小上下文"优于塞满 128k 窗口; map_reduce_full 模式因每题约 2.9h 移除 | `docs/evaluations/long_context_baseline_20261018_111636.md` |

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import math
 import os
+import random
 from dataclasses import dataclass
 from statistics import mean
 from typing import Any
@@ -406,3 +407,129 @@ def compute_reliability_cost_metrics(
         metrics["cost_estimated_usd"] = (prompt_mean / 1000.0) * price_prompt + (completion_mean / 1000.0) * price_completion
         metrics["cache_hit_rate"] = float(cache_hits) / float(total)
     return ReliabilityCostMetrics(metrics=metrics, node_latency_p95=node_p95)
+
+
+# ---------------------------------------------------------------------------
+# Bootstrap 置信区间 (RFC-006 A2)
+# ---------------------------------------------------------------------------
+
+def bootstrap_mean_ci(
+    values: list[float],
+    *,
+    n_boot: int = 1000,
+    alpha: float = 0.05,
+    seed: int = 42,
+) -> dict[str, float] | None:
+    """对单题指标序列做 bootstrap 重采样, 返回均值的 95% 置信区间 (percentile 法).
+
+    固定 seed 保证同一报告可复现.
+    """
+    clean = [float(v) for v in values if v is not None]
+    n = len(clean)
+    if n == 0:
+        return None
+    point = float(mean(clean))
+    if n == 1 or n_boot <= 0:
+        return {"mean": point, "ci_low": point, "ci_high": point, "n": float(n)}
+    rng = random.Random(seed)
+    boot_means: list[float] = []
+    for _ in range(int(n_boot)):
+        # 有放回重采样
+        boot_means.append(mean([clean[rng.randrange(n)] for _ in range(n)]))
+    boot_means.sort()
+    lo_idx = max(0, int(math.floor((alpha / 2.0) * len(boot_means))) - 1)
+    hi_idx = min(len(boot_means) - 1, int(math.ceil((1.0 - alpha / 2.0) * len(boot_means))))
+    return {
+        "mean": point,
+        "ci_low": float(boot_means[lo_idx]),
+        "ci_high": float(boot_means[hi_idx]),
+        "n": float(n),
+    }
+
+
+def compute_confidence_intervals(
+    samples: list[dict[str, Any]],
+    *,
+    ks: list[int],
+    n_boot: int = 1000,
+) -> dict[str, dict[str, float]]:
+    """对关键指标做单题级 bootstrap, 输出 95% CI.
+
+    覆盖: retrieval 指标 / citations_coverage / gate_block_rate /
+    sentence_support_rate / numeric_consistency_score / citation_precision.
+    samples 需已由 run.py 附加 sentence_support / domain_consistency 单题明细.
+    """
+    clean_ks = sorted({int(k) for k in ks if int(k) > 0}) or [1, 3, 5]
+    series: dict[str, list[float]] = {}
+
+    # retrieval 指标: 复用单题计算 (键名与 report["metrics"] 保持一致, 供 gate 查找)
+    per_sample_retrieval = [_compute_single_retrieval_metrics(sample, clean_ks) for sample in samples]
+    for row in per_sample_retrieval:
+        for name, value in row.items():
+            series.setdefault(str(name), []).append(_to_float(value))
+
+    # citations_coverage / gate_block: 单题 0/1
+    from riskagent_agenticrag.evaluation.citations import is_valid_citation
+
+    citation_flags: list[float] = []
+    gate_flags: list[float] = []
+    for sample in samples:
+        explicit_valid_count = sample.get("valid_citation_count")
+        try:
+            has_valid = int(explicit_valid_count) > 0
+        except (TypeError, ValueError):
+            citations = sample.get("citations")
+            if not isinstance(citations, list):
+                citations = []
+            has_valid = any(
+                isinstance(c, dict) and is_valid_citation(c) for c in citations
+            )
+        citation_flags.append(1.0 if has_valid else 0.0)
+        gate_flags.append(0.0 if str(sample.get("status") or "") == "ok" else 1.0)
+    series["citations_coverage"] = citation_flags
+    series["gate_block_rate"] = gate_flags
+
+    # sentence_support / citation_precision: 单题明细 (sentence_support_rate 为题级均值口径)
+    support_rates: list[float] = []
+    precision_scores: list[float] = []
+    for sample in samples:
+        detail = sample.get("sentence_support")
+        if isinstance(detail, dict):
+            total_sentences = detail.get("total_sentences")
+            supported = detail.get("supported_sentences_count")
+            try:
+                if int(total_sentences) > 0:
+                    support_rates.append(float(supported) / float(int(total_sentences)))
+            except (TypeError, ValueError):
+                pass
+            precision = detail.get("citation_precision")
+            try:
+                precision_scores.append(float(precision))
+            except (TypeError, ValueError):
+                pass
+    if support_rates:
+        series["sentence_support_rate"] = support_rates
+    if precision_scores:
+        series["citation_precision"] = precision_scores
+
+    # numeric_consistency: 单题明细
+    numeric_scores: list[float] = []
+    for sample in samples:
+        domain = sample.get("domain_consistency")
+        if isinstance(domain, dict):
+            numeric = domain.get("numeric")
+            if isinstance(numeric, dict):
+                score = numeric.get("score")
+                try:
+                    numeric_scores.append(float(score))
+                except (TypeError, ValueError):
+                    pass
+    if numeric_scores:
+        series["numeric_consistency_score"] = numeric_scores
+
+    out: dict[str, dict[str, float]] = {}
+    for name, values in series.items():
+        ci = bootstrap_mean_ci(values, n_boot=n_boot)
+        if ci is not None:
+            out[name] = ci
+    return out

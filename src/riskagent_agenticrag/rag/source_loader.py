@@ -15,10 +15,90 @@
 
 from __future__ import annotations
 
+import os
 import pathlib
 import re
 
 from langchain_core.documents import Document
+
+
+def _pdf_tables_enabled() -> bool:
+    """PDF 表格感知解析开关 (RFC-006 C1), 默认开启, 可用 RISKAGENT_PDF_TABLES=false 关闭."""
+    return os.getenv("RISKAGENT_PDF_TABLES", "true").strip().lower() not in {"false", "0", "no"}
+
+
+def _table_cell(value: object) -> str:
+    text = " ".join(str(value or "").strip().split())
+    return text.replace("|", "\\|")
+
+
+def table_to_markdown(rows: list[list[object]]) -> str:
+    """pdfplumber 表格行 (list of list) 转 markdown 表格文本."""
+    clean: list[list[str]] = []
+    for row in rows or []:
+        if not row:
+            continue
+        clean.append([_table_cell(c) for c in row])
+    if not clean:
+        return ""
+    width = max(len(r) for r in clean)
+    for r in clean:
+        r.extend([""] * (width - len(r)))
+    header = clean[0] if any(c for c in clean[0]) else [f"col{i + 1}" for i in range(width)]
+    lines = [
+        "| " + " | ".join(header) + " |",
+        "|" + "|".join([" --- "] * width) + "|",
+    ]
+    for r in clean[1:]:
+        lines.append("| " + " | ".join(r) + " |")
+    return "\n".join(lines)
+
+
+def _extract_pdf_tables(path: pathlib.Path) -> list[Document]:
+    """用 pdfplumber 提取 PDF 表格, 每张表一个 Document (chunk_type=table, RFC-006 C1).
+
+    pdfplumber 不可用或解析失败时静默返回空列表, 不影响正文加载.
+    """
+    try:
+        import pdfplumber  # type: ignore[import-not-found]
+    except Exception:
+        return []
+    docs: list[Document] = []
+    try:
+        with pdfplumber.open(str(path)) as pdf:
+            for i, page in enumerate(pdf.pages):
+                try:
+                    tables = page.extract_tables() or []
+                except Exception:
+                    continue
+                for t_idx, rows in enumerate(tables, start=1):
+                    valid_rows = [r for r in (rows or []) if r]
+                    # 过滤误检: 至少 2 行 2 列且含 >=4 个非空单元格
+                    # (页眉框线 / 单行文本 / 空网格都会被 pdfplumber 误判为表格)
+                    if len(valid_rows) < 2:
+                        continue
+                    if max(len(r) for r in valid_rows) < 2:
+                        continue
+                    if sum(1 for r in valid_rows for c in r if str(c or "").strip()) < 4:
+                        continue
+                    md = table_to_markdown(valid_rows)
+                    if len(md.strip()) < 30:
+                        continue
+                    docs.append(
+                        Document(
+                            page_content=md,
+                            metadata={
+                                "source": str(path),
+                                "file_type": "pdf",
+                                "page": int(i + 1),
+                                "chunk_type": "table",
+                                "table_index": int(t_idx),
+                            },
+                        )
+                    )
+    except Exception:
+        return docs
+    return docs
 
 
 def _load_pdf(path: pathlib.Path) -> list[Document]:
@@ -42,6 +122,9 @@ def _load_pdf(path: pathlib.Path) -> list[Document]:
                 },
             )
         )
+    # RFC-006 C1: 表格感知解析, 表格转 markdown 独立 chunk (chunk_type=table)
+    if _pdf_tables_enabled():
+        docs.extend(_extract_pdf_tables(path))
     return docs
 
 

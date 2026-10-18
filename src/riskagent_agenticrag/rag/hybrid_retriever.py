@@ -73,6 +73,32 @@ def _compute_metadata_boost(meta: dict[str, Any], q_tokens: set[str]) -> float:
     return min(0.15, 0.05 * float(hit))
 
 
+def bm25_effective_text(doc: Document, *, mode: str) -> str:
+    """BM25 索引文本 (RFC-006 C2 Contextual 变体).
+
+    off: 纯 chunk 文本 (现状); llm_brief: 前缀拼接索引期 LLM brief (变体一);
+    short_brief: 前缀拼接 title+section_path 短 brief 约 30 token (变体二, 纯元数据).
+    dense embedding 侧不受此函数影响.
+    """
+    mode = str(mode or "off").strip().lower()
+    text = doc.page_content or ""
+    meta = doc.metadata or {}
+    if mode == "llm_brief":
+        brief = str(meta.get("context_brief", "") or "").strip()
+        if brief:
+            return f"{brief}\n{text}"
+        return text
+    if mode == "short_brief":
+        source = str(meta.get("source", "") or "").strip()
+        title = pathlib.Path(source).stem if source else ""
+        section = str(meta.get("section_path", "") or "").strip()
+        parts = [p for p in (f"doc: {title}" if title else "", f"section: {section}" if section else "") if p]
+        if parts:
+            return f"[{' | '.join(parts)}]\n{text}"
+        return text
+    return text
+
+
 @dataclass(frozen=True)
 class HybridConfig:
     dense_k: int = 30
@@ -86,6 +112,8 @@ class HybridConfig:
     min_chunk_chars: int = 80
     max_per_source: int = 2
     max_per_section: int = 1
+    # Contextual 变体 (RFC-006 C2): BM25 索引文本注入模式 off/llm_brief/short_brief
+    bm25_context_mode: str = "off"
 
 
 class HybridRetriever:
@@ -114,7 +142,10 @@ class HybridRetriever:
         self._reranker_init_errors: list[str] = []
 
         if sparse_docs:
-            tokens = [tokenize(d.page_content or "") for d in sparse_docs]
+            tokens = [
+                tokenize(bm25_effective_text(d, mode=str(config.bm25_context_mode or "off")))
+                for d in sparse_docs
+            ]
             self._bm25 = BM25Okapi(tokens)
             self._bm25_keys = [doc_key(d) for d in sparse_docs]
 

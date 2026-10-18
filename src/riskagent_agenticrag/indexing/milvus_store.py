@@ -47,6 +47,7 @@ def ensure_collection(*, client: MilvusClient, config: MilvusStoreConfig, dim: i
         FieldSchema(name="parent_id", dtype=DataType.VARCHAR, max_length=64),
         FieldSchema(name="section_path", dtype=DataType.VARCHAR, max_length=1024),
         FieldSchema(name="context_brief", dtype=DataType.VARCHAR, max_length=2048),
+        FieldSchema(name="chunk_type", dtype=DataType.VARCHAR, max_length=16),
         FieldSchema(name="start_index", dtype=DataType.INT64),
         FieldSchema(name="page", dtype=DataType.INT64),
         FieldSchema(name="start_line", dtype=DataType.INT64),
@@ -126,6 +127,11 @@ def drop_collection(*, client: MilvusClient, config: MilvusStoreConfig) -> bool:
 
 
 def search(*, client: MilvusClient, config: MilvusStoreConfig, vector: list[float], limit: int) -> list[dict[str, Any]]:
+    # Milvus Lite 重启后集合处于 released 状态, 搜索前必须 load.
+    try:
+        client.load_collection(collection_name=str(config.collection_name))
+    except Exception:
+        pass
     out = client.search(
         collection_name=str(config.collection_name),
         data=[vector],
@@ -138,6 +144,7 @@ def search(*, client: MilvusClient, config: MilvusStoreConfig, vector: list[floa
             "parent_id",
             "section_path",
             "context_brief",
+            "chunk_type",
             "start_index",
             "page",
             "start_line",
@@ -171,6 +178,7 @@ def search(*, client: MilvusClient, config: MilvusStoreConfig, vector: list[floa
                 "parent_id",
                 "section_path",
                 "context_brief",
+                "chunk_type",
                 "start_index",
                 "page",
                 "start_line",

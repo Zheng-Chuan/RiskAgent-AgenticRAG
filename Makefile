@@ -99,6 +99,12 @@ api:  ## 启动 API 服务器
 eval:  ## 运行评测
 	$(PYTHON) -m riskagent_agenticrag.evaluation.run --label unified_pipeline
 
+eval-long-context:  ## RFC-006 B: 长上下文基线三模式对比实验 (一次性, 成本高可用 --limit 控制)
+	$(PYTHON) -m riskagent_agenticrag.evaluation.baseline_long_context
+
+eval-contextual-ab:  ## RFC-006 C2: Contextual Retrieval 变体 A/B (默认 off+short_brief; 详见 scripts/run_contextual_ab.sh)
+	bash scripts/run_contextual_ab.sh
+
 offline-regression:  ## 运行纯离线回归
 	bash scripts/run_offline_regression.sh
 

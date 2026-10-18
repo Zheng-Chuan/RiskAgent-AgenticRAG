@@ -48,6 +48,19 @@ def rrf_scores(*, ranked_lists: list[list[str]], k: int = 60) -> dict[str, float
 
 # ---- JSONL 持久化 ----
 
+def embedding_texts(chunks: list[Document], *, inject_brief: bool) -> list[str]:
+    """embedding 输入文本 (RFC-006 C2): inject_brief 时拼接 context_brief 前缀, 否则纯 chunk 文本."""
+    texts: list[str] = []
+    for c in chunks:
+        brief = str((c.metadata or {}).get("context_brief", "")).strip()
+        chunk_text = str(c.page_content or "")
+        if brief and inject_brief:
+            texts.append(f"{brief}\n{chunk_text}")
+        else:
+            texts.append(chunk_text)
+    return texts
+
+
 def persist_docs_jsonl(docs: list[Document], path: Path) -> str:
     """将 Document 列表写入 JSONL 文件."""
     path.parent.mkdir(parents=True, exist_ok=True)

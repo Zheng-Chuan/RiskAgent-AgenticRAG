@@ -2,7 +2,7 @@
 
 ## 状态
 
-Proposed (2026-10-06): 业界前沿对齐审计后立项; 2026-10-18 范围收窄至 A2/B/C1/C2 四项 (范围调整记录见下). 执行跟踪见 [phase-5-frontier-alignment](../phases/phase-5-frontier-alignment.md).
+Implemented (2026-10-06 立项): 2026-10-18 范围收窄至 A2/B/C1/C2 四项 (范围调整记录见下) 并全部落地; 2026-10-19 三个收尾项完成 — ① 表格题入集验证 C1 收益 (58/58, 表格解析使原本不可回答的问题可回答), ② LLM 分块干净归因评测 (LLM 分块不采用, 生产维持规则分块 v2), ③ C2 llm_brief 变体 A/B (无显著收益, RFC-003 关闭, 生产维持 off). 本 RFC 全部事项收口, Phase 5 完成. 执行跟踪见 [phase-5-frontier-alignment](../phases/phase-5-frontier-alignment.md).
 
 ## 目标
 

@@ -462,10 +462,10 @@
   - gate_labels 样本规模还偏小
   - answer_relevancy 在没有 ragas 时会退化成 heuristic overlap
   - release acceptance 已强制 fresh eval 口径 (无 LLM key 直接报错终止)
-  - 这几个点都是真实边界 项目已收口 作为已知边界显式保留 不再补强
+  - 这几个点都是真实边界 第一轮收口时作为已知边界显式保留; 第二轮 (Phase 5, 2026-10) 对其中两点已有动作: 评测指标补了 bootstrap 95% CI, 题集扩到 58 题含表格题
 - 继续追问
   - 为什么这些边界不再补
-  - (答: 项目 2026-08-25 收口, 边界已显式记录在 PRD 和 ARCHITECTURE, gate 全绿后剩余价值不在无限加固)
+  - (答: 第一轮 2026-08-25 收口, 边界已显式记录在 PRD 和 ARCHITECTURE, gate 全绿后剩余价值不在无限加固; 第二轮重开后只补前沿对齐审计确认的高性价比项, 不做无限加固)
 
 ---
 
@@ -562,7 +562,7 @@
   - 这是已知边界
   - 线上 gate 做的是 fail-fast
   - 更细的数字一致性现在主要在离线 eval
-  - 数字型问题识别已实现 (numeric gate + 数值题型路由), evidence 数字重算经评估后不做 (项目收口)
+  - 数字型问题识别已实现 (numeric gate + 数值题型路由), evidence 数字重算经评估后不做 (第一轮收口决策, 第二轮未重开)
 
 ---
 
@@ -586,7 +586,7 @@
 - 推荐回答
   - 这是有意识地用硬截断控制污染
   - 当前先做简单稳定版
-  - 多轮摘要和 retrieval memory 未实现 项目收口后也不再规划
+  - 多轮摘要和 retrieval memory 未实现 第一轮收口后未规划 (RAPTOR 已评估取消, 第二轮范围亦不含)
 
 ---
 
@@ -627,7 +627,7 @@
 ### 4. gate_labels 样本太小 且正样本不足
 
 - 这会导致 gate benefit false kill miss rate 统计意义偏弱
-- 你要直接承认样本规模小是已知边界 项目收口后不再扩
+- 你要直接承认样本规模小是已知边界 (第一轮 50 题收口时不扩; 2026-10-19 已扩到 58 题含 8 道表格题, 但 gate_labels 标注样本仍偏小)
 
 ### 5. retriever cache key 太窄
 
@@ -769,8 +769,8 @@
 - retrieval eval 的 qrels 已经走到 chunk_id 级 gold recall 分母只计主 gold (relevance>=2) 与 IR 惯例对齐
 - 我们默认关闭 LLM appeal 是因为 release gate 必须 deterministic
 - 离线回归真正解决的是可复现性 而不是证明真实线上效果已经最优
-- release acceptance 已绑定 fresh eval 报告 (无 LLM key 直接报错终止) v10d/v10f 全量 50/50 验收通过
-- 项目已收口: 把可验证的事情做完 (recall 0.5 -> 0.8, gate 全绿, 混合策略上线) 比堆未验证的新范式更有价值 RAPTOR 和 Agentic RAG 完整迁移都是评估收益无法验证后主动取消的
+- release acceptance 已绑定 fresh eval 报告 (无 LLM key 直接报错终止) v10d/v10f 全量 50/50 验收通过 (50 题口径); 第二轮 58 题口径最新报告 phase5_table_questions 58/58 题目级 PASS
+- 第一轮已收口: 把可验证的事情做完 (recall 0.5 -> 0.8, gate 全绿, 混合策略上线) 比堆未验证的新范式更有价值 RAPTOR 和 Agentic RAG 完整迁移都是评估收益无法验证后主动取消的; 2026-10 重开第二轮前沿对齐 (RFC-006) 只补审计确认的四个差距, 同样坚持可验证才落地
 
 ---
 

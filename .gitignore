@@ -59,3 +59,4 @@ tests/reports/
 
 # Coverage temp files (.coverage 本体已跟踪, 只忽略 pytest 并发产生的临时副本)
 .coverage.*
+.milvus_rule_v2_20261019/

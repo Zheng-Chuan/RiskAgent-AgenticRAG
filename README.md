@@ -15,6 +15,8 @@
 - 生成侧会产出 `answer` `citations` `claims` `evidence_set` `decision_log`
 - 校验侧已经具备 `refusal gate` `evidence gate` `numeric gate`
 - 评测侧已经具备 `qrels` `citation precision` `answer eval` `domain consistency` `threshold gate`
+- 索引侧支持 PDF 表格感知解析 (pdfplumber, `chunk_type=table` 独立 chunk) 和 Contextual Retrieval brief 生成 (默认关闭, RFC-003/RFC-006)
+- 评测报告关键指标带 bootstrap 95% CI, threshold gate 支持按置信区间保守判定 (RFC-006 A2)
 
 ## 当前口径
 
@@ -33,11 +35,11 @@
 - `docs/RESUME.md`: 对外表述和简历口径收敛
 - `docs/decisions/ADR-*.md`: 已接受的架构决策和 trade-off
 - `docs/decisions/RFC-*.md`: 已收口的提案记录 (落地情况与取消决策)
-- `docs/phases/*.md`: 分阶段迭代 checkpoint exit criteria 和交付物 (全部完成)
+- `docs/phases/*.md`: 分阶段迭代 checkpoint exit criteria 和交付物 (第一轮 Phase 0-4 全部完成; Phase 5 前沿对齐 2026-10-19 收口)
 - `docs/evaluations/EVALUATION_LOG.md`: 每次正式评测的结果台账 FAIL 根因和修复追踪
 - `docs/INTERVIEW.md`: 面向高压面试追问的专项问答
 
-项目已于 2026-08-25 收口: 全部阶段完成, 未启动方向 (RAPTOR / Agentic RAG 完整迁移) 经评估后取消, 详见 [docs/decisions/RFC-001-retrieval-hardening-roadmap.md](docs/decisions/RFC-001-retrieval-hardening-roadmap.md).
+第一轮已于 2026-08-25 收口: 全部阶段完成, 未启动方向 (RAPTOR / Agentic RAG 完整迁移) 经评估后取消, 详见 [docs/decisions/RFC-001-retrieval-hardening-roadmap.md](docs/decisions/RFC-001-retrieval-hardening-roadmap.md). 2026-10-06 经业界前沿对齐审计重开第二轮 (Phase 5, [RFC-006](docs/decisions/RFC-006-frontier-gap-closing-roadmap.md)): A2 置信区间 / B 长上下文基线 / C1 PDF 表格解析 / C2 Contextual 变体四项于 2026-10-18 落地; 2026-10-19 三个收尾项完成 (表格题入集 58/58 验证 C1 收益, LLM 分块干净归因评测结论为不采用, llm_brief 变体 A/B 无显著收益), Phase 5 收口.
 
 文档迭代流程.
 
@@ -93,10 +95,12 @@ make test CONDA_ENV=riskagent-agenticrag
 
 ## 评测口径
 
+- 题集: `tests/data/questions.json` 当前 58 题 (2026-10-19 起, 原 50 题 + 8 道表格题 q51-q58); 与 50 题历史报告对比需注明题集差异
 - 核心回答指标: `citation_coverage` `faithfulness` `answer_relevancy`
 - 检索指标: `retrieval_recall_at_k` `retrieval_mrr` `retrieval_ndcg_at_k`
 - 句级证据分析: `supported_sentences` `unsupported_sentences`
 - 金融专项指标: `numeric_consistency_score` `glossary_consistency_score`
+- 关键指标带 bootstrap 95% CI (`confidence_intervals` 节, 1000 次重采样)
 - 阈值配置: [eval_thresholds.json](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/config/eval_thresholds.json)
 
 ## 报告引用
@@ -104,8 +108,9 @@ make test CONDA_ENV=riskagent-agenticrag
 - 历史样例报告 (用于验证报告结构和 threshold gate 流程, 带旧字段 `retriever_mode=step4`, 不代表当前主链): [rag_eval_baseline_sample.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts/reports/rag_eval_baseline_sample.md)
 - `scripts/release_acceptance.sh` 要求可用 `LLM key` 跑 fresh eval, 无 key 直接报错终止 (2026-08-21 起样例报告回退已移除, 强制 fresh 口径)
 - 历次评测结果 FAIL 根因和修复追踪见 [docs/evaluations/EVALUATION_LOG.md](docs/evaluations/EVALUATION_LOG.md)
-- 当前最新全量报告: `prod_pipeline_v10f_crag_hybrid` (2026-08-25, `passed=50/50` `faithfulness=0.982` `retrieval_recall_at_5=0.80` `citation_coverage=1.000`, gate 阈值/基线全过, CRAG 混合策略生产上线)
-- v10f 报告 Markdown: [rag_eval_prod_pipeline_v10f_crag_hybrid_20260825_031459.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts/reports/rag_eval_prod_pipeline_v10f_crag_hybrid_20260825_031459.md)
+- 当前最新全量报告: `phase5_table_questions` (2026-10-19, 58/58 题目级 PASS, `faithfulness=0.968` `retrieval_recall_at_5=0.776` `context_recall=0.948`, 规则分块 v2 + 表格解析索引; 8 道新表格题全过, 其中 2 题的事实仅存在于表格 chunk): [rag_eval_phase5_table_questions_20261019_092730.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts/reports/rag_eval_phase5_table_questions_20261019_092730.md)
+- 50 题口径历史最佳: `prod_pipeline_v10f_crag_hybrid` (2026-08-25, `passed=50/50` `faithfulness=0.982` `retrieval_recall_at_5=0.80` `citation_coverage=1.000`, gate 阈值/基线全过, CRAG 混合策略生产上线): [rag_eval_prod_pipeline_v10f_crag_hybrid_20260825_031459.md](file:///Users/zhengchuan/Documents/TECH/Repo/RiskAgent-AgenticRAG/.artifacts/reports/rag_eval_prod_pipeline_v10f_crag_hybrid_20260825_031459.md); 两份报告题集不同 (58 vs 50), 指标不可直接对比
+- Phase 5 实验报告 (表格解析全量归因 / Contextual A/B / 长上下文基线) 见 [EVALUATION_LOG](docs/evaluations/EVALUATION_LOG.md) Phase 5 节
 - v10d 全量复评报告 (50/50 首次达成, release acceptance 以此重跑通过): `rag_eval_prod_pipeline_v10d_full_reeval_20260821_141306.json`
 - 2026-07-18 full baseline 关键结果 `passed=38/50` `retrieval_recall_at_5=0.500` gate `fail`, 该瓶颈已在 v10b (2026-08-18, recall@5 0.78 gate 首次全绿) 解决, v10b 3 个 FAIL (TARG 词表缺失) 已在 v10c/v10d 闭环
 - `README.md` `docs/ARCHITECTURE.md` `docs/PRD.md` 中出现的关键数字 都应能映射到具体报告文件
@@ -128,3 +133,4 @@ make test CONDA_ENV=riskagent-agenticrag
 - 历史低覆盖大缺口已补齐: `rag/remote_reranker.py` (0% -> 全覆盖, 新增 11 个测试), `artifacts/storage.py` bundle 分支 (73% -> 92%+)
 - 存量风格告警: 全仓 `ruff check` 当前约 397 个 (2026-08-24 已 `--fix` 自动修复 348 个, 剩余为 TRY003/PLR2004/E402 等需手动处理的风格类告警), 项目收口后不再专项治理
 - 当前测试文件共 `55+` 个 覆盖 unit smoke scenario performance milestone acceptance 等多个层次
+- 2026-10-19 实测 (conda `agenticrag` 环境): 917 项测试通过; 另有 2 个已知既有失败 (依赖真实 `.milvus` 索引的评测用例与 1 个 markdown chunk 用例), 属环境相关存量问题, 与 Phase 5 改动无关

@@ -24,7 +24,7 @@
 - 做 retrieval first 的评测和发布门禁
 - 做可复现的索引 评测 报告和回归
 - 做全链路可观测 (退化告警经评估后不做, 见 [RFC-002](./decisions/RFC-002-observability-full-chain-trace.md))
-- 选择性引入业界最新 RAG 范式 (第一轮 2026-08-25 收口; 2026-10-06 经前沿对齐审计重开第二轮, 见 [RFC-006](./decisions/RFC-006-frontier-gap-closing-roadmap.md))
+- 选择性引入业界最新 RAG 范式 (第一轮 2026-08-25 收口; 第二轮 2026-10-19 收口, 见 [RFC-006](./decisions/RFC-006-frontier-gap-closing-roadmap.md))
 
 ### 2.2 我们不做什么
 
@@ -58,8 +58,8 @@
 ### 3.4 范式前沿
 
 - 项目期内追踪并选择性引入了学术界 2025-2026 RAG 范式: Contextual Retrieval (已实现默认关闭) / CRAG / TARG / SEAL-RAG 已落地, Agentic RAG 检索工具化已实现 (默认关闭), RAPTOR 评估后取消
+- 第二轮前沿对齐 (Phase 5, 2026-10): bootstrap 置信区间入评测与 gate / 长上下文基线对比 (rag_main 胜出) / PDF 表格感知解析入索引 (chunk_type=table, 已实证使仅存于表格的事实可检索) / Contextual Retrieval 三变体 A/B (终态: 生产默认 off). 2026-10-19 连同收尾项 (表格题入集 58/58, LLM 分块归因评测不采用, llm_brief 无显著收益) 一并收口, 见 [RFC-006](./decisions/RFC-006-frontier-gap-closing-roadmap.md)
 - 不盲目追新, 只引入能直接提升召回/精度/效率的范式
-- 第一轮已收口 (2026-08-25); 2026-10 前沿对齐审计重开第二轮, [RFC-006](./decisions/RFC-006-frontier-gap-closing-roadmap.md) 聚焦统计置信区间 / 长上下文基线 / PDF 表格解析 / Contextual Retrieval 变体 (2026-10-18 范围收窄), 不动检索主链
 
 ---
 
@@ -72,7 +72,7 @@
 
 ---
 
-## 5. 已完成的投入 (2026-08-25 收口)
+## 5. 已完成的投入 (第一轮, 2026-08-25 收口)
 
 ### 5.1 第一优先级 (P0)
 
@@ -101,7 +101,7 @@
 
 ### 5.5 范式落地时间线 (实际)
 
-P0-P2 计划于 2026 Q3 起排期, 实际全部在 2026-08-25 前完成闭环 (v10b gate 首次全绿 -> v10d 50/50 -> v10f 混合策略上线), 未启动方向 (RAPTOR / Agentic RAG 完整迁移 / 退化告警) 经评估后取消, 项目收口.
+P0-P2 计划于 2026 Q3 起排期, 实际全部在 2026-08-25 前完成闭环 (v10b gate 首次全绿 -> v10d 50/50 -> v10f 混合策略上线), 未启动方向 (RAPTOR / Agentic RAG 完整迁移 / 退化告警) 经评估后取消, 第一轮收口. 第二轮 (Phase 5 / RFC-006) 于 2026-10-06 重开, 四项主线 2026-10-18 落地, 收尾项 2026-10-19 完成, 第二轮收口.
 
 ---
 

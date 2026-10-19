@@ -538,5 +538,107 @@
       "numeric",
       "definition"
     ]
+  },
+  {
+    "id": "q51",
+    "question": "Under the Basel maturity method, what risk weight applies to bonds with a coupon of less than 3% and a residual maturity of 3 to 6 months, and how does it compare with the weight for 6 to 12 months?",
+    "reference_answer": "For coupon less than 3%: 3 to 6 months carries a risk weight of 0.40%, and 6 to 12 months carries 0.70%. Weights rise with maturity up to 12.50% for over 20 years.",
+    "ground_truth_contexts": [
+      "Maturity method time bands: coupon less than 3%, 3 to 6 months risk weight 0.40%; 6 to 12 months risk weight 0.70%."
+    ],
+    "tags": [
+      "regulation",
+      "numeric",
+      "table"
+    ]
+  },
+  {
+    "id": "q52",
+    "question": "What are the correlations between the 1-year and 5-year interest rate risk factors for specified currencies under the Basel CVA framework?",
+    "reference_answer": "The correlation between the 1-year and 5-year interest rate risk factors for specified currencies is 72%.",
+    "ground_truth_contexts": [
+      "Correlations for interest rate risk factors (specified currencies): 1 year vs 5 years = 72%."
+    ],
+    "tags": [
+      "regulation",
+      "numeric",
+      "table"
+    ]
+  },
+  {
+    "id": "q53",
+    "question": "In the FSB review of OTC derivatives market effectiveness, what was the notional amount outstanding of interest rate derivatives and what percentage of the total OTC derivatives market did it represent?",
+    "reference_answer": "Interest rate derivatives had US$368 trillion notional outstanding, representing 81.1% of the total OTC derivatives market (total US$454 trillion). FX derivatives were second at US$69 trillion (15.2%).",
+    "ground_truth_contexts": [
+      "OTC derivatives notional outstanding by asset class: interest rate derivatives US$368 trillion (81.1%), FX US$69 trillion (15.2%), credit US$10 trillion (2.2%), equity US$6 trillion (1.3%), commodity US$1 trillion (0.2%), total US$454 trillion."
+    ],
+    "tags": [
+      "regulation",
+      "numeric",
+      "table"
+    ]
+  },
+  {
+    "id": "q54",
+    "question": "According to the Basel delta GIRR correlation table, what is the correlation between the 1-year and 10-year risk-free yield curve tenors, and between the 0.25-year and 0.5-year tenors?",
+    "reference_answer": "The correlation between 1-year and 10-year is 76.3%, and between 0.25-year and 0.5-year is 97.0%. Same-tenor correlations are 100%.",
+    "ground_truth_contexts": [
+      "Delta GIRR correlations within the same bucket with different tenors: 0.25 year vs 0.5 year = 97.0%; 1 year vs 10 year = 76.3%."
+    ],
+    "tags": [
+      "regulation",
+      "numeric",
+      "table"
+    ]
+  },
+  {
+    "id": "q55",
+    "question": "As at end-June 2017, what was China's implementation status for margin requirements and platform trading under the FSB OTC derivatives reforms?",
+    "reference_answer": "China's status as at end-June 2017: margin was Red (no existing authority to implement reform and no steps taken to adopt such authority), while platform trading was rated 3. Trade reporting, central clearing and interim capital were Blue or Blue+.",
+    "ground_truth_contexts": [
+      "FSB Table A end-June 2017: China CN - Trade Reporting Blue, Central Clearing Blue, Interim Capital Blue+, Margin Red, Platform Trading 3."
+    ],
+    "tags": [
+      "regulation",
+      "table"
+    ]
+  },
+  {
+    "id": "q56",
+    "question": "What risk weight applies to reference credit spread vega risk in bucket 11 under the Basel CVA framework (BCBS d488)?",
+    "reference_answer": "Reference credit spread vega risk bucket 11 (HY/NR category) carries a risk weight of 12.0%. Adjacent buckets: bucket 10 is 4.0% and bucket 12 is 7.0%.",
+    "ground_truth_contexts": [
+      "Reference credit spread vega risk weights by bucket (HY/NR): bucket 10 = 4.0%, bucket 11 = 12.0%, bucket 12 = 7.0%."
+    ],
+    "tags": [
+      "regulation",
+      "numeric",
+      "table"
+    ]
+  },
+  {
+    "id": "q57",
+    "question": "In the Basel maturity method, which maturity band carries a risk weight of 8.00% for coupon less than 3%?",
+    "reference_answer": "The 12 to 20 years band carries a risk weight of 8.00% for coupon less than 3% (the next band, over 20 years, carries 12.50%).",
+    "ground_truth_contexts": [
+      "Maturity method: coupon less than 3%, 12 to 20 years risk weight 8.00%; over 20 years 12.50%."
+    ],
+    "tags": [
+      "regulation",
+      "numeric",
+      "table"
+    ]
+  },
+  {
+    "id": "q58",
+    "question": "Under the Basel liquidity horizon tables, how many liquidity horizon buckets are defined for the case 0<=t<0.75, and what are the bucket boundaries that follow it?",
+    "reference_answer": "For the 0<=t<0.75 case the table defines 9 liquidity horizon buckets: 0<=t<0.75, 0.75<=t<1.5, 1.5<=t<4, 4<=t<7, 7<=t<12, 12<=t<18, 18<=t<25, 25<=t<35, 35<=t<infinity.",
+    "ground_truth_contexts": [
+      "Liquidity horizon buckets: 0<=t<0.75 | 0.75<=t<1.5 | 1.5<=t<4 | 4<=t<7 | 7<=t<12 | 12<=t<18 | 18<=t<25 | 25<=t<35 | 35<=t<inf."
+    ],
+    "tags": [
+      "regulation",
+      "table"
+    ]
   }
 ]

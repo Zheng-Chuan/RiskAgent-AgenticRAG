@@ -30,7 +30,13 @@ Implemented (feature flag, 默认关闭) — 2026-08-20 定论
 `rag/retriever_factory.py` (模式从 env/settings 读取), `indexing/indexer.py` (brief 生成与 embedding 注入解耦).
 A/B 入口: `make eval-contextual-ab` (`scripts/run_contextual_ab.sh`), 单测 `tests/test_contextual_bm25.py`.
 
-终态: 待 A/B 结果回填. 无收益则关闭变体并维持 2026-08 定论.
+终态 (已收口, 2026-10-19): 三变体全部实测, **生产默认维持 off**.
+
+- 变体一 `llm_brief` (BM25 侧注入 LLM 文档级 brief): A/B 完成 (2026-10-19, LLM 分块索引 58 题, brief 经 backfill 全覆盖): faithfulness +0.003 / context_precision -0.008 / answer_correctness -0.024; 检索层 recall@5 +0.034 但 CI [0.379,0.621] 与 off [0.345,0.586] 大幅重叠, 不显著. **无显著收益.** 实测补充: brief 生成在索引重建期受治理限流影响会静默置空 (d457 等大文档 brief 全空), 需 `scripts/backfill_context_briefs.py` 补齐才能评测, 运维成本也是考量之一.
+- 变体二 `short_brief` (BM25 侧注入 title+section_path, 约 30 token): A/B 完成 (2026-10-18, 同索引 50 题): context_precision 0.147 -> 0.266 (+81%), faithfulness +0.014, 检索层 recall@5 0.820 -> 0.780 / MRR 0.651 -> 0.602 (CI 大幅重叠, 不显著); 定位为 "以轻微检索代价换上下文精度" 的可选变体.
+- 原始方案 (embedding 侧注入文档级 brief): 2026-07 实测术语稀释致召回退化, 已否决 (见下文).
+
+结论: Contextual Retrieval 在本语料 (强术语信号的定义/条款类问答) 上, 三个变体均不构成默认开启的理由; short_brief 作为已知可用的上下文精度旋钮保留. RFC 关闭.
 
 ## 目标
 

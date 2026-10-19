@@ -1,6 +1,8 @@
 # 评测结果台账
 
-本文件是项目评测结果的权威记录模块. 每次正式评测 (50 题 full eval 或 release acceptance) 跑完后, 必须在此追加一条记录, 包含指标数字, gate 判定, FAIL 题目清单和根因分析.
+本文件是项目评测结果的权威记录模块. 每次正式评测 (full eval 或 release acceptance) 跑完后, 必须在此追加一条记录, 包含指标数字, gate 判定, FAIL 题目清单和根因分析.
+
+题集口径: 2026-10-19 起为 58 题 (`tests/data/questions.json`, 原 50 题 + 8 道表格题 q51-q58); 此前记录均为 50 题口径, 与 58 题报告对比时需注明题集差异, 指标不可直接比较.
 
 约定.
 
@@ -204,7 +206,9 @@ Threshold Gate 判定: PASS, 阈值失败 0 项, 基线回归 0 项.
 - v10f 条目的 precision 口径对齐改动: 经评审决定不做, 见该条目说明
 - q19/q21/q22 修复部署验证: 已由 v10c 复跑 3/3 PASS 及 v10d 全量 50/50 确认, 闭环
 
-最终生产状态: v10f 混合策略 (CRAG sufficient 门槛 0.7 + SEAL dedup), 50/50 PASS, faithfulness 0.982 / recall@5 0.80 / citation 1.000.
+最终生产状态 (第一轮): v10f 混合策略 (CRAG sufficient 门槛 0.7 + SEAL dedup), 50/50 PASS, faithfulness 0.982 / recall@5 0.80 / citation 1.000.
+
+注: 本收口记录对应第一轮 (2026-08-25). 2026-10-06 经前沿对齐审计重开第二轮 (Phase 5 / RFC-006), 评测记录恢复追加, 见下方 Phase 5 节.
 
 ## Phase 5 (RFC-006, 2026-10-18)
 
@@ -213,3 +217,6 @@ Threshold Gate 判定: PASS, 阈值失败 0 项, 基线回归 0 项.
 | 2026-10-18 | phase5_pdf_tables_full | 50/50 | WARNING (归因受限) | 规则分块 v2 + 表格解析索引 (2498 chunks 含 107 表格); recall@5 0.820 (v10f 0.80 ↑), faithfulness 0.952 (↓0.030), context_precision 0.147 (↓0.364); gate 零阈值失败, 回归项主要来自 LLM→规则分块切换的混淆因素; CI 节 (n_boot=1000) 首次全量落地; 表格 chunk 入库但 50 题 qrels 无表格标注, 无法度量 C1 收益 | `.artifacts/reports/rag_eval_phase5_pdf_tables_full_20261018_100636.md` |
 | 2026-10-18 | contextual_ab_short_brief | 50/50 | 结论: 收益在上下文侧 | C2 A/B (同索引): short_brief 使 context_precision 0.147→0.266 (+81%), context_recall +0.036, faithfulness +0.014; 检索层 recall@5 0.820→0.780 / MRR 0.651→0.602 (CI 大幅重叠, 不显著); 定位为"以轻微检索代价换上下文精度"的变体, 默认保持 off | `.artifacts/reports/rag_eval_contextual_ab_short_brief_20261018_104805.md` |
 | 2026-10-18 | long_context_baseline (n=10) | 10 | rag_main 胜出 | RFC-006 B: rag_main 全面优于 parent_stuffing (faithfulness 1.0 vs 0.43, context_precision 0.79 vs 0.56, 1.1k vs 17.7k tokens/题, 误拒 0 vs 0.2); 实证"检索+小上下文"优于塞满 128k 窗口; map_reduce_full 模式因每题约 2.9h 移除 | `docs/evaluations/long_context_baseline_20261018_111636.md` |
+| 2026-10-19 | phase5_table_questions | 58/58 | C1 部分验证成功 | 新增 8 道表格题 (q51-q58, qrels 指向表格 chunk, gold 值逐项对照 PDF 核实): 表格题通过 8/8, gold 表格 chunk 入 top-5 4/8; 关键发现: ① q51/q57 的事实只存在于表格 chunk (d457 p111 maturity method 表), 主链检索命中且答案数值全对 — 表格解析创造了原本不可回答的问题; ② 其余题目的表格事实在 PDF 原生 text 通道已有平铺副本, 表格 chunk 与 text chunk 冗余竞争, gold 命中 4/8; ③ 58 题口径整体: recall@5 0.776 / faithfulness 0.968 / context_recall 0.948 / numeric_consistency 0.933; ④ q56 gold 标注勘误 (bucket 11 = 12.0% 非 7.0%, 模型答案正确) | `.artifacts/reports/rag_eval_phase5_table_questions_20261019_092730.md` |
+| 2026-10-19 | phase5_llm_chunk_clean | 58/58 | 归因闭环; LLM 分块不采用 | ② 干净归因评测: LLM 分块 (split_documents_v2, manifest v5, 2089 chunks) + 表格解析索引, 同 58 题 qrels; faithfulness 0.936 / context_recall 0.908 / context_precision 0.151 / citation 1.000, 题目级 58/58; 对照规则分块 (table_questions): context_precision 0.147 vs 0.151 基本不变 → phase5_pdf_tables_full 的 precision 暴跌与 LLM→规则分块切换无关, 是新索引+58 题口径的结构性低位; LLM 分块其余指标均略低于规则分块, 无任何改善 → 生产维持规则分块 v2; gate FAIL 为 qrels 口径假象: chunk_id=文件名:内容哈希, LLM 分块后边界全变导致旧 gold chunk_id 大量失配 (recall@5 0.466, 12 项回归全源于此), 非真实质量回归 | `.artifacts/reports/rag_eval_phase5_llm_chunk_clean_20261019_120444.md` |
+| 2026-10-19 | contextual_ab_llm_brief | 58/58 | 结论: 无显著收益, 维持 off | ③ C2 llm_brief A/B (同 LLM 分块索引, brief 经 `scripts/backfill_context_briefs.py` 补齐至 2089/2089 全覆盖后评测): faithfulness 0.939 (+0.003) / context_recall 0.930 (+0.022) / context_precision 0.144 (-0.008) / answer_correctness 0.344 (-0.024); 检索层 recall@5 0.500 (+0.034, CI [0.379,0.621] 与 off [0.345,0.586] 大幅重叠) / MRR 0.418 (+0.013, 不显著); 与 short_brief (context_precision +81%) 不同, llm_brief 对 precision 无改善 → RFC-003 最终判决: 三变体 (embedding 注入 / BM25 llm_brief / BM25 short_brief) 全部实测, 生产默认维持 off | `.artifacts/reports/rag_eval_contextual_ab_llm_brief_20261019_131851.md` |

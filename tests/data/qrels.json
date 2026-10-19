@@ -2194,5 +2194,109 @@
         "origin": "keyword_gap_fill"
       }
     ]
+  },
+  {
+    "id": "q51",
+    "qrels": [
+      {
+        "qrel_id": "q51_r1",
+        "chunk_id": "bis_bcbs_d457.pdf:526dba634f66",
+        "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+        "section_path": "",
+        "text": "Maturity method time bands and weights (coupon less than 3%): 3 to 6 months 0.40%, 6 to 12 months 0.70%, over 20 years 12.50%.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q52",
+    "qrels": [
+      {
+        "qrel_id": "q52_r1",
+        "chunk_id": "bis_bcbs_d488.pdf:9267d14089c9",
+        "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d488.pdf",
+        "section_path": "",
+        "text": "Correlations for interest rate risk factors (specified currencies): 1 year vs 5 years 72%.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q53",
+    "qrels": [
+      {
+        "qrel_id": "q53_r1",
+        "chunk_id": "fsb_review_otc_effectiveness_2017.pdf:64f43b4f27b6",
+        "source": "corpus/regulatory_seed/pdf/en/fsb_review_otc_effectiveness_2017.pdf",
+        "section_path": "",
+        "text": "Notional outstanding by asset class: interest rate derivatives US$368 trillion 81.1% of total; total US$454 trillion.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q54",
+    "qrels": [
+      {
+        "qrel_id": "q54_r1",
+        "chunk_id": "bis_bcbs_d457.pdf:411fa3a52b09",
+        "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+        "section_path": "",
+        "text": "Delta GIRR correlations within same bucket different tenor: 0.25y vs 0.5y 97.0%; 1y vs 10y 76.3%.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q55",
+    "qrels": [
+      {
+        "qrel_id": "q55_r1",
+        "chunk_id": "fsb_otc_progress_2017.pdf:4d65bf761f24",
+        "source": "corpus/regulatory_seed/pdf/en/fsb_otc_progress_2017.pdf",
+        "section_path": "",
+        "text": "Table A end-June 2017 China CN: Trade Reporting Blue, Central Clearing Blue, Interim Capital Blue+, Margin Red, Platform Trading 3.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q56",
+    "qrels": [
+      {
+        "qrel_id": "q56_r1",
+        "chunk_id": "bis_bcbs_d488.pdf:3de94f537454",
+        "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d488.pdf",
+        "section_path": "",
+        "text": "Reference credit spread vega risk weights (HY/NR buckets 8-17): 3.0%, 2.0%, 4.0%, 12.0%, 7.0%, 8.5%, 5.5%, 5.0%, 12.0%, 1.5%. Bucket 11 = 12.0%.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q57",
+    "qrels": [
+      {
+        "qrel_id": "q57_r1",
+        "chunk_id": "bis_bcbs_d457.pdf:526dba634f66",
+        "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+        "section_path": "",
+        "text": "Maturity method coupon less than 3%: 12 to 20 years risk weight 8.00%.",
+        "relevance": 2
+      }
+    ]
+  },
+  {
+    "id": "q58",
+    "qrels": [
+      {
+        "qrel_id": "q58_r1",
+        "chunk_id": "bis_bcbs_d457.pdf:c98797476dc1",
+        "source": "corpus/regulatory_seed/pdf/en/bis_bcbs_d457.pdf",
+        "section_path": "",
+        "text": "Liquidity horizon bucket boundaries starting 0<=t<0.75: 9 buckets up to 35<=t<infinity.",
+        "relevance": 2
+      }
+    ]
   }
 ]

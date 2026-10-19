@@ -24,6 +24,17 @@
 - (2026-10-18) C2 Contextual Retrieval 变体落地: 变体一 `llm_brief` (BM25 侧注入, brief 生成与 embedding 注入解耦) 与变体二 `short_brief` (title+section_path 短 brief, 无需重建索引), 开关 `RISKAGENT_CONTEXTUAL_BM25_MODE`; A/B 入口 `make eval-contextual-ab`; A/B 已跑完 (off vs short_brief, 同索引 50 题): short_brief 使 context_precision 0.147→0.266 (+81%)、faithfulness +0.014, 检索层 recall@5/MRR 小幅回落但 CI 重叠不显著; 定位为"以轻微检索代价换上下文精度"的可选变体, 生产默认保持 off, 详见 [EVALUATION_LOG](../evaluations/EVALUATION_LOG.md)
 - (2026-10-18) C1 PDF 表格感知解析落地: `source_loader` 用 pdfplumber 提取表格转 markdown 独立 chunk (`chunk_type=table`, 误检过滤: >=2 行 2 列且 >=4 非空单元格), `ingestion.split_documents` 表格 chunk 不切割且豁免参考文献 junk 启发式; Milvus schema +`chunk_type` 字段 (MANIFEST_VERSION 4->5), chunking fingerprint +`pdf_tables` 开关与 policy_version v2 (开启默认触发全量重建); d457/d488 实测可提取真实监管表格; 索引已重建 (2498 chunks 含 107 表格); 单测 `tests/test_pdf_table_parsing.py`. 全量评测归因受限: 基线为 LLM 分块而新索引为规则分块, 回归主要来自分块切换; 且 50 题 qrels 无表格标注, 表格检索收益需补表格类问题后才能度量
 
+- (2026-10-19) 收尾项 ① 表格类问题入题集完成: 题集 50 -> 58 题 (q51-q58, qrels 指向已核实的表格 chunk), 全量评测 58/58 题目级 PASS; q51/q57 的事实仅存在于表格 chunk 且被主链命中并正确作答, 实证 C1 表格解析使原本不可回答的问题可回答; 其余表格事实在 PDF 原生 text 通道有冗余副本 (gold 命中 4/8). 58 题口径: recall@5 0.776 / faithfulness 0.968 / context_recall 0.948 / numeric_consistency 0.933. 报告 `.artifacts/reports/rag_eval_phase5_table_questions_20261019_092730.md`
+
+## 收尾项 (2026-10-19 追加, 全部完成)
+
+四项主线收口后, 遗留两个混淆因素需要补干净归因:
+
+- ② LLM 分块干净归因评测: **完成** (2026-10-19). LLM 分块 (split_documents_v2, manifest v5, 2089 chunks 含 107 表格) 索引上跑 58 题全量, 对照规则分块同口径 (phase5_table_questions). 结论: (a) context_precision 0.151 vs 0.147 基本不变 → phase5_pdf_tables_full 的 precision 低位与分块策略无关, 是新索引 + 58 题口径的结构性现象; (b) LLM 分块 faithfulness 0.936 / context_recall 0.908 均略低于规则分块, 无任何指标改善 → **生产维持规则分块 v2, LLM 分块不采用**; (c) 题目级 58/58, citation 1.000. gate FAIL (recall@5 0.466) 为 qrels 口径假象: chunk_id = 文件名:内容哈希, LLM 分块改变 chunk 边界导致旧 gold chunk_id 大量失配, 12 项 baseline 回归全部源于此, 非真实质量回归. 报告 `.artifacts/reports/rag_eval_phase5_llm_chunk_clean_20261019_120444.md`
+- ③ C2 llm_brief 变体评测: **完成** (2026-10-19). 重建期 1324 个空 brief (治理限流所致) 用 `scripts/backfill_context_briefs.py` 并发补齐至 2089/2089 全覆盖后, 以 `RISKAGENT_CONTEXTUAL_BM25_MODE=llm_brief` 在同索引跑 A/B. 结论: **无显著收益, 维持 off** — faithfulness +0.003 / context_precision -0.008 / answer_correctness -0.024; 检索层 recall@5 +0.034 但 CI 大幅重叠不显著. 与 short_brief (context_precision +81%) 不同, llm_brief 对 precision 无改善. RFC-003 三变体 (embedding 注入 / BM25 llm_brief / BM25 short_brief) 至此全部实测, 生产默认 off 终态确认. 报告 `.artifacts/reports/rag_eval_contextual_ab_llm_brief_20261019_131851.md`
+
+完成判据: ② 产出同分块口径的干净对比结论; ③ 给出 llm_brief 开/关终态; 两者结果入 [EVALUATION_LOG](../evaluations/EVALUATION_LOG.md) 并回写本文档状态. (均已达成, 2026-10-19)
+
 ## P0 必须先做
 
 ### 1. bootstrap 置信区间 (A2)
@@ -87,4 +98,4 @@
 
 ## 状态
 
-Done (2026-10-06 立项, 2026-10-18 四项全部收口: A2 完成; B 两模式结论落地 (rag_main 胜出, map_reduce_full 因成本移除); C2 A/B 完成, 生产保持 off; C1 代码+索引落地, 收益度量待表格类问题入题集)
+完成 (2026-10-06 立项; 2026-10-18 四项主线收口: A2 完成; B 两模式结论落地 (rag_main 胜出, map_reduce_full 因成本移除); C2 A/B off vs short_brief 完成; C1 代码+索引落地; 2026-10-19 三个收尾项完成: ① 表格题入集 58/58 与 C1 收益验证, ② LLM 分块干净归因 (LLM 分块不采用, 生产维持规则分块 v2), ③ llm_brief A/B (无显著收益, 维持 off). Phase 5 全部收口)

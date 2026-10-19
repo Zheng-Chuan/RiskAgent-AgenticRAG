@@ -84,7 +84,7 @@
 | Phase 2 | 检索与召回强化 | ✓ 完成 | [phase-2-retrieval-hardening.md](./phases/phase-2-retrieval-hardening.md) |
 | Phase 3 | 评测与门禁强化 | ✓ 完成 | [phase-3-evaluation-hardening.md](./phases/phase-3-evaluation-hardening.md) |
 | Phase 4 | 发布与回归稳定化 | ✓ 完成 | [phase-4-release-readiness.md](./phases/phase-4-release-readiness.md) |
-| Phase 5 | 前沿对齐 (置信区间 / 长上下文基线 / PDF 表格解析 / Contextual 变体) | 计划中 | [phase-5-frontier-alignment.md](./phases/phase-5-frontier-alignment.md) |
+| Phase 5 | 前沿对齐 (置信区间 / 长上下文基线 / PDF 表格解析 / Contextual 变体) | 完成 (2026-10-19 收口, 含三个追加收尾项) | [phase-5-frontier-alignment.md](./phases/phase-5-frontier-alignment.md) |
 
 (第一轮 2026-08-25 收口: 全部阶段完成, 未启动的方向已取消, 见 [RFC-001](./decisions/RFC-001-retrieval-hardening-roadmap.md); 2026-10-06 经业界前沿对齐审计重开第二轮, 见 [RFC-006](./decisions/RFC-006-frontier-gap-closing-roadmap.md))
 
@@ -101,7 +101,7 @@
 | 全链路可观测性 | Closed (P0/P1 已落地) | [RFC-002](./decisions/RFC-002-observability-full-chain-trace.md) |
 | Contextual Retrieval | Implemented (默认关闭) | [RFC-003](./decisions/RFC-003-contextual-retrieval.md) |
 | Agentic RAG 检索工具化 | Closed (阶段一已实现默认关闭, 迁移取消) | [RFC-004](./decisions/RFC-004-agentic-rag-paradigm.md) |
-| 前沿差距收口路线图 (置信区间/长上下文基线/表格解析/Contextual 变体) | Proposed | [RFC-006](./decisions/RFC-006-frontier-gap-closing-roadmap.md) |
+| 前沿差距收口路线图 (置信区间/长上下文基线/表格解析/Contextual 变体) | Implemented (2026-10-19 收口) | [RFC-006](./decisions/RFC-006-frontier-gap-closing-roadmap.md) |
 
 ---
 
@@ -134,14 +134,20 @@
 
 ---
 
-## 9. 当前状态 (2026-08-25 收口终态)
+## 9. 当前状态 (第一轮 2026-08-25 收口终态)
 
 - qrels 已升级为 `chunk_id` 级 gold, recall 分母只计主 gold (relevance>=2), `qrels_gap_allowlist.json` 保持清空
 - Self-RAG 已升级为 CRAG 三档评估, v10f 混合策略 (sufficient 门槛 0.7) 为生产默认
 - 评测报告已落盘 `index_schema_version` `index_schema_fingerprint` `resolved_reranker_model` 等元信息, 可复现
 - 发布门禁强制 fresh eval 口径: 无 `LLM key` 直接报错终止 (2026-08-21 起样例报告回退已移除)
-- 最新全量报告 v10f: `50/50` PASS, `faithfulness=0.982` `retrieval_recall_at_5=0.80` `citation_coverage=1.000`, gate 阈值/基线全过, release acceptance 已以此重跑通过
+- 50 题口径最佳报告 v10f: `50/50` PASS, `faithfulness=0.982` `retrieval_recall_at_5=0.80` `citation_coverage=1.000`, gate 阈值/基线全过, release acceptance 已以此重跑通过
 - 文档口径已收口: 关键数字均可映射到具体报告文件
+
+### 9.1 Phase 5 更新 (2026-10-19, 已收口)
+
+- 题集 50 -> 58 题 (新增 q51-q58 表格题, qrels 指向 `chunk_type=table` gold); 最新 58 题全量报告 `phase5_table_questions` (58/58 题目级 PASS, faithfulness 0.968 / recall@5 0.776), 与 50 题历史报告不可直接对比
+- RFC-006 四项 (A2 置信区间 / B 长上下文基线 / C1 表格解析 / C2 变体 A/B) 已于 2026-10-18 落地, 结论见 [phase-5](./phases/phase-5-frontier-alignment.md) 与 [EVALUATION_LOG](./evaluations/EVALUATION_LOG.md)
+- 收尾项 (2026-10-19 完成): ① 表格题验证 C1 收益 (表格解析使原本不可回答的问题可回答); ② LLM 分块干净归因评测 (LLM 分块无改善, 生产维持规则分块 v2); ③ C2 llm_brief A/B (无显著收益, RFC-003 关闭, Contextual Retrieval 三变体终态为生产默认 off)
 
 ### 已知边界
 

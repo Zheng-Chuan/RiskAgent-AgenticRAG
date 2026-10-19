@@ -238,11 +238,18 @@
 [source_loader]
     | 解析文档并保留 source page file_type 等基础 metadata
     | line metadata 主要在后续 ingestion 阶段补齐
+    | PDF 附加表格感知解析 (RFC-006 C1):
+    |   pdfplumber 每页 extract_tables 转 markdown 表格
+    |   每张表一个独立 Document (chunk_type=table)
+    |   误检过滤: >=2 行 且 >=2 列 且 >=4 非空单元格
+    |   pdfplumber 不可用或解析失败时静默跳过 不影响正文
     v
 [ingestion]
     | build_parent_documents
     | split_documents
     | 形成 parent 和 chunk 两层语料
+    | 表格 chunk 不再切割 且豁免参考文献 junk 启发式
+    | 默认 llm_semantic_split_document 语义切割 (可配开关切规则分块)
     v
 [embeddings]
     | 默认 provider = hf
@@ -273,6 +280,14 @@
     |
     +-> 写 dense rows 到 Milvus
     |    chunk_id vector text source parent_id section_path 等一起入库
+    |    含 chunk_type 字段 (text / table, MANIFEST_VERSION 5)
+    |
+    +-> (可选) Contextual Retrieval brief 生成 (RFC-003/RFC-006, 默认关闭)
+    |    RISKAGENT_CONTEXTUAL_BRIEFS=true 时索引期逐 chunk 生成 LLM brief
+    |    默认 RISKAGENT_CONTEXTUAL_BRIEFS_EMBED=false: brief 只写 metadata
+    |    不注入 embedding (规避已实证的术语稀释)
+    |    查询期 BM25 侧注入由 RISKAGENT_CONTEXTUAL_BM25_MODE 控制
+    |    (off / short_brief / llm_brief, 默认 off)
     |
     +-> 写 sparse_corpus.jsonl
     |    给 BM25 / sparse 检索使用
@@ -1698,7 +1713,7 @@ Self-RAG 的很多阈值和题型规则本质上还是 hand-crafted, 不是 lear
 - 用 `gate_labels` 检查门禁策略收益
 - 用 `threshold gate` 和 `baseline regression` 管发布
 
-当前项目里, 这套体系已经真实落在 `50` 题金融评测集上, 并且可以输出 fresh report 做版本对比.
+当前项目里, 这套体系已经真实落在金融评测集上 (2026-10-19 起为 58 题, 含 8 道表格题; 此前为 50 题), 并且可以输出 fresh report 做版本对比.
 
 ## 7.2 参考了业界哪些成果
 
@@ -2193,6 +2208,8 @@ gate_miss_rate = false_negative / labeled_total
 
 - higher is better 的指标, 低于 `minimum - tolerance` 就失败
 - lower is better 的指标, 高于 `maximum + tolerance` 就失败
+
+此外 (RFC-006 A2, 2026-10-18 起默认开启), 关键指标附带 bootstrap 95% CI (1000 次重采样, seed 固定), threshold gate 用保守边界判定: higher-is-better 用 `ci_low`, lower-is-better 用 `ci_high`. 可经配置 `use_confidence_intervals: false` 关闭.
 
 ### 2. Baseline Regression
 
